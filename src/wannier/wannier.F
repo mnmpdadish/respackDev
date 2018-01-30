@@ -1,7 +1,8 @@
       PROGRAM WANNIER          
       use m_bvector, only: generate_bvectors
       use m_rdinput       
-      use fft_3d 
+      use fft_3d
+      use frmsf_wan, only: wrt_frmsf_wan
       include "config.h"
 !--
       call read_input
@@ -2467,6 +2468,12 @@
        endif!REVERSE                   
       enddo!ib                      
 
+      IF(ALL(dense(1:3) /= 0)) THEN
+         CALL wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,
+     +                      a1,a2,a3,b1,b2,b3,FermiEnergy,
+     +                      WEIGHT_R,H_MAT_R)
+      END IF
+      
 !==================================
 !=== VISUALIZE WANNIER FUNCTION ===
 !==================================
@@ -2542,7 +2549,8 @@
         aa3=a3*dble(zmax-zmin)
         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
         write(116,*)'Electron density'
-        write(116,'(6f15.10)') a,b,c,alp,bet,gmm 
+        write(116,'(6f15.10)')
+     +  a*0.529177249,b*0.529177249,c*0.529177249,alp,bet,gmm ! bohr -> angstrom
         write(116,'(3I5)') 
      +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
         write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),

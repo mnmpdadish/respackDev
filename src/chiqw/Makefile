@@ -17,7 +17,7 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 
 #sekirei 
 #FC = mpif90 
-#FFLAGS = -O2 -qopenmp
+#FFLAGS = -O2 -qopenmp -g -traceback
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #GNU 

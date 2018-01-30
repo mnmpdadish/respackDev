@@ -52,7 +52,8 @@ integer,public::xmax!x-range for visualization
 integer,public::ymin!y-range for visualization 
 integer,public::ymax!y-range for visualization 
 integer,public::zmin!z-range for visualization 
-integer,public::zmax!z-range for visualization 
+integer,public::zmax!z-range for visualization
+integer,public::dense(3)! Dense k-grid for the Wnnier-interpolated FS
 !initial_guess 
 type initial_guess 
 !integer::i,j!20170406
@@ -73,7 +74,7 @@ integer,public,allocatable::wrt_list(:)!wrt_list(N_write_wannier)
 namelist/param_wannier/icell,N_wannier,N_initial_guess,EPS_SPILLAGE,DAMP,EPS_SPREAD,MAX_STEP_LENGTH,&
 Lower_energy_window,Upper_energy_window,set_inner_window,Upper_inner_window,Lower_inner_window,flg_BMAT,&
 tcut_mvmc,reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k 
-namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format!20170709  
+namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense!20170709  
 namelist/param_visualization/flg_vis_wannier,N_write_wannier,& 
 ix_vis_min,ix_vis_max,iy_vis_min,iy_vis_max,iz_vis_min,iz_vis_max
 !namelist/param_vis_bloch/flg_vis_bloch,calc_k 
@@ -221,6 +222,7 @@ write(6,*)
 !--
 !default
 Ndiv=40!Separation between symmetry points  
+dense(1:3) = 0
 !--
 !read(999,nml=param_interpolation)
 read(5,nml=param_interpolation)

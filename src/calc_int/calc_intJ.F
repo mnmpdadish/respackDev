@@ -958,7 +958,7 @@
      +      iw,jw,J_MAT(iw,jw,ia1,ia2,ia3,ie)*au
            enddo!jw 
           enddo!iw 
-          write(6,*) 
+          write(207,*) 
          enddo 
         enddo 
        enddo 

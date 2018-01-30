@@ -58,6 +58,7 @@
       call MPI_Bcast(file_num_eps_base_start,1,MPI_INTEGER,0,
      +               comm_glb,ierr) 
       call MPI_Bcast(n_calc_q,1,MPI_INTEGER,0,comm_glb,ierr) 
+      if(myrank_glb /= 0) allocate(calc_num_k(n_calc_q))
       call MPI_Bcast(calc_num_k,n_calc_q,MPI_INTEGER,0,comm_glb,ierr)
 !--
 !      call MPI_FINALIZE(ierr)

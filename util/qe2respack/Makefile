@@ -12,10 +12,16 @@ QEROOT=
 
 # Intel compiler with intel MKL
 FC = ifort
-FFLAGS = -O2 -xHOST
+FFLAGS = -O2 -xHOST -g -traceback
 LINKER =  mpif90 
 LDFLAGS = -liomp5 -lpthread
 LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+# GNU
+#FC = gfortran
+#FFLAGS = -O3 -g -fbacktrace
+#LINKER = mpif90
+#LDFLAGS = -g -pthread
+#LAPACK = -llapack -lblas
 
 LFLAGS = ${LDFLAGS} ${LAPACK}
 INCLUDE= -I${QEROOT}/iotk/include -I${QEROOT}/iotk/src 
@@ -29,7 +35,7 @@ default: all
 all: ${PROGRAMS}
 
 qe2respack: qe2respack.o ${QEROOT}/iotk/src/libiotk.a
-	${LINKER} ${LFLAGS} $^ -o $@
+	${LINKER} $^ -o $@ ${LFLAGS}
 
 qe2respack.o: qe2respack.f90
 	${FC} ${FFLAGS} ${INCLUDE} $< -c

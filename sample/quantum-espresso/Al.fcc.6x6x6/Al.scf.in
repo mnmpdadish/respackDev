@@ -9,7 +9,7 @@
     outdir = './tmp/scf/' 
  /
  &system
-    ibrav = 0
+    ibrav = 2
     celldm(1) = 7.60 
     nat = 1
     ntyp = 1
@@ -20,16 +20,12 @@
     nbnd = 50
  /
  &electrons
-    diagonalization = cg
+    diagonalization = "cg"
     conv_thr =  1.0d-8
     mixing_beta = 0.3
  /
 ATOMIC_SPECIES
  Al  26.982  Al_ONCV_PBE-1.0.upf
-CELL_PARAMETERS {alat}
-   0.5  0.5  0.0 
-   0.0  0.5  0.5 
-   0.5  0.0  0.5
 ATOMIC_POSITIONS {crystal} 
  Al  0.00 0.00 0.00
 K_POINTS {automatic}
