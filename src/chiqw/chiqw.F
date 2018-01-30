@@ -115,7 +115,8 @@
 !--
       if(flg_cRPA_ewin==1)then 
        if(E_LOWER==E_UPPER)then 
-        write(6,*)'ERROR: wrong setting energy window' 
+        write(6,*)'ERROR: wrong setting energy window; stop' 
+        stop
        endif 
        if(E_LOWER==0.0d0)then 
         write(6,*)'WARNING: E_LOWER=0.0eV'
@@ -125,11 +126,15 @@
        endif 
        E_LOWER=E_LOWER/au 
        E_UPPER=E_UPPER/au 
-      else 
-!      E_LOWER=FermiEnergy-0.5d0/au 
-!      E_UPPER=FermiEnergy+0.5d0/au 
-       E_LOWER=FermiEnergy-1.5d0/au 
-       E_UPPER=FermiEnergy+1.5d0/au 
+!20180110 
+!      else 
+!       E_LOWER=FermiEnergy-0.5d0/au 
+!       E_UPPER=FermiEnergy+0.5d0/au 
+!       E_LOWER=FermiEnergy-1.5d0/au 
+!       E_UPPER=FermiEnergy+1.5d0/au 
+!       E_LOWER=E_LOWER/au!20171220 
+!       E_UPPER=E_UPPER/au!20171220 
+!--
       endif 
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,'(a20,i5)')'flg_cRPA     =',flg_cRPA
@@ -768,9 +773,6 @@
       call MPI_BARRIER(comm_glb,ierr)
 !--
       allocate(index_kpt(nkb1,nkb2,nkb3));index_kpt(:,:,:)=0     
-      allocate(FermiInside(NTB));FermiInside(:)=0 
-      allocate(band_max(NTB));band_max(:)=0.0d0
-      allocate(band_min(NTB));band_min(:)=0.0d0
       call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
 !--
 !      if(myrank_glb.eq.MPI_io_rank)then 
@@ -784,43 +786,56 @@
 !       enddo
 !      endif 
 !--
-      call judge_FermiInside(Nk_irr,NTB,E_EIGI(1,1),FermiEnergy,
-     +                       FermiInside(1),band_max(1),band_min(1))
-      if(myrank_glb.eq.MPI_io_rank)then 
+      allocate(WindowInside(NTB));WindowInside(:)=0
+      allocate(Tindx(NTB));Tindx(:)=0 
+      allocate(E_AVE(NTB));E_AVE(:)=0.0d0 
+      allocate(band_max(NTB));band_max(:)=0.0d0
+      allocate(band_min(NTB));band_min(:)=0.0d0
+      allocate(prob(NTB,NTK));prob(:,:)=0.0d0 
+!--
+      if(flg_cRPA==0)then 
+       call judge_FermiInside(Nk_irr,NTB,E_EIGI(1,1),FermiEnergy,
+     + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1))
+      endif 
+!--
+      if(flg_cRPA==1.and.flg_cRPA_band==1)then 
+       call judge_FermiInside(Nk_irr,NTB,E_EIGI(1,1),FermiEnergy,
+     + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1))
+      endif 
+!--
+      if(flg_cRPA==1.and.flg_cRPA_ewin==1)then 
+       call judge_WindowInside(Nk_irr,NTB,E_EIGI(1,1),E_LOWER,E_UPPER,
+     + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1)) 
+      endif 
+!--
+      if (myrank_glb.eq.0) then 
+       write(6,*) 
+       write(6,*)'Winside'
+       write(6,*) 
+       do ib=1,NTB
+        write(6,*) ib,WindowInside(ib)
+       enddo 
+!
+       write(6,*) 
+       write(6,*)'Tindx'
+       write(6,*) 
+       do ib=1,NTB
+        write(6,*) ib,Tindx(ib)
+       enddo 
+!
        write(6,*) 
        write(6,*)'bandMax and bandMin in eV'
        write(6,*) 
        do ib=1,NTB
         write(6,'(i5,2f15.10)') ib,band_max(ib)*au,band_min(ib)*au 
        enddo 
-      endif 
-!--
-      allocate(WindowInside(NTB));WindowInside(:)=0
-      allocate(Tindx(NTB));Tindx(:)=0 
-      allocate(E_AVE(NTB));E_AVE(:)=0.0d0 
-      allocate(prob(NTB,NTK));prob(:,:)=0.0d0 
-      call judge_WindowInside(Nk_irr,NTB,E_EIGI(1,1),E_LOWER,E_UPPER,
-     +                        WindowInside(1),Tindx(1),E_AVE(1)) 
-      if (myrank_glb.eq.0) then 
-       write(6,*) 
-       write(6,*)'Winside'
-       write(6,*) 
-       do i_band=1,NTB
-        write(6,*) i_band,WindowInside(i_band)
-       enddo 
-       write(6,*) 
-       write(6,*)'Tindx'
-       write(6,*) 
-       do i_band=1,NTB
-        write(6,*) i_band,Tindx(i_band)
-       enddo 
+!
        write(6,*) 
        write(6,*)'E_AVE in eV'
        write(6,*) 
-       do i_band=1,NTB
-        write(6,*) i_band,E_AVE(i_band)*au 
+       do ib=1,NTB
+        write(6,*) ib,E_AVE(ib)*au 
        enddo 
-       write(6,*) 
       endif 
 !--
 !band-cRPA

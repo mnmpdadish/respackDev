@@ -566,68 +566,26 @@
       enddo 
       return 
       end 
-!---
+!--
       subroutine judge_FermiInside(NTK,NTB,E_EIG,FermiEnergy,
-     +           FermiInside,band_max,band_min)
+     + WindowInside,Tindx,E_AVE,band_max,band_min) 
       implicit none 
       integer::NTK,NTB
       real(8)::E_EIG(NTB,NTK)  
       real(8)::FermiEnergy
-      integer::ik,i_band,fs 
-      real(8)::e,band_top,band_btm 
-      integer::FermiInside(NTB)    
-      real(8)::band_max(NTB)
-      real(8)::band_min(NTB)
-!---
-      FermiInside(:)=0
-      band_max(:)=0.0d0 
-      band_min(:)=0.0d0 
-      do i_band=1,NTB
-       do ik=1,NTK 
-        e=E_EIG(i_band,ik) 
-        if(ik==1)then 
-         band_top=e
-         band_btm=e
-        endif 
-        if(e<band_btm) then 
-         band_btm=e
-        endif 
-        if(e>band_top) then 
-         band_top=e
-        endif 
-       enddo!ik 
-       if(band_btm> FermiEnergy) fs=2
-       if(band_btm<=FermiEnergy.and.band_top>=FermiEnergy) fs=0
-       if(band_top< FermiEnergy) fs=1
-       FermiInside(i_band)=fs 
-       band_max(i_band)=band_top
-       band_min(i_band)=band_btm
-      enddo!i_band 
-!---
-!      do i_band=1,NTB
-!       write(6,*) i_band,FermiInside(i_band)
-!      enddo 
-!---
-      RETURN 
-      END 
-!---
-      subroutine judge_WindowInside(NTK,NTB,E_EIG,EL,EU,WindowInside,
-     +           Tindx,E_AVE)
-      implicit none 
-      integer::NTK,NTB
-      real(8)::E_EIG(NTB,NTK)  
-      real(8)::EL,EU
-      integer::ik,i_band,fs 
+      integer::ik,ib,fs 
       real(8)::e,top,btm 
       integer::WindowInside(NTB)    
       integer::Tindx(NTB)    
       real(8)::E_AVE(NTB)    
-!---
+      real(8)::band_max(NTB)
+      real(8)::band_min(NTB)
+!--
       WindowInside(:)=0
       Tindx(:)=0
-      do i_band=1,NTB
+      do ib=1,NTB
        do ik=1,NTK 
-        e=E_EIG(i_band,ik) 
+        e=E_EIG(ib,ik) 
         if(ik==1)then 
          top=e
          btm=e
@@ -635,28 +593,75 @@
         if(e<btm) btm=e
         if(e>top) top=e
        enddo!ik 
-!case1
-       if(top<EL) fs=0                           
-!case2
-       if(EL<=top.and.top<EU.and.btm<EL) fs=0
-!case3
+!uocc
+       if(btm>FermiEnergy) fs=2
+!pocc
+       if(btm<=FermiEnergy.and.top>=FermiEnergy) then
+        fs=1
+        Tindx(ib)=ib 
+       endif 
+!docc
+       if(top<FermiEnergy) fs=0
+!
+       WindowInside(ib)=fs 
+       E_AVE(ib)=(top+btm)/2.0d0 
+       band_max(ib)=top
+       band_min(ib)=btm
+      enddo!ib 
+!--
+      RETURN 
+      END 
+!--
+      subroutine judge_WindowInside(NTK,NTB,E_EIG,EL,EU,WindowInside,
+     + Tindx,E_AVE,band_max,band_min)
+      implicit none 
+      integer::NTK,NTB
+      real(8)::E_EIG(NTB,NTK)  
+      real(8)::EL,EU
+      integer::ik,ib,fs 
+      real(8)::e,top,btm 
+      integer::WindowInside(NTB)    
+      integer::Tindx(NTB)    
+      real(8)::E_AVE(NTB)    
+      real(8)::band_max(NTB)
+      real(8)::band_min(NTB)
+!--
+      WindowInside(:)=0
+      Tindx(:)=0
+      do ib=1,NTB
+       do ik=1,NTK 
+        e=E_EIG(ib,ik) 
+        if(ik==1)then 
+         top=e
+         btm=e
+        endif 
+        if(e<btm) btm=e
+        if(e>top) top=e
+       enddo!ik 
+!case1:docc
+       if(top<EL) fs=0
+!case2:docc
+       if(EL<=top.and.top<EU.and.btm<EL) fs=0 
+!case3:pocc
        if(EL<=top.and.top<EU.and.EL<=btm.and.btm<EU)then 
         fs=1
-        Tindx(i_band)=i_band
+        Tindx(ib)=ib
        endif   
-!case4
+!case4:pocc
        if(btm<EL.and.top>EU)then   
-        fs=1
-        Tindx(i_band)=i_band
+        fs=1 
+        Tindx(ib)=ib
        endif   
-!case5
-       if(EL<btm.and.btm<EU.and.top>EU) fs=2
-!case6
-       if(btm>EU) fs=2                          
+!case5:uocc
+       if(EL<btm.and.btm<EU.and.top>EU) fs=2 
+!case6:uocc 
+       if(btm>EU) fs=2 
 !--
-       WindowInside(i_band)=fs 
-       E_AVE(i_band)=(top+btm)/2.0d0 
-      enddo!i_band 
+       WindowInside(ib)=fs 
+       E_AVE(ib)=(top+btm)/2.0d0 
+       band_max(ib)=top
+       band_min(ib)=btm
+      enddo!ib 
       RETURN 
       END 
 !--

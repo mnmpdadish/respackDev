@@ -71,7 +71,6 @@
       real(8),allocatable::wfunc(:)!wfunc(Nl123*2) 
 !dielmat 
       integer,allocatable::index_kpt(:,:,:)!index_kpt(nkb1,nkb2,nkb3)
-      integer,allocatable::FermiINside(:)!FermiInside(NTB)
       integer,allocatable::WindowInside(:)!WindowInside(NTB)
       integer,allocatable::Tindx(:)!Tindx(NTB)
       real(8),allocatable::E_AVE(:)!E_AVE(NTB)
