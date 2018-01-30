@@ -1,0 +1,5 @@
+ &BANDS
+    outdir='./tmp/band/'
+    prefix='Si'
+    filband='Si.band'
+ /

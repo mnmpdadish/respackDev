@@ -1,0 +1,31 @@
+&param_chiqw 
+/ 
+
+&param_wannier 
+N_wannier=9,                !Total number of considerd band in wannier calc 
+Lower_energy_window=-10.0d0,!LOWER BOUND OF ENERGY WINDOW (eV)
+Upper_energy_window= 36.0d0,!UPPER BOUND OF ENERGY WINDOW (eV)      
+N_initial_guess=9/          !TOTAL NUMBER OF INITIAL GUESS GAUSSIAN       
+s   0.2d0  0.00d0  0.00d0  0.00d0  
+px  0.2d0  0.00d0  0.00d0  0.00d0  
+py  0.2d0  0.00d0  0.00d0  0.00d0  
+pz  0.2d0  0.00d0  0.00d0  0.00d0  
+dxy 0.2d0  0.00d0  0.00d0  0.00d0  
+dyz 0.2d0  0.00d0  0.00d0  0.00d0  
+dz2 0.2d0  0.00d0  0.00d0  0.00d0  
+dzx 0.2d0  0.00d0  0.00d0  0.00d0  
+dx2 0.2d0  0.00d0  0.00d0  0.00d0  
+
+&param_interpolation   
+N_sym_points=5/      !The total number of symmetry points 
+0.50d0 0.50d0 0.50d0 !L
+0.00d0 0.00d0 0.00d0 !G
+0.50d0 0.00d0 0.50d0 !X
+0.50d0 0.25d0 0.75d0 !W
+0.50d0 0.50d0 0.50d0 !L
+
+&param_visualization   
+FLG_VIS_WANNIER = 1/
+
+&param_calc_int 
+/

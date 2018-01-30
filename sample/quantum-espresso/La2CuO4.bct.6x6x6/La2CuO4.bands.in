@@ -1,0 +1,5 @@
+ &BANDS
+    outdir='./tmp/band/'
+    prefix='La2CuO4'
+    filband='La2CuO4.band'
+ /

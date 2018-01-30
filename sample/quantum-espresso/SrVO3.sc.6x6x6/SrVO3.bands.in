@@ -1,0 +1,5 @@
+ &BANDS
+    outdir='./tmp/band/'
+    prefix='SrVO3'
+    filband='SrVO3.band'
+ /

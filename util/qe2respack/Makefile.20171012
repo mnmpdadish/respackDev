@@ -1,0 +1,35 @@
+# Copyright (c) 2017 Yusuke Nomura, Terumasa Tadano 
+# Simple Makefile for qe2respack
+
+# Root directory of a Quantum ESPRESSO distribution.
+# Please modify this for your environment.
+ QEROOT=/home/xxx/ESPRESSO/12.0/sniff/qe-6.0 #your machine
+#QEROOT=/home/r0088/r008806/src/QE/qe-6.1    #systemB@issp 
+
+# Intel compiler with intel MKL
+FC = ifort
+FFLAGS = -O2 -xHOST
+LINKER =  mpif90 
+LDFLAGS = -liomp5 -lpthread
+LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+
+LFLAGS = ${LDFLAGS} ${LAPACK}
+INCLUDE= -I${QEROOT}/iotk/include -I${QEROOT}/iotk/src 
+
+#************************************************************
+
+PROGRAMS = qe2respack
+
+default: all
+
+all: ${PROGRAMS}
+
+qe2respack: qe2respack.o ${QEROOT}/iotk/src/libiotk.a
+	${LINKER} ${LFLAGS} $^ -o $@
+
+qe2respack.o: qe2respack.f90
+	${FC} ${FFLAGS} ${INCLUDE} $< -c
+
+.PHONY: clean
+clean:
+	rm -f ${PROGRAMS} *.o

@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -l nodes=4:ppn=24:GroupC  
+
+cd   $PBS_O_WORKDIR
+echo $PBS_O_WORKDIR
+echo $PBS_NODEFILE
+cat  $PBS_NODEFILE | sort | uniq > $HOME/ooo
+NPROCS=`wc -l < $HOME/ooo`
+echo $NPROCS
+cat $HOME/ooo
+echo $HOSTNAME
+echo =============================
+date
+echo =============================
+date                                > out.sub
+echo ============================= >> out.sub
+OMP_STACKSIZE=24g 
+OMP_NUM_THREADS=24 #8 #16 
+MKL_NUM_THREADS=24 #8 #16  
+export OMP_STACKSIZE 
+export OMP_NUM_THREADS
+export MKL_NUM_THREADS
+
+#xtapp 
+#rm fort.10
+#ln -s TiO2.cg fort.10
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/inipot.ompi >> LOG.INIPOT 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/cgmrpt.ompi >> LOG.CGMRPT 
+#./xtapp2respack.sh -b ./wfn2respack TiO2 
+#rm fort.10
+#ln -s TiO2.vb fort.10
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/inipot.ompi >> LOG.INIPOT.VBPEF  
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/vbpef.ompi >> LOG.VBPEF 
+
+#respack 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_wannier < input.in >> LOG.WAN 
+
+echo ============================= >> out.sub
+date                               >> out.sub
+echo =============================
+date
+echo =============================

@@ -1,0 +1,36 @@
+ &control
+    calculation='scf'
+    restart_mode='from_scratch'
+    tstress = .true.
+    tprnfor = .true.
+    wf_collect = .true.
+    prefix = 'Al'
+    pseudo_dir = './PP/' 
+    outdir = './tmp/scf/' 
+ /
+ &system
+    ibrav = 0
+    celldm(1) = 7.60 
+    nat = 1
+    ntyp = 1
+    ecutwfc = 36.0
+    occupations = 'smearing'
+    smearing = 'gaussian'
+    degauss = 0.02
+    nbnd = 50
+ /
+ &electrons
+    diagonalization = cg
+    conv_thr =  1.0d-8
+    mixing_beta = 0.3
+ /
+ATOMIC_SPECIES
+ Al  26.982  Al_ONCV_PBE-1.0.upf
+CELL_PARAMETERS {alat}
+   0.5  0.5  0.0 
+   0.0  0.5  0.5 
+   0.5  0.0  0.5
+ATOMIC_POSITIONS {crystal} 
+ Al  0.00 0.00 0.00
+K_POINTS {automatic}
+ 6 6 6  0 0 0 
