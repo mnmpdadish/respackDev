@@ -42,6 +42,8 @@ wrt_frmsf.o: wrt_frmsf.f90 wannier_sub.o
 
 frmsf_wan.o: frmsf_wan.F90 m_rdinput.o
 
+est_NTK.o: est_NTK.f90 wannier_sub.o
+
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} 
 #--------------------------------------------------------------------

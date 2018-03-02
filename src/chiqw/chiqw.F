@@ -261,7 +261,7 @@
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,*)'finish fort.101' 
       endif 
-      call est_NTK(Nk_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
+      !call est_NTK(Nk_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
 !--
 !20170415 
       allocate(SKI_list(3,Nk_irr));SKI_list(:,:)=0.0D0 
@@ -269,9 +269,9 @@
        call search_list(SKI(1,ik),SKI_list(1,ik)) 
       enddo  
 !--
-      if(myrank_glb.eq.MPI_io_rank)then 
-       write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
-      endif 
+!      if(myrank_glb.eq.MPI_io_rank)then 
+!       write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+!      endif 
 !---
 !OPEN(132,R,FILE='dat.nkm')20170406 
       OPEN(132,FILE='./dir-wfn/dat.nkm')!20170406 
@@ -399,6 +399,12 @@
       endif 
       call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
 !--
+!20180302  
+      call est_NTK(Nk_irr,Nsymq,SKI(1,1),rg(1,1,1),NTK)
+      if(myrank_glb.eq.MPI_io_rank)then 
+       write(6,*)'Estimated NTK=',NTK 
+      endif 
+!--
 !gen(SK0,numirr,numrot,trs,RW) 
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
@@ -466,6 +472,11 @@
        DO ik=1,NTK
         WRITE(6,'(I5,3F15.10)') ik,SK0(:,ik) 
        ENDDO 
+      endif 
+!--
+      call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  
+      if(myrank_glb.eq.MPI_io_rank)then 
+       write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
       endif 
 !--
 !gen(NB0,NG0,KG0,E_EIG)

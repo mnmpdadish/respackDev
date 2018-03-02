@@ -45,6 +45,8 @@ calc_intJ.o: calc_intJ.F config_j3d.h m_rdinput.o m_fft3d_20150826.o inv.o est_N
 
 calc_int_sub.o: calc_int_sub.F m_fft3d_20150826.o 
 
+est_NTK.o: est_NTK.f90 calc_int_sub.o
+
 clean: 
 	${RM} ${TARGET} ${W3dOBJ} ${J3dOBJ} ${COMMONOBJ} ${MOD_FILES} 
 #--------------------------------------------------------------------

@@ -139,11 +139,10 @@
        read(101,*)(SKI(i,IK),i=1,3) 
       enddo 
       close(101) 
-      call est_NTK(NK_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
-      write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
-!20170327 
-      Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
-      write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
+      !call est_NTK(NK_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
+      !write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+      !Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
+      !write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
 !OPEN(132,R,FILE='dat.nkm') 
       OPEN(132,FILE='./dir-wfn/dat.nkm') 
@@ -264,6 +263,10 @@
        enddo!ib
       enddo!ik          
 !--
+!20180302  
+      call est_NTK(Nk_irr,Nsymq,SKI(1,1),rg(1,1,1),NTK)
+      write(6,*)'Estimated NTK=',NTK 
+!--
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
@@ -328,15 +331,23 @@
        write(6,*)'NTK=',NTK,'jk=',jk;STOP
       endif 
 !--
+      write(6,*) 
       write(6,*)'====================='
       write(6,*)'WRITE SAMPLE K-POINTS'
       write(6,*)'====================='
       do ik=1,NTK
        WRITE(6,'(I5,3F15.10)') ik,SK0(:,ik) 
       enddo  
+!--
 !      do ik=1,NTK 
 !       write(6,*) ik,numrot(ik) 
 !      enddo 
+!--
+      call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  
+      write(6,*) 
+      write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+      Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
+      write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
 !write Fermi surface
       allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
@@ -349,6 +360,7 @@
         E_EIG(:,jk)=E_EIGI(:,ik) 
        endif 
       enddo 
+      write(6,*) 
       write(6,*)'write Fermi surface'
       call system('rm -rf dir-wan') 
       call system('mkdir dir-wan') 

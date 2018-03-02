@@ -86,11 +86,11 @@
       enddo 
       CLOSE(101) 
       write(6,*)'finish ski'
-      call est_NTK(NK_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
-      write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
 !20170327 
-      Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
-      write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
+      !call est_NTK(NK_irr,SKI(1,1),NTK,nkb1,nkb2,nkb3)  
+      !write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+      !Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
+      !write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
 !OPEN(132,R,FILE='dat.nkm')20170420 
       OPEN(132,FILE='./dir-wfn/dat.nkm') 
@@ -172,6 +172,10 @@
       write(6,*)'NL123=',Nl123  
       call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
 !--
+!20180302  
+      call est_NTK(Nk_irr,Nsymq,SKI(1,1),rg(1,1,1),NTK)
+      write(6,*)'Estimated NTK=',NTK 
+!--
 !gen(SK0,numirr,numrot,trs,RW) 
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
@@ -235,9 +239,15 @@
        write(6,*)' SK0 '
        write(6,*)'====='
        write(6,*)
-       DO ik=1,NTK
-        WRITE(6,'(I5,3F15.10)') ik,SK0(:,ik) 
-       ENDDO 
+       do ik=1,NTK
+        write(6,'(I5,3F15.10)') ik,SK0(:,ik) 
+       enddo 
+!--
+      call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  
+      write(6,*) 
+      write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+      Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
+      write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
 !gen(KG0,NG0)
       allocate(NG0(NTK));NG0(:)=0

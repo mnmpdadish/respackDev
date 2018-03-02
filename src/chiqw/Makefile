@@ -50,6 +50,8 @@ chiqw.o: chiqw.F m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_gri
 
 chiqw_sub.o: chiqw_sub.F m_fft3d_20150826.o invZGE.o
 
+est_NTK.o: est_NTK.f90 chiqw_sub.o
+
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} 
 #--------------------------------------------------------------------
