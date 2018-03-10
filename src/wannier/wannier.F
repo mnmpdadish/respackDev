@@ -208,12 +208,28 @@
       write(6,*)'Ecut_for_psi=',Ecut_for_psi 
 !--
 !fft grid
-      m1=maxval(abs(KGI(1,:,:))) 
-      m2=maxval(abs(KGI(2,:,:))) 
-      m3=maxval(abs(KGI(3,:,:))) 
-      nwx2=algn235(2*m1) 
-      nwy2=algn235(2*m2) 
-      nwz2=algn235(2*m3) 
+      !20180309 
+      !m1=maxval(abs(KGI(1,:,:))) 
+      !m2=maxval(abs(KGI(2,:,:))) 
+      !m3=maxval(abs(KGI(3,:,:))) 
+      !nwx2=algn235(2*m1) 
+      !nwy2=algn235(2*m2) 
+      !nwz2=algn235(2*m3) 
+      !
+      htmp=dsqrt(dot_product(a1,a1))
+      h1(:)=a1(:)/htmp 
+      htmp=dsqrt(dot_product(a2,a2))
+      h2(:)=a2(:)/htmp 
+      htmp=dsqrt(dot_product(a3,a3)) 
+      h3(:)=a3(:)/htmp 
+      d1=abs(dot_product(b1,h1)) 
+      d2=abs(dot_product(b2,h2)) 
+      d3=abs(dot_product(b3,h3)) 
+      qwf=2.0d0*dsqrt(Ecut_for_psi) 
+      nwx2=algn235(int(qwf/d1)+1,1) 
+      nwy2=algn235(int(qwf/d2)+1,1) 
+      nwz2=algn235(int(qwf/d3)+1,1) 
+      !
       nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
       Nl123=nfft1*nfft2*nfft3 
       write(6,*)'nwx2=',nwx2 
