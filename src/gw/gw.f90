@@ -117,6 +117,7 @@ if(myrank/=0) allocate(numirr(NTK))
 if(myrank/=0) allocate(numrot(NTK)) 
 if(myrank/=0) allocate(trs(NTK)) 
 if(myrank/=0) allocate(RW(3,NTK))
+if(myrank/=0) allocate(numMK(Nk_irr))!20180316  
 if(myrank/=0) allocate(NGI(Nk_irr)) 
 if(myrank/=0) allocate(NG0(NTK))
 if(myrank/=0) allocate(KGI(3,NTG,Nk_irr)) 
@@ -135,6 +136,7 @@ call MPI_Bcast(numirr,NTK,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(numrot,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(trs,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(RW,3*NTK,MPI_INTEGER,0,comm,ierr) 
+call MPI_Bcast(numMK,Nk_irr,MPI_INTEGER,0,comm,ierr)!20180316  
 call MPI_Bcast(NGI,Nk_irr,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(NG0,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(KGI,3*NTG*Nk_irr,MPI_INTEGER,0,comm,ierr) 
@@ -303,42 +305,75 @@ do iq=1,pnq
   enddo 
   do ib=1,Nocc!Mt!Nocc
    rho(:,:,:)=0.0D0 
-!$OMP PARALLEL PRIVATE(ik,shift_G,ikq,C0_K,C0_KmQ,jb,wfunc,fftwk,rho_tmp,ikir,iop) 
+!$OMP PARALLEL PRIVATE(ik,shift_G,ikq,C0_K,C0_KmQ,jb,wfunc,fftwk,rho_tmp,ikir,iop,ikqir,ikqop) 
    allocate(fftwk(Nl123*2));fftwk=0.0d0 
    allocate(wfunc(Nl123*2));wfunc=0.0d0 
    allocate(rho_tmp(NG_for_psi));rho_tmp=0.0d0 
    allocate(C0_K(NTG));C0_K=0.0d0
    allocate(C0_KmQ(NTG));C0_KmQ=0.0d0
 !$OMP DO
-   do ik=1,Nk_irr 
+   do ikir=1,Nk_irr 
+    !
+    ik=numMK(ikir) 
+    iop=numrot(ik) 
+    !
     do jb=1,Mb 
-     C0_K(:)=CIR(:,jb+Ns(ik),ik)  
+     !
+     !C0_K(:)=CIR(:,jb+Ns(ik),ik)  
+     !
+     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+     L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
+     ! 
      shift_G(:)=0
      call search_kq(NTK,SK0(1,1),-q1,-q2,-q3,ik,ikq,shift_G(1))
      shift_G(:)=-shift_G(:)  
-     ikir=numirr(ikq); iop=numrot(ikq) 
-     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,iop),pg(1,iop),&
-     L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,ib,ikir),C0_KmQ(1)) 
+     !
+     ikqir=numirr(ikq)
+     ikqop=numrot(ikq) 
+     !
+     !call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,iop),pg(1,iop),&
+     !L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,ib,ikir),C0_KmQ(1)) 
+     !
+     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+     L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
+     !
+     !
      call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),C0_KmQ(1),C0_K(1),ikq,ik,nwx2,nwy2,nwz2,&
      nfft1,nfft2,Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,bnq+iq-1),NG_for_psi,shift_G(1),rho_tmp(1))
-     rho(:,jb,ik)=rho_tmp(:)
+     !
+     !
+     !rho(:,jb,ik)=rho_tmp(:)
+     !
+     rho(:,jb,ikir)=rho_tmp(:)
+     !
     enddo!jb  
    enddo!ik 
 !$OMP END DO 
    deallocate(fftwk,wfunc,rho_tmp,C0_K,C0_KmQ)
 !$OMP END PARALLEL 
-!$OMP PARALLEL PRIVATE(ik,shift_G,ikq,jb,kb,SUM_CMPX,igL)  
+!$OMP PARALLEL PRIVATE(ik,ikir,shift_G,ikq,jb,kb,SUM_CMPX,igL)  
 !$OMP DO
-   do ik=1,Nk_irr 
+   do ikir=1,Nk_irr 
+    !
+    ik=numMK(ikir) 
+    ! 
     shift_G(:)=0
     call search_kq(NTK,SK0(1,1),-q1,-q2,-q3,ik,ikq,shift_G(1))
     do jb=1,Mb 
      do kb=1,Mb 
       SUM_CMPX=0.0d0
       do igL=1,NG_for_psi 
-       SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ik)*CONJG(rho(igL,kb,ik))/((length_qg(igL))**2)*atten_factor(igL)
+       !
+       !SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ik)*CONJG(rho(igL,kb,ik))/((length_qg(igL))**2)*atten_factor(igL)
+       !
+       SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ikir)*CONJG(rho(igL,kb,ikir))/((length_qg(igL))**2)*atten_factor(igL)
+       !
       enddo 
-      pSX(jb,kb,ik)=pSX(jb,kb,ik)+SUM_CMPX 
+      !
+      !pSX(jb,kb,ik)=pSX(jb,kb,ik)+SUM_CMPX 
+      !
+      pSX(jb,kb,ikir)=pSX(jb,kb,ikir)+SUM_CMPX 
+      !
      enddo!kb 
     enddo!jb 
    enddo!ik 
@@ -371,42 +406,74 @@ do iq=1,pnq
   enddo!igL 
   do ib=1,Nocc!Mt!Nocc
    rho(:,:,:)=0.0D0 
-!$OMP PARALLEL PRIVATE(ik,shift_G,ikq,C0_K,C0_KmQ,jb,wfunc,fftwk,rho_tmp,ikir,iop) 
+!$OMP PARALLEL PRIVATE(ik,shift_G,ikq,C0_K,C0_KmQ,jb,wfunc,fftwk,rho_tmp,ikir,iop,ikqir,ikqop) 
    allocate(fftwk(Nl123*2));fftwk=0.0d0 
    allocate(wfunc(Nl123*2));wfunc=0.0d0 
    allocate(rho_tmp(NG_for_psi));rho_tmp=0.0d0
    allocate(C0_K(NTG));C0_K=0.0d0
    allocate(C0_KmQ(NTG));C0_KmQ=0.0d0
 !$OMP DO
-   do ik=1,Nk_irr 
+   do ikir=1,Nk_irr 
+    !
+    ik=numMK(ikir) 
+    iop=numrot(ik) 
+    !
     do jb=1,Mb 
-     C0_K(:)=CIR(:,jb+Ns(ik),ik)  
+     !
+     !C0_K(:)=CIR(:,jb+Ns(ik),ik)  
+     !
+     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+     L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
+     !
      shift_G(:)=0
      ikq=ik 
-     ikir=numirr(ikq); iop=numrot(ikq) 
-     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,iop),pg(1,iop),&
-     L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,ib,ikir),C0_KmQ(1)) 
+     !
+     ikqir=numirr(ikq)
+     ikqop=numrot(ikq) 
+     !
+     !call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,iop),pg(1,iop),&
+     !L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,ib,ikir),C0_KmQ(1)) 
+     !
+     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+     L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
+     !
      call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),C0_KmQ(1),C0_K(1),ikq,ik,nwx2,nwy2,nwz2,&
      nfft1,nfft2,Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,bnq+iq-1),NG_for_psi,shift_G(1),rho_tmp(1))
-     rho(:,jb,ik)=rho_tmp(:)
+     !
+     !rho(:,jb,ik)=rho_tmp(:)
+     !
+     rho(:,jb,ikir)=rho_tmp(:)
+     !
     enddo!jb 
    enddo!ik  
 !$OMP END DO
    deallocate(fftwk,wfunc,rho_tmp,C0_K,C0_KmQ)
 !$OMP END PARALLEL 
-!$OMP PARALLEL PRIVATE(ik,ikq,jb,kb,SUM_CMPX,igL) 
+!$OMP PARALLEL PRIVATE(ikir,ik,ikq,jb,kb,SUM_CMPX,igL) 
 !$OMP DO
-   do ik=1,Nk_irr 
+   do ikir=1,Nk_irr 
+    !
+    ik=numMK(ikir)
+    !
     ikq=ik 
+    !
     do jb=1,Mb 
      do kb=1,Mb 
       SUM_CMPX=0.0d0
       do igL=1,NG_for_psi 
        if(igL.ne.No_G_0) then 
-        SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ik)*CONJG(rho(igL,kb,ik))/((length_qg(igL))**2)*atten_factor(igL)
+        !
+        !SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ik)*CONJG(rho(igL,kb,ik))/((length_qg(igL))**2)*atten_factor(igL)
+        !
+        SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ikir)*CONJG(rho(igL,kb,ikir))/((length_qg(igL))**2)*atten_factor(igL)
+        !
        endif 
       enddo!igL 
-      pSX(jb,kb,ik)=pSX(jb,kb,ik)+SUM_CMPX 
+      !
+      !pSX(jb,kb,ik)=pSX(jb,kb,ik)+SUM_CMPX 
+      !
+      pSX(jb,kb,ikir)=pSX(jb,kb,ikir)+SUM_CMPX 
+      !
      enddo!kb 
     enddo!jb 
    enddo!ik 
@@ -437,9 +504,16 @@ if(myrank.eq.0)then
  !write(6,*)'correction_head=',chead   
  !---
  allocate(SX_DIV(Mb,Mb,Nk_irr));SX_DIV(:,:,:)=0.0d0 
- do ik=1,Nk_irr 
+ do ikir=1,Nk_irr 
+  !
+  ik=numMK(ikir)
+  ! 
   do jb=1,Mb 
-   SX_DIV(jb,jb,ik)=fbk(jb+Ns(ik),ik)*chead 
+   !
+   !SX_DIV(jb,jb,ik)=fbk(jb+Ns(ik),ik)*chead 
+   !
+   SX_DIV(jb,jb,ikir)=fbk(jb+Ns(ik),ik)*chead 
+   !
   enddo!jb 
  enddo!ik 
  !--

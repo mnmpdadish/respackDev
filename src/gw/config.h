@@ -67,7 +67,7 @@ real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND(3,NSK_BAND_DISP)
 integer::NSK_BAND_DISP 
 !--
 !
-integer::ia1,ia2,ia3,iw,jw,ik,ikir,iop,ib,jb,iq,ikq,kb 
+integer::ia1,ia2,ia3,iw,jw,ik,ikir,iop,ib,jb,iq,ikq,kb,ikqir,ikqop 
 integer::igL,igL1,igL2,igL3 
 real(8)::SUM_REAL 
 complex(8)::SUM_CMPX

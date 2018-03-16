@@ -35,6 +35,7 @@ integer,public,allocatable::numirr(:)!numirr(NTK)
 integer,public,allocatable::numrot(:)!numrot(NTK) 
 integer,public,allocatable::trs(:)!trs(NTK) 
 integer,public,allocatable::RW(:,:)!RW(3,NTK)
+integer,public,allocatable::numMK(:)!numMK(Nk_irr)!20180316  
 !eigenvalue(111) 
 integer,public::NTB 
 real(8),public,allocatable::E_EIGI(:,:)!E_EIGI(NTB,Nk_irr) 
@@ -112,6 +113,7 @@ implicit none
 integer::i,ik,jk,iop,iik   
 real(8)::ktmp(3) 
 integer::RWtmp(3) 
+integer::initial_flg!20180316 
 OPEN(101,FILE='./dir-wfn/dat.sample-k') 
 rewind(101) 
 read(101,*)Nk_irr 
@@ -130,8 +132,10 @@ allocate(numirr(NTK));numirr(:)=0
 allocate(numrot(NTK));numrot(:)=0
 allocate(trs(NTK));trs(:)=0
 allocate(RW(3,NTK));RW(:,:)=0
+allocate(numMK(Nk_irr));numMK=0!20180316 
 jk=0
 do ik=1,Nk_irr
+ initial_flg=0!20180316 
  do iop=1,nsymq
 !sym
   ktmp(:)=0.0d0; RWtmp(:)=0  
@@ -145,6 +149,13 @@ do ik=1,Nk_irr
   jk=jk+1
   SK0(:,jk)=ktmp(:)
   numirr(jk)=ik; numrot(jk)=iop; trs(jk)=1; RW(:,jk)=RWtmp(:)
+  !
+  !20180316
+  if(initial_flg.eq.0)then
+   numMK(ik)=jk
+   initial_flg=1 
+  endif 
+  !
 !time-reversal
 1000 ktmp(:)=0.0d0;RWtmp(:)=0  
   ktmp(1)=dble(rg(1,1,iop))*SKI(1,ik)+dble(rg(1,2,iop))*SKI(2,ik)+dble(rg(1,3,iop))*SKI(3,ik)
