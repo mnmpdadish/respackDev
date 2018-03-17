@@ -69,11 +69,19 @@ do iop=1,nsymq
  read(100,*)(pg(i,iop),i=1,3)   
 enddo 
 close(100) 
-!--
+!
 rginv=rg 
 do iop=1,nsymq
  call invmat(3,rginv(1,1,iop)) 
 enddo 
+!
+do iop=1,nsymq
+ write(6,*) iop
+ do i=1,3
+  write(6,'(3I5,1x,3F15.10)')(rg(i,j,iop),j=1,3),(rginv(i,j,iop),j=1,3)
+ enddo 
+enddo 
+!
 end subroutine
 !
 subroutine rd_dat_bandcalc 
