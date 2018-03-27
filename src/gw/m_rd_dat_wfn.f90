@@ -156,9 +156,13 @@ do ik=1,Nk_irr
   enddo!iik
   jk=jk+1
   SK0(:,jk)=ktmp(:)
-  numirr(jk)=ik; numrot(jk)=iop; trs(jk)=1; RW(:,jk)=RWtmp(:)
+  numirr(jk)=ik
+  numrot(jk)=iop
+  trs(jk)=1
+  RW(:,jk)=RWtmp(:)
   !
   !20180316
+  !
   if(initial_flg.eq.0)then
    numMK(ik)=jk
    initial_flg=1 
@@ -175,7 +179,10 @@ do ik=1,Nk_irr
   enddo!iik
   jk=jk+1
   SK0(:,jk)=-ktmp(:) 
-  numirr(jk)=ik; numrot(jk)=iop; trs(jk)=-1; RW(:,jk)=RWtmp(:) 
+  numirr(jk)=ik
+  numrot(jk)=iop
+  trs(jk)=-1
+  RW(:,jk)=RWtmp(:) 
 2000 enddo!iop  
 enddo!ik
 call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  

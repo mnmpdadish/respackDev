@@ -157,7 +157,9 @@ do iq=1,Nq_irr
   ktmp(1)=dble(rg(1,1,iop))*SQI(1,iq)+dble(rg(1,2,iop))*SQI(2,iq)+dble(rg(1,3,iop))*SQI(3,iq)
   ktmp(2)=dble(rg(2,1,iop))*SQI(1,iq)+dble(rg(2,2,iop))*SQI(2,iq)+dble(rg(2,3,iop))*SQI(3,iq)
   ktmp(3)=dble(rg(3,1,iop))*SQI(1,iq)+dble(rg(3,2,iop))*SQI(2,iq)+dble(rg(3,3,iop))*SQI(3,iq)
+  !
   call kcheck(ktmp(1),RWtmp(1))!rewind check 
+  !
   do iik=1,jk 
    if(abs(SQ(1,iik)-ktmp(1))<1.0d-4.and.abs(SQ(2,iik)-ktmp(2))<1.0d-4.and.abs(SQ(3,iik)-ktmp(3))<1.0d-4) goto 1100
   enddo!iik
@@ -172,7 +174,9 @@ do iq=1,Nq_irr
   ktmp(1)=dble(rg(1,1,iop))*SQI(1,iq)+dble(rg(1,2,iop))*SQI(2,iq)+dble(rg(1,3,iop))*SQI(3,iq)
   ktmp(2)=dble(rg(2,1,iop))*SQI(1,iq)+dble(rg(2,2,iop))*SQI(2,iq)+dble(rg(2,3,iop))*SQI(3,iq) 
   ktmp(3)=dble(rg(3,1,iop))*SQI(1,iq)+dble(rg(3,2,iop))*SQI(2,iq)+dble(rg(3,3,iop))*SQI(3,iq) 
+  !
   call kcheck_trs(ktmp(1),RWtmp(1))!rewind check 20170321 
+  !
   do iik=1,jk
    if(abs(SQ(1,iik)-(-ktmp(1)))<1.0d-4.and.abs(SQ(2,iik)-(-ktmp(2)))<1.0d-4.and.abs(SQ(3,iik)-(-ktmp(3)))<1.0d-4) goto 2100
   enddo!iik
@@ -276,9 +280,9 @@ complex(8),allocatable::epstmp(:,:,:)!epstmp(NTGQ,NTGQ,ne)
 complex(8),allocatable::epstmpgm(:,:,:,:)!epstmpgm(NTGQ,NTGQ,ne,3)
 !--
 !OPEN(600-,R,FILE='dat.epsqw',FORM='unformatted') 
-allocate(epstmp(NTGQ,NTGQ,ne));epstmp(:,:,:)=0.0D0!real8
-allocate(epstmpgm(NTGQ,NTGQ,ne,3));epstmpgm(:,:,:,:)=0.0D0!real8
-allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr));epsirr(:,:,:,:)=0.0D0!real4 
+allocate(epstmp(NTGQ,NTGQ,ne));epstmp(:,:,:)=0.0d0!real8
+allocate(epstmpgm(NTGQ,NTGQ,ne,3));epstmpgm(:,:,:,:)=0.0d0!real8
+allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr));epsirr(:,:,:,:)=0.0d0!real4 
 !
 ierr=CHDIR("./dir-eps") 
 call system('pwd') 

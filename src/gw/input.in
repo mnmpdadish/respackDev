@@ -1,9 +1,3 @@
-&param_calc_gw 
-/
-
-&param_chiqw 
-/ 
-
 &param_wannier 
 N_wannier=9,                !Total number of considerd band in wannier calc 
 Lower_energy_window=-10.0d0,!LOWER BOUND OF ENERGY WINDOW (eV)
@@ -30,6 +24,12 @@ N_sym_points=5/      !The total number of symmetry points
 &param_visualization   
 FLG_VIS_WANNIER = 1/
 
+&param_chiqw 
+/ 
+
 &param_calc_int 
+/
+
+&param_calc_gw 
 /
 
