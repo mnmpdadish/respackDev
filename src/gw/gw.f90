@@ -223,8 +223,7 @@ if(myrank.eq.0)then
   enddo 
  enddo 
  !
- !
-endif 
+endif!myrank.eq.0 
 !
 !chi_cutoff(300)  
 !
@@ -356,22 +355,14 @@ else
  bnq=(pnq+1)*mod(NTQ,nproc)+pnq*(myrank-mod(NTQ,nproc))+1 
  enq=bnq+pnq-1
 end if
+write(file_id,'(a)')'## SC calc start ##'
 write(file_id,'(a,3i7)')'bnq,enq,pnq',bnq,enq,pnq 
 !
 !fft
 !
 nfft1=nwx2+1; nfft2=nwy2+1; nfft3=nwz2+1; Nl123=nfft1*nfft2*nfft3 
 call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
-!allocate(fftwk(Nl123*2),stat=err) 
-!allocate(wfunc(Nl123*2),stat=err) 
 !
-!call MPI_FINALIZE(ierr)
-!STOP 
-!
-!if(.true.) goto 9998 
-!if(.true.) goto 9999 
-!
-allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
 allocate(pSC(nsgm,Mb,Mb,Nk_irr)); pSC(:,:,:,:)=0.0d0 
 !
 do iq=1,pnq
@@ -684,11 +675,11 @@ do iq=1,pnq
   !
   !<head contribution> 
   !
-  !(i) atten(Spencer Alabi)
+  !(i) Spencer-Alabi
   !
   chead=(tpi/dble(NTQ)/VOLUME)*Rc*Rc   
   !
-  !(ii) Louie
+  !(ii) Hybertsen-Louie
   !
   !qsz=(6.0D0*(pi**2)/dble(NTQ)/dble(VOLUME))**(1.0D0/3.0D0)  
   !chead=(2.0D0/pi)*qsz 
@@ -757,28 +748,19 @@ do iq=1,pnq
 enddo!iq 
 !
 call MPI_BARRIER(comm,ierr)
-write(file_id,*) 'I finished pSC calc' 
+write(file_id,*)'I finished pSC calc' 
+!
+if(myrank.eq.0)then
+ allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
+endif 
 call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
 !
-if(myrank.eq.0)then 
- write(1500) SCirr  
- end_time=MPI_Wtime()
- diff_time=end_time-start_time 
- write(6,*)'#TOTAL TIME=',diff_time 
-endif 
+allocate(SC(Mb,Mb,NTK,nsgm));SC=0.0d0
 !
-call MPI_FINALIZE(ierr)
-STOP 
-!
-9998 write(6,*)'calc SCR' 
 if(myrank.eq.0)then 
- allocate(SCirr(nsgm,Mb,Mb,Nk_irr)) 
- read(1500) SCirr 
- !
- allocate(SC(Mb,Mb,NTK,nsgm)); SC(:,:,:,:)=0.0d0
  do ik=1,NTK 
   ikir=numirr(ik) 
-  if(trs(ik)==1) then 
+  if(trs(ik)==1)then 
    do ie=1,nsgm
     do ib=1,Mb!Nb(ik)
      do jb=1,Mb!Nb(ik) 
@@ -786,7 +768,7 @@ if(myrank.eq.0)then
      enddo 
     enddo 
    enddo 
-  elseif(trs(ik)==-1) then 
+  elseif(trs(ik)==-1)then 
    do ie=1,nsgm  
     do ib=1,Mb!Nb(ik)
      do jb=1,Mb!Nb(ik) 
@@ -797,75 +779,155 @@ if(myrank.eq.0)then
   endif 
  enddo 
  deallocate(SCirr) 
- !---
- allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK));pf=0.0d0     
- do ik=1,NTK 
-  do ia3=-Na3,Na3 
-   do ia2=-Na2,Na2 
-    do ia1=-Na1,Na1 
-     phase=tpi*(SK0(1,ik)*dble(ia1)+SK0(2,ik)*dble(ia2)+SK0(3,ik)*dble(ia3)) 
-     pf(ia1,ia2,ia3,ik)=exp(-ci*phase) 
-    enddo!ia1  
-   enddo!ia2  
-  enddo!ia3  
- enddo!ik  
- write(6,*)'#finish make pf'
- !
- !
- !OPEN(157,W,FILE='SCR') 
- !
- rewind(157)
- allocate(SCR(nsgm,NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3));SCR(:,:,:,:,:,:)=0.0d0 
- do ia3=-Na3,Na3
+endif!myrank.eq.0
+!
+call MPI_Bcast(SC,Mb*Mb*NTK*nsgm,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+call MPI_BARRIER(comm,ierr)
+!
+allocate(pf(NTK,-Na1:Na1,-Na2:Na2,-Na3:Na3)); pf=0.0d0     
+do ik=1,NTK 
+ do ia3=-Na3,Na3 
+  do ia2=-Na2,Na2 
+   do ia1=-Na1,Na1 
+    phase=tpi*(SK0(1,ik)*dble(ia1)+SK0(2,ik)*dble(ia2)+SK0(3,ik)*dble(ia3)) 
+    pf(ik,ia1,ia2,ia3)=exp(-ci*phase) 
+   enddo  
+  enddo  
+ enddo  
+enddo  
+!
+!write(6,*)'#finish make pf'
+!
+!MPI for nsgm 
+!
+pnw=nsgm/nproc 
+if(mod(nsgm,nproc).ne.0) then
+ nbufw=pnw+1
+else
+ nbufw=pnw 
+end if
+if(myrank.lt.mod(nsgm,nproc)) then
+ pnw=pnw+1
+ bnw=pnw*myrank+1 
+ enw=bnw+pnw-1
+else
+ bnw=(pnw+1)*mod(nsgm,nproc)+pnw*(myrank-mod(nsgm,nproc))+1 
+ enw=bnw+pnw-1
+end if
+write(file_id,'(a,3i7)')'bnw,enw,pnw',bnw,enw,pnw            
+!
+!make pSCR
+!
+allocate(pSCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,pnw)); pSCR=0.0d0 
+!
+do ie=1,pnw!nsgm  
+ do ia1=-Na1,Na1
   do ia2=-Na2,Na2
-   do ia1=-Na1,Na1
+   do ia3=-Na3,Na3
     do iw=1,NWF
      do jw=1,NWF 
-      do ie=1,nsgm  
-       SUM_CMPX=0.0D0 
+      SUM_CMPX=0.0D0 
+      if(.true.)then!ture=off-diag 
 !$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb,kb)  
-       psum=0.0d0 
+      psum=0.0d0 
 !$OMP DO 
-       do ik=1,NTK 
-        do jb=1,Nb(ik) 
-         do kb=1,Nb(ik) 
-          psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,kb,ik,ie)*UNT(kb,jw,ik)*pf(ia1,ia2,ia3,ik) 
-         enddo!kb 
-        enddo!jb 
-       enddo!ik 
+      do ik=1,NTK 
+       do jb=1,Nb(ik) 
+        do kb=1,Nb(ik) 
+         psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,kb,ik,bnw+ie-1)*UNT(kb,jw,ik)*pf(ik,ia1,ia2,ia3) 
+        enddo!kb 
+       enddo!jb 
+      enddo!ik 
 !$OMP END DO 
-       SUM_CMPX=SUM_CMPX+psum 
+      SUM_CMPX=SUM_CMPX+psum 
 !$OMP END PARALLEL 
-       SCR(ie,iw,jw,ia1,ia2,ia3)=SUM_CMPX/DBLE(NTK)
-      enddo!ie
+      else 
+!$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb)  
+      psum=0.0d0 
+!$OMP DO 
+      do ik=1,NTK 
+       do jb=1,Nb(ik) 
+        psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,jb,ik,bnw+ie-1)*UNT(jb,jw,ik)*pf(ik,ia1,ia2,ia3) 
+       enddo!jb 
+      enddo!ik 
+!$OMP END DO 
+      SUM_CMPX=SUM_CMPX+psum 
+!$OMP END PARALLEL 
+      endif 
+      pSCR(iw,jw,ia1,ia2,ia3,ie)=SUM_CMPX/DBLE(NTK)
      enddo!jw
     enddo!iw
-    write(6,'(a20,x,3i7)')"finish ia1,ia2,ia3",ia1,ia2,ia3 
-   enddo!ia1
+   enddo!ia3
   enddo!ia2 
- enddo!ia3  
- !
- !do ia1=-Na1,Na1
- ! do ia2=-Na2,Na2 
- !  do ia3=-Na3,Na3 
- !   do jw=1,NWF
- !    do iw=1,NWF 
- !     write(157)(SCR(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
- !    enddo!iw  
- !   enddo!jw  
- !  enddo!ia3 
- ! enddo!ia2 
- !enddo!ia1 
- !close(157) 
- !
+ enddo!ia1 
+ write(file_id,'(a,i7)')'ie=',ie 
+enddo!ie
+deallocate(SC,pf) 
+!
+call MPI_BARRIER(comm,ierr)
+write(file_id,*)'I finished pSCR calc' 
+!
+!make SCR 
+!
+if(myrank.eq.0)then 
+ allocate(SCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); SCR=0.0d0 
+endif 
+call MPI_Gather(pSCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,&
+                 SCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,0,comm,ierr)
+!
+!allocate(SCR(nsgm,NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3));SCR(:,:,:,:,:,:)=0.0d0 
+! do ia3=-Na3,Na3
+!  do ia2=-Na2,Na2
+!   do ia1=-Na1,Na1
+!    do iw=1,NWF
+!     do jw=1,NWF 
+!      do ie=1,nsgm  
+!       SUM_CMPX=0.0D0 
+!!$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb,kb)  
+!       psum=0.0d0 
+!!$OMP DO 
+!       do ik=1,NTK 
+!        do jb=1,Nb(ik) 
+!         do kb=1,Nb(ik) 
+!          psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,kb,ik,ie)*UNT(kb,jw,ik)*pf(ia1,ia2,ia3,ik) 
+!         enddo!kb 
+!        enddo!jb 
+!       enddo!ik 
+!!$OMP END DO 
+!       SUM_CMPX=SUM_CMPX+psum 
+!!$OMP END PARALLEL 
+!       SCR(ie,iw,jw,ia1,ia2,ia3)=SUM_CMPX/DBLE(NTK)
+!      enddo!ie
+!     enddo!jw
+!    enddo!iw
+!    write(6,'(a20,x,3i7)')"finish ia1,ia2,ia3",ia1,ia2,ia3 
+!   enddo!ia1
+!  enddo!ia2 
+! enddo!ia3  
+! deallocate(SC,pf) 
+!
+!OPEN(157,W,FILE='SCR') 
+!rewind(157)
+!do ia1=-Na1,Na1
+! do ia2=-Na2,Na2 
+!  do ia3=-Na3,Na3 
+!   do jw=1,NWF
+!    do iw=1,NWF 
+!     write(157)(SCR(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
+!    enddo!iw  
+!   enddo!jw  
+!  enddo!ia3 
+! enddo!ia2 
+!enddo!ia1 
+!close(157) 
+!
+if(myrank.eq.0)then 
  write(5004) SCR 
  write(6,*)'finish SCR' 
- !
 endif!myrank.eq.0 
-call MPI_FINALIZE(ierr)
-STOP
 !
-9999 write(6,*)'calc SX' 
+write(file_id,'(a)')'## SX calc start ##'
+!
 allocate(SXirr(Mb,Mb,Nk_irr));SXirr(:,:,:)=0.0d0 
 allocate(pSX(Mb,Mb,Nk_irr));pSX(:,:,:)=0.0d0 
 do iq=1,pnq 

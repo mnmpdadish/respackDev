@@ -15,6 +15,7 @@ integer::comm,myrank,nproc,ierr
 real(8)::start_time,end_time,diff_time 
 !integer::status(MPI_STATUS_SIZE)
 integer::nbufq,pnq,bnq,enq
+integer::nbufw,pnw,bnw,enw 
 integer::file_id 
 !
 !fft 
@@ -33,7 +34,9 @@ complex(8),allocatable::SCirr(:,:,:,:)
 complex(8),allocatable::pSC(:,:,:,:) 
 complex(8),allocatable::pSComp(:,:,:,:) 
 complex(4),allocatable::epsmk(:,:,:) 
-complex(8),allocatable::SCR(:,:,:,:,:,:) 
+!complex(8),allocatable::SCR(:,:,:,:,:,:) 
+complex(4),allocatable::pSCR(:,:,:,:,:,:) 
+complex(4),allocatable::SCR(:,:,:,:,:,:) 
 real(8)::sgn,de,delta 
 complex(8)::dnm 
 complex(8)::psum 

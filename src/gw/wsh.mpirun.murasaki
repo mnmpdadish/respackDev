@@ -20,6 +20,7 @@ MKL_NUM_THREADS=28
 export OMP_STACKSIZE 
 export OMP_NUM_THREADS
 export MKL_NUM_THREADS
+
 ######
 #xtapp 
 ######
