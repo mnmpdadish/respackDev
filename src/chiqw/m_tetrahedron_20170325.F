@@ -512,11 +512,23 @@
       integer :: i1,i2,i3,i4,i5,i6,i7
       integer :: imt1(8,8)
       integer :: ia1(8)
+      !
+      integer :: nvec(3)!20180413 Y.Nohara 
+      !
       bvec=reshape((/1d0,0d0,0d0,0d0,1d0,0d0,0d0,0d0,1d0/),(/3,3/))
       if(present(bvec1))bvec(:,1)=bvec1
       if(present(bvec2))bvec(:,2)=bvec2
       if(present(bvec3))bvec(:,3)=bvec3
-      call libtetrabzinitialize(bvec,(/n1,n2,n3/),idx1)
+      !
+      !20180413 Y.Nohara    
+      !
+      !(/n1,n2,n3/) gives a warning at run time
+      !
+      !call libtetrabzinitialize(bvec,(/n1,n2,n3/),idx1)
+      !
+      nvec(1)=n1; nvec(2)=n2; nvec(3)=n3
+      call libtetrabzinitialize(bvec,nvec(1),idx1)
+      !
       end subroutine
 
 !!!FROM LIBTETRABZ, MIT License, Copyright (c) 2014 Mitsuaki Kawamura!!!

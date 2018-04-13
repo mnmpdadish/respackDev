@@ -6,7 +6,13 @@ TARGET = calc_w3d calc_j3d
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
 FC = ifort  
-FFLAGS = -O2 -qopenmp -xHost -g -traceback
+FFLAGS = -O2 -openmp -xHost -g -traceback
+
+#######
+#DEBUG#
+#######
+#FFLAGS = -openmp -debug full -check all -warn all -traceback -g 
+
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #GNU
@@ -48,5 +54,5 @@ calc_int_sub.o: calc_int_sub.F m_fft3d_20150826.o
 est_NTK.o: est_NTK.f90 calc_int_sub.o
 
 clean: 
-	${RM} ${TARGET} ${W3dOBJ} ${J3dOBJ} ${COMMONOBJ} ${MOD_FILES} 
+	${RM} ${TARGET} ${W3dOBJ} ${J3dOBJ} ${COMMONOBJ} ${MOD_FILES} *.mod *__genmod.f90* 
 #--------------------------------------------------------------------

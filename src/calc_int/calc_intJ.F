@@ -171,9 +171,14 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      nwx2=algn235(int(qwf/d1)+1,1) 
-      nwy2=algn235(int(qwf/d2)+1,1) 
-      nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      !nwx2=algn235(int(qwf/d1)+1,1) 
+      !nwy2=algn235(int(qwf/d2)+1,1) 
+      !nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
+      nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
+      nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
       !
       nfft1=nwx2+1
       nfft2=nwy2+1

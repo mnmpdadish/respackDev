@@ -65,7 +65,7 @@
       integer::L1,L2,L3,nnp  
 !fft 
       type(fft3_struct)::fs 
-      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123,m1,m2,m3  
+      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123 !,m1,m2,m3  
       real(8)::htmp,d1,d2,d3,qwf,h1(3),h2(3),h3(3)   
       integer::algn235
       real(8),allocatable::fftwk(:)!fftwk(Nl123*2) 
@@ -206,7 +206,7 @@
       integer::file_num_eps_base!,file_num_chi_base 
       integer::file_num_chi_ie,file_num_eps_ie
       character(99)::filename,command,dirname 
-      logical::dir_e,file_e 
+      logical::file_e!,dir_e
       real(8),allocatable::calc_qlist(:,:)!calc_qlist(3,Nk_irr)
       integer::qnum 
       integer::Nq_irr!TOTAL NUMBER OF Q IRR

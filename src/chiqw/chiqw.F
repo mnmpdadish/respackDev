@@ -396,9 +396,14 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      nwx2=algn235(int(qwf/d1)+1,1) 
-      nwy2=algn235(int(qwf/d2)+1,1) 
-      nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      !nwx2=algn235(int(qwf/d1)+1,1) 
+      !nwy2=algn235(int(qwf/d2)+1,1) 
+      !nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
+      nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
+      nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
       !
       nfft1=nwx2+1
       nfft2=nwy2+1
@@ -1137,9 +1142,26 @@
      +                 source,0,comm,ierr) 
         enddo!source 
         deallocate(Otmp) 
-        do ib=1,N_pocc
-         backspace(102)
-        enddo 
+        !
+        !20180412 M.Charlebois 
+        !
+        !It is better not to use backspace function
+        !
+        !do ib=1,N_pocc
+        ! backspace(102)
+        !enddo 
+        !
+        rewind(102)
+        read(102) ncomp
+        do jk=1,ik-1
+         do ib=1,NTB 
+          read(102) 
+         enddo!ib
+        enddo!jk  
+        do ib=1,N_docc
+         read(102) 
+        enddo!ib 
+        !
         do ib=1,pnv 
          read(102)(VIR(ig,ib,ik),ig=1,NGI(ik))
         enddo 

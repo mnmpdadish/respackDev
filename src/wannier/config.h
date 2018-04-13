@@ -1,6 +1,7 @@
 !config.h 
       implicit none 
       real(8),parameter::au=27.21151d0
+      real(8),parameter::bohr=0.529177249d0!20180412  
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
       integer,parameter::NBMAX = 12
@@ -163,7 +164,7 @@
 !visualization(yoshimoto-fft)  
       type(fft3_struct)::fs 
       character(99)::filename 
-      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123,err,m1,m2,m3
+      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123,err !,m1,m2,m3
       real(8)::htmp,d1,d2,d3,qwf,h1(3),h2(3),h3(3)   
       integer::ndx2,ndy2,ndz2 
       integer::algn235

@@ -15,7 +15,8 @@ SUBROUTINE wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,FermiEnerg
   &                     WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   COMPLEX(8),INTENT(IN) :: H_MAT_R(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   !
-  INTEGER(8) :: ik, i1, i2, i3, ib, jb, fo = 21, nk, i1min, i2min, i3min
+  !INTEGER(8) :: ik, i1, i2, i3, ib, jb, fo = 21, nk, i1min, i2min, i3min
+  INTEGER :: ik, i1, i2, i3, ib, jb, fo = 21, nk, i1min, i2min, i3min
   REAL(8) :: kvec(3,PRODUCT(dense(1:3))), phase, tpi=2.0d0*acos(-1.0d0), &
   &          Ek(n_occ,PRODUCT(dense(1:3))), proj(n_occ,n_occ,PRODUCT(dense(1:3)))
   COMPLEX(8) :: Hk(n_occ,n_occ), phase_factor, ci=CMPLX(0.0d0,1.0d0)

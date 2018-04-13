@@ -5,7 +5,13 @@
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
 FC = ifort  
-FLAGS = -O2 -qopenmp -xHost -g -traceback
+FFLAGS = -O2 -openmp -xHost -g -traceback
+
+#######
+#DEBUG#
+#######
+#FFLAGS = -openmp -debug full -check all -warn all -traceback -g 
+
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm 
 
 #GNU
@@ -45,5 +51,5 @@ frmsf_wan.o: frmsf_wan.F90 m_rdinput.o
 est_NTK.o: est_NTK.f90 wannier_sub.o
 
 clean: 
-	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} 
+	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 
 #--------------------------------------------------------------------

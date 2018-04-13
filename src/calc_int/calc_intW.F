@@ -59,12 +59,13 @@
       enddo 
       write(6,*)'finish rg'
 !check 
-!do iop=1,nsymq
-!write(6,*) iop
-!do i=1,3
-!write(6,'(3I5,1x,3F15.10)') (rg(i,j,iop),j=1,3),(rginv(i,j,iop),j=1,3)
-!enddo 
-!enddo 
+      do iop=1,nsymq
+       write(6,*) iop
+       do i=1,3
+        write(6,'(3I5,1x,3F15.10)')
+     +  (rg(i,j,iop),j=1,3),(rginv(i,j,iop),j=1,3)
+       enddo 
+      enddo 
 !do iop=1,nsymq
 !do i=1,3
 !do j=1,3
@@ -175,9 +176,14 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      nwx2=algn235(int(qwf/d1)+1,1) 
-      nwy2=algn235(int(qwf/d2)+1,1) 
-      nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      !nwx2=algn235(int(qwf/d1)+1,1) 
+      !nwy2=algn235(int(qwf/d2)+1,1) 
+      !nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
+      nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
+      nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
       !
       nfft1=nwx2+1
       nfft2=nwy2+1
@@ -578,8 +584,15 @@
        do ig=1,NGQ_eps(iq) 
         i1=LG0(1,ig,iq);j1=LG0(2,ig,iq);k1=LG0(3,ig,iq) 
         packingq(i1,j1,k1,iq)=ig 
+        write(6,'(a,5i10)')'iq,ig,i1,j1,k1',iq,ig,i1,j1,k1
        enddo 
       enddo 
+!
+      write(6,*) 
+      do iq=1,NTQ 
+       write(6,'(i5,3f15.10,6i5)')iq,(SQ(i1,iq),i1=1,3),
+     + numirrq(iq),numrotq(iq),trsq(iq),(RWq(j1,iq),j1=1,3)
+      enddo  
 !-- 
       NTGQ=maxval(NGQ_eps(:))!TOTAL NUMBER OF G VECTORS FOR EPSILON
       write(6,*)'NTGQ=',NTGQ  

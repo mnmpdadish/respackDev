@@ -226,9 +226,14 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      nwx2=algn235(int(qwf/d1)+1,1) 
-      nwy2=algn235(int(qwf/d2)+1,1) 
-      nwz2=algn235(int(qwf/d3)+1,1) 
+      !
+      !nwx2=algn235(int(qwf/d1)+1,1)!wrong 
+      !nwy2=algn235(int(qwf/d2)+1,1)!wrong 
+      !nwz2=algn235(int(qwf/d3)+1,1)!wrong 
+      !
+      nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
+      nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
+      nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
       !
       nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
       Nl123=nfft1*nfft2*nfft3 
@@ -851,7 +856,7 @@
        WEIGHT_b(7) = 1.0d0/(2.0d0*(v**2)) 
        WEIGHT_b(8) = WEIGHT_b(7) 
 !
-      case(8)!=== CASE(8) BCT CELL === 2011/1/4 BY YUSUKE NOMURA ===
+      case(8)!=== CASE(8) BCT CELL === 2011/1/4 by Y.Nomura ===
        write(6,*) 
        write(6,*)'==============================='
        write(6,*)' body centered tetragonal cell '
@@ -1655,7 +1660,13 @@
         enddo   
 !diag X: XC'=C'x 
         eig_tmp(:)=0.0d0 
-        call diagV(nm,mat_tmp(1,1),eig_tmp(1)) 
+        !
+        !20180412 by Y.Nomura 
+        !
+        if(nm>0)then
+         call diagV(nm,mat_tmp(1,1),eig_tmp(1)) 
+        endif 
+        !
 !descending order
         Z_EIG(:)=0.0D0            
         C_TMP(:,:)=0.0d0 
@@ -2367,9 +2378,9 @@
       CLOSE(122) 
 !--
       write(6,*) 
-      write(6,*)'======='
-      write(6,*)'H_MAT_R'
-      write(6,*)'======='
+      write(6,*)'============='
+      write(6,*)'H_MAT_R in eV'
+      write(6,*)'============='
       write(6,*) 
       do ia1=-Na1,Na1!-1
        do ia2=-Na2,Na2!-1
@@ -2384,7 +2395,7 @@
        enddo      
       enddo      
 !--
-!(3') WEIGHT_R 20170317 BY YUSUKE NOMURA 
+!(3') WEIGHT_R 20170317 by Y.Nomura 
       WEIGHT_R=1.0d0; SUM_REAL=0.0d0 
       do ia1=-Na1,Na1!-1         
        do ia2=-Na2,Na2!-1         
@@ -2578,7 +2589,8 @@
         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
         write(116,*)'Electron density'
         write(116,'(6f15.10)')
-     +  a*0.529177249,b*0.529177249,c*0.529177249,alp,bet,gmm ! bohr -> angstrom
+!    +  a*0.529177249,b*0.529177249,c*0.529177249,alp,bet,gmm!bohr->angstrom
+     +  a*bohr,b*bohr,c*bohr,alp,bet,gmm !bohr->angstrom
         write(116,'(3I5)') 
      +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
         write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
