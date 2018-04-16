@@ -3,18 +3,11 @@ implicit none
 private
 public::read_input 
 !&param_calc_gw 
-integer,public::calc_ifreq!    
-integer,public::ix_intJ_min!
-integer,public::ix_intJ_max!
-integer,public::iy_intJ_min!
-integer,public::iy_intJ_max!
-integer,public::iz_intJ_min!
-integer,public::iz_intJ_max!
-real(8),public::wcut_mvmc!Cutoff of U' for mvmc 
-real(8),public::jcut_mvmc!Cutoff of J  for mvmc 
 real(8),public::Green_func_delt!ttrhdrn Green's function delt (eV)
 real(8),public::idlt!ttrhdrn Green's function delt (eV)
 integer,public::Rc_range_spacing!Range of attenuation potential cutoff 
+integer,public::Ncalc!The number of bands considered in the GW calculation  
+logical,public::calc_SC!flag to calc SC or not 
 !&param_interpolation   
 integer,public::N_sym_points!The number of k-point points in symmetry line
 integer,public::Ndiv!Separation between symmetry points  
@@ -22,8 +15,7 @@ integer,public::reading_sk_format!20170709
 real(8),public,allocatable::SK_sym_pts(:,:) 
 integer,public,allocatable::dense(:)!dense(3)!Dense k-grid for the Wnnier-interpolated FS
 namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense
-namelist/param_calc_gw/calc_ifreq,ix_intJ_min,ix_intJ_max,iy_intJ_min,iy_intJ_max,&
-iz_intJ_min,iz_intJ_max,wcut_mvmc,jcut_mvmc,Green_func_delt,Rc_range_spacing 
+namelist/param_calc_gw/Green_func_delt,Rc_range_spacing,Ncalc,calc_SC  
 contains
 subroutine read_input 
 integer::ix,ik  
@@ -64,17 +56,10 @@ write(6,*)
 !&param_calc_gw 
 !--
 !default
-CALC_IFREQ=1!omega=0
-IX_INTJ_MIN=0
-IX_INTJ_MAX=0
-IY_INTJ_MIN=0
-IY_INTJ_MAX=0
-IZ_INTJ_MIN=0
-IZ_INTJ_MAX=0 
-WCUT_MVMC=2.0d0!eV
-JCUT_MVMC=0.3d0!eV   
 GREEN_FUNC_DELT=0.1d0!eV
 Rc_range_spacing=2!3  
+Ncalc=30 
+calc_SC=.true.!calc SC: .true., not calc SC: .false.
 !--
 !open(999,file='input.in')
 !read(999,nml=param_calc_gw)

@@ -43,7 +43,7 @@ complex(8)::psum
 !
 !sx 
 !
-integer::Ncalc 
+!integer::Ncalc 
 integer::NG_for_eps,NG_for_psi            
 integer::No_G_0 
 integer::shift_G(3)  
@@ -79,8 +79,9 @@ real(8),allocatable::vxcr(:,:,:)!vxcr(nrx2,nry2,nrz2)
 !
 !grid for GW
 !
-integer::nsgm 
+integer::nsgm
 real(8),allocatable::sgmw(:)!sgmw(nsgm)  
+real(8)::bandmax,bandmin,diff_band_energy,chiqw_grd_size,emax,emin,ecmax,ecmin 
 !
 !vxc
 !
