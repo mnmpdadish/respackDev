@@ -5,7 +5,7 @@
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
 FC = ifort  
-FFLAGS = -O2 -openmp -xHost -g -traceback
+FFLAGS = -O2 -qopenmp -xHost -g -traceback
 
 #######
 #DEBUG#
