@@ -1,13 +1,14 @@
-module m_rdinput 
+module m_rd_input 
 implicit none
 private
 public::read_input 
 !&param_calc_gw 
-real(8),public::Green_func_delt!ttrhdrn Green's function delt (eV)
-real(8),public::idlt!ttrhdrn Green's function delt (eV)
 integer,public::Rc_range_spacing!Range of attenuation potential cutoff 
 integer,public::Ncalc!The number of bands considered in the GW calculation  
 logical,public::calc_SC!flag to calc SC or not 
+real(8),public::gw_grid_separation!minimum separation of GW grid (eV) 
+!real(8),public::Green_func_delt!ttrhdrn Green's function delt (eV)
+!real(8),public::idlt!ttrhdrn Green's function delt (eV)
 !&param_interpolation   
 integer,public::N_sym_points!The number of k-point points in symmetry line
 integer,public::Ndiv!Separation between symmetry points  
@@ -15,7 +16,7 @@ integer,public::reading_sk_format!20170709
 real(8),public,allocatable::SK_sym_pts(:,:) 
 integer,public,allocatable::dense(:)!dense(3)!Dense k-grid for the Wnnier-interpolated FS
 namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense
-namelist/param_calc_gw/Green_func_delt,Rc_range_spacing,Ncalc,calc_SC  
+namelist/param_calc_gw/Rc_range_spacing,Ncalc,calc_SC,gw_grid_separation   
 contains
 subroutine read_input 
 integer::ix,ik  
@@ -56,18 +57,21 @@ write(6,*)
 !&param_calc_gw 
 !--
 !default
-GREEN_FUNC_DELT=0.1d0!eV
+!
+!GREEN_FUNC_DELT=0.1d0!eV
+!
 Rc_range_spacing=2!3  
-Ncalc=30 
+Ncalc=0!Ncalc is set as NTB after
 calc_SC=.true.!calc SC: .true., not calc SC: .false.
+gw_grid_separation=0.0d0!this is set after read dat.green_function_delta_in_au in dir-eps 
 !--
 !open(999,file='input.in')
 !read(999,nml=param_calc_gw)
-!rewind(5) 
 read(5,nml=param_calc_gw)
 write(6,param_calc_gw) 
-idlt=Green_func_delt 
-!close(5)
+!
+!idlt=Green_func_delt 
+!
 !--
 end subroutine
 end module

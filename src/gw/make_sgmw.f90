@@ -1,29 +1,30 @@
-subroutine estimate_nsgm(ecmin,emin,emax,ecmax,idlt,nproc,nsgm)
+subroutine estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm)
  ! 
  implicit none
- real(8)::ecmin,emin,emax,ecmax,idlt
+ real(8)::ecmin,emin,emax,ecmax,gw_grid_separation 
  real(8)::omega,grd_separation 
  integer::ie,je,nproc
  integer::nsgm 
  integer,parameter::nsgm_max=100000 
+ real(8),parameter::expansion=10.0d0!50.0d0  
  !
  je=0
- grd_separation=10.0d0*idlt 
+ grd_separation=expansion*gw_grid_separation 
  omega=ecmin 
  do ie=1,nsgm_max
   !
   if(ecmin<=omega.and.omega<emin)then
-   grd_separation=10.0d0*idlt 
+   grd_separation=expansion*gw_grid_separation 
    je=je+1
   endif 
   !
   if(emin<=omega.and.omega<=emax)then
-   grd_separation=idlt 
+   grd_separation=gw_grid_separation 
    je=je+1
   endif 
   !
   if(emax<omega)then
-   grd_separation=10.0d0*idlt 
+   grd_separation=expansion*gw_grid_separation 
    je=je+1
   endif 
   !
@@ -40,34 +41,35 @@ subroutine estimate_nsgm(ecmin,emin,emax,ecmax,idlt,nproc,nsgm)
  return
 end 
 !
-subroutine make_sgmw(ecmin,emin,emax,idlt,nsgm,sgmw)
+subroutine make_sgmw(ecmin,emin,emax,gw_grid_separation,nsgm,sgmw)
  !
  implicit none
- real(8)::ecmin,emin,emax,idlt 
+ real(8)::ecmin,emin,emax,gw_grid_separation
  real(8)::omega,grd_separation 
  integer::nsgm 
  real(8)::sgmw(nsgm) 
  integer::ie 
+ real(8),parameter::expansion=10.0d0!50.0d0  
  !
  sgmw=0.0d0 
  !
- grd_separation=10.0d0*idlt 
+ grd_separation=expansion*gw_grid_separation 
  omega=ecmin 
  do ie=1,nsgm 
   !
   if(ecmin<=omega.and.omega<emin)then
    sgmw(ie)=omega
-   grd_separation=10.0d0*idlt 
+   grd_separation=expansion*gw_grid_separation 
   endif 
   !
   if(emin<=omega.and.omega<=emax)then
    sgmw(ie)=omega
-   grd_separation=idlt 
+   grd_separation=gw_grid_separation
   endif 
   !
   if(emax<omega)then
    sgmw(ie)=omega
-   grd_separation=10.0d0*idlt 
+   grd_separation=expansion*gw_grid_separation 
   endif 
   !
   omega=omega+grd_separation 

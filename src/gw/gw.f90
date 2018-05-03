@@ -2,7 +2,7 @@ PROGRAM GW
 !
 use mpi
 use fft_3d 
-use m_rdinput       
+use m_rd_input       
 use m_rd_dat_wfn
 use m_rd_dat_wan 
 use m_rd_dat_eps 
@@ -23,13 +23,11 @@ start_time=MPI_Wtime()
 !
 if(myrank.eq.0)then 
  call read_input 
- Green_func_delt=Green_func_delt/au  
- idlt=idlt/au
+ gw_grid_separation=gw_grid_separation/au
 endif 
 call MPI_BARRIER(comm,ierr)
 !
-call MPI_Bcast(Green_func_delt,1,MPI_DOUBLE_PRECISION,0,comm,ierr) 
-call MPI_Bcast(idlt,1,MPI_DOUBLE_PRECISION,0,comm,ierr) 
+call MPI_Bcast(gw_grid_separation,1,MPI_DOUBLE_PRECISION,0,comm,ierr) 
 call MPI_Bcast(Rc_range_spacing,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(Ncalc,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(calc_SC,1,MPI_LOGICAL,0,comm,ierr) 
@@ -131,7 +129,7 @@ if(myrank/=0) allocate(numirr(NTK))
 if(myrank/=0) allocate(numrot(NTK)) 
 if(myrank/=0) allocate(trs(NTK)) 
 if(myrank/=0) allocate(RW(3,NTK))
-if(myrank/=0) allocate(numMK(Nk_irr))!20180316  
+if(myrank/=0) allocate(numMK(Nk_irr))
 if(myrank/=0) allocate(NGI(Nk_irr)) 
 if(myrank/=0) allocate(NG0(NTK))
 if(myrank/=0) allocate(KGI(3,NTG,Nk_irr)) 
@@ -150,7 +148,7 @@ call MPI_Bcast(numirr,NTK,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(numrot,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(trs,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(RW,3*NTK,MPI_INTEGER,0,comm,ierr) 
-call MPI_Bcast(numMK,Nk_irr,MPI_INTEGER,0,comm,ierr)!20180316  
+call MPI_Bcast(numMK,Nk_irr,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(NGI,Nk_irr,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(NG0,NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(KGI,3*NTG*Nk_irr,MPI_INTEGER,0,comm,ierr) 
@@ -200,11 +198,12 @@ call MPI_BARRIER(comm,ierr)
 !
 if(myrank.eq.0)then 
  call rd_dat_chi_cutoff
+ call rd_dat_green_function_delta_in_au
  call rd_dat_wgrid 
  call rd_dat_sq 
- call rd_dat_eps!20180317  
+ call rd_dat_eps
  ! 
- !20180317 
+ !espinv=epsinv-1 
  !
  do iq=1,Nq_irr 
   NG_for_eps=NGQ_eps(iq) 
@@ -220,6 +219,10 @@ endif!myrank.eq.0
 !chi_cutoff(300)  
 !
 call MPI_Bcast(Ecut_for_eps,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+!
+!green_function_delta_in_au(302) 
+!
+call MPI_Bcast(idlt,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 !
 !wgrid(135)  
 !
@@ -237,8 +240,8 @@ call MPI_Bcast(Lq3,1,MPI_INTEGER,0,comm,ierr)
 call MPI_BARRIER(comm,ierr)
 !
 if(myrank/=0) allocate(em(ne))
-if(myrank/=0) allocate(pole_of_chi(ne))!20180317
-if(myrank/=0) allocate(mat_b(ne,ne))!20180317
+if(myrank/=0) allocate(pole_of_chi(ne))
+if(myrank/=0) allocate(mat_b(ne,ne))
 if(myrank/=0) allocate(SQI(3,Nq_irr)) 
 if(myrank/=0) allocate(SQ(3,NTQ)) 
 if(myrank/=0) allocate(numirrq(NTQ)) 
@@ -249,54 +252,61 @@ if(myrank/=0) allocate(LG0(3,NTG,NTQ))
 if(myrank/=0) allocate(NGQ_eps(NTQ))
 if(myrank/=0) allocate(NGQ_psi(NTQ)) 
 if(myrank/=0) allocate(packingq(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3,Nq_irr))
-if(myrank/=0) allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr))!real4 20180317 
+if(myrank/=0) allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr))!real4 
 call MPI_BARRIER(comm,ierr)
 !
 call MPI_Bcast(em,ne,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
-call MPI_Bcast(pole_of_chi,ne,MPI_DOUBLE_COMPLEX,0,comm,ierr)!20180317
-call MPI_Bcast(mat_b,ne*ne,MPI_DOUBLE_COMPLEX,0,comm,ierr)!20180317
+call MPI_Bcast(pole_of_chi,ne,MPI_DOUBLE_COMPLEX,0,comm,ierr)
+call MPI_Bcast(mat_b,ne*ne,MPI_DOUBLE_COMPLEX,0,comm,ierr)
 call MPI_Bcast(SQI,3*Nq_irr,MPI_DOUBLE_PRECISION,0,comm,ierr) 
 call MPI_Bcast(SQ,3*NTQ,MPI_DOUBLE_PRECISION,0,comm,ierr) 
 call MPI_Bcast(numirrq,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(numrotq,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(trsq,NTQ,MPI_INTEGER,0,comm,ierr) 
-call MPI_Bcast(RWq,3*NTQ,MPI_INTEGER,0,comm,ierr)!bugfix: NTQ -> 3*NTQ !20180324  
+call MPI_Bcast(RWq,3*NTQ,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(LG0,3*NTG*NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(NGQ_eps,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(NGQ_psi,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(packingq(-Lq1,-Lq2,-Lq3,1),(2*Lq1+1)*(2*Lq2+1)*(2*Lq3+1)*Nq_irr,MPI_INTEGER,0,comm,ierr) 
-call MPI_Bcast(epsirr,NTGQ*NTGQ*ne*Nq_irr,MPI_COMPLEX,0,comm,ierr)!20180317 
+call MPI_Bcast(epsirr,NTGQ*NTGQ*ne*Nq_irr,MPI_COMPLEX,0,comm,ierr)
 call MPI_BARRIER(comm,ierr)
 !
 if(myrank.eq.0)then 
  write(6,*) 
- write(6,*)'================================'
- write(6,*)'dir-eps: FREQUENCY GRID IN EPSQW'
- write(6,*)'================================'
+ write(6,*)'====================================='
+ write(6,*)'dir-eps: FREQUENCY GRID IN EPSQW (eV)'
+ write(6,*)'====================================='
  write(6,*) 
  do ie=1,ne 
-  write(6,'(2f15.10)') em(ie)
+  write(6,'(2f15.7)') em(ie)*au 
  enddo 
- write(6,*) 
- write(6,*)'==========================='
- write(6,*)'dir-eps: POLE OF MODEL GRID'
- write(6,*)'==========================='
- write(6,*) 
- do ie=1,ne 
-  write(6,'(2f15.10)') pole_of_chi(ie)
- enddo 
-endif  
+ !write(6,*) 
+ !write(6,*)'==========================='
+ !write(6,*)'dir-eps: POLE OF MODEL GRID'
+ !write(6,*)'==========================='
+ !write(6,*) 
+ !do ie=1,ne 
+ ! write(6,'(2f15.10)') pole_of_chi(ie)
+ !enddo 
+endif!myrank.eq.0  
 !
-!Rc, idlt, and Ncalc
+!Rc, idlt, Ncalc
 !
 avec_length(1)=dsqrt(a1(1)**2+a1(2)**2+a1(3)**2)
 avec_length(2)=dsqrt(a2(1)**2+a2(2)**2+a2(3)**2)
 avec_length(3)=dsqrt(a3(1)**2+a3(2)**2+a3(3)**2)
 Rc=Rc_range_spacing*maxval(avec_length) 
 !
-write(6,'(a25,i10)')'Considered bands for self-energy',Ncalc 
-write(6,'(a25,f15.10)')'idlt (eV)',idlt*au 
-write(6,'(a25,f15.10)')'Rc (AA)=',Rc*bohr   
+!Ncalc is set to NTB (defalut)
+!
+if(Ncalc.eq.0) Ncalc=NTB 
+!
+if(myrank.eq.0)then 
+ write(6,*) 
+ write(6,'(a40,x,i10)')'Ncalc (considered bands in self-energy)=',Ncalc 
+ write(6,'(a40,x,f15.10)')'idlt (eV)=',idlt*au 
+ write(6,'(a40,x,f15.10)')'Rc (AA)=',Rc*bohr   
+endif 
 !
 !fbk 
 !
@@ -316,9 +326,16 @@ do ik=1,NTK
   en=(E_EIGI(ib,ikir)-FermiEnergy)*au  
  enddo
 enddo
-write(6,'(a10,f15.10)')'Nele=',2.0d0*SUM_REAL/dble(NTK)  
+if(myrank.eq.0)then
+ write(6,*) 
+ write(6,'(a40,x,f15.7)')'Nele=',2.0d0*SUM_REAL/dble(NTK)  
+endif 
 !
 !make sgmw
+!
+!gw_grid_separation is set to green_function_delta (default)
+!
+if(gw_grid_separation.eq.0.0d0) gw_grid_separation=idlt
 !
 if(myrank.eq.0)then 
  bandmin=minval(E_EIGI(1+minval(Ns),:)) 
@@ -329,18 +346,20 @@ if(myrank.eq.0)then
  emin=bandmin-diff_band_energy 
  ecmax=bandmax+diff_band_energy+chiqw_grd_size 
  ecmin=bandmin-diff_band_energy-chiqw_grd_size  
- write(6,*)'bandmax=',bandmax*au
- write(6,*)'bandmin=',bandmin*au
- write(6,*)'diff_band_energy=',diff_band_energy*au  
- write(6,*)'chiqw_grd_size=',chiqw_grd_size*au  
- write(6,*)'emax=',emax*au
- write(6,*)'emin=',emin*au
- write(6,*)'ecmax=',ecmax*au
- write(6,*)'ecmin=',ecmin*au
+ write(6,*) 
+ write(6,'(a40,x,f15.7)')'bandmax (eV)=',bandmax*au
+ write(6,'(a40,x,f15.7)')'bandmin (eV)=',bandmin*au
+ write(6,'(a40,x,f15.7)')'diff_band_energy (eV)=',diff_band_energy*au  
+ write(6,'(a40,x,f15.7)')'chiqw_grd_size (eV)=',chiqw_grd_size*au  
+ write(6,'(a40,x,f15.7)')'emax (eV)=',emax*au
+ write(6,'(a40,x,f15.7)')'emin (eV)=',emin*au
+ write(6,'(a40,x,f15.7)')'ecmax (eV)=',ecmax*au
+ write(6,'(a40,x,f15.7)')'ecmin (eV)=',ecmin*au
+ write(6,'(a40,x,f15.7)')'gw_grid_separation (eV)=',gw_grid_separation*au
  !
- call estimate_nsgm(ecmin,emin,emax,ecmax,idlt,nproc,nsgm)
+ call estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm)
  allocate(sgmw(nsgm));sgmw=0.0d0 
- call make_sgmw(ecmin,emin,emax,idlt,nsgm,sgmw(1))
+ call make_sgmw(ecmin,emin,emax,gw_grid_separation,nsgm,sgmw(1))
  ! 
  !OPEN(136,R,FILE='./dat.gwgrid') 
  ! 
@@ -348,10 +367,19 @@ if(myrank.eq.0)then
  rewind(136) 
  write(136,*) nsgm 
  do ie=1,nsgm 
-  write(136,'(f15.10)') sgmw(ie) 
+  write(136,'(f20.10)') sgmw(ie) 
  enddo 
  !
-endif 
+ write(6,*) 
+ write(6,*)'========================='
+ write(6,*)'FREQUENCY GRID IN GW (eV)'
+ write(6,*)'========================='
+ write(6,*) 
+ do ie=1,nsgm  
+  write(6,'(f15.7)') sgmw(ie)*au 
+ enddo 
+ write(6,*) 
+endif!myrank.eq.0
 !
 call MPI_Bcast(nsgm,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_BARRIER(comm,ierr)
@@ -388,8 +416,10 @@ else
  enq=bnq+pnq-1
 end if
 !
-if(calc_sc)then!.true.=default 
+!SC 
 !
+if(calc_sc)then!.true.=default 
+ !
  write(file_id,'(a)')'## SC calc start ##'
  write(file_id,'(a,3i7)')'bnq,enq,pnq',bnq,enq,pnq 
  !
@@ -398,8 +428,12 @@ if(calc_sc)then!.true.=default
  nfft1=nwx2+1; nfft2=nwy2+1; nfft3=nwz2+1; Nl123=nfft1*nfft2*nfft3 
  call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
  !
- allocate(pSC(nsgm,Mb,Mb,Nk_irr)); pSC(:,:,:,:)=0.0d0 
+ if(myrank.eq.0)then 
+  write(6,*)'start SC' 
+  write(6,*) 
+ endif 
  !
+ allocate(pSC(nsgm,Mb,Mb,Nk_irr)); pSC(:,:,:,:)=0.0d0 
  do iq=1,pnq
   !
   q1=SQ(1,bnq+iq-1);q2=SQ(2,bnq+iq-1);q3=SQ(3,bnq+iq-1)
@@ -538,13 +572,13 @@ if(calc_sc)then!.true.=default
 !$OMP END CRITICAL
    deallocate(fftwk,wfunc,rho_tmp,rho,pSComp,C0_K,C0_KmQ,vecf,veca)
 !$OMP END PARALLEL
-  !
-  if(myrank.eq.0) write(6,*)'FINISH iq',iq 
-  deallocate(length_qg,atten_factor,epsmk) 
-  !
-  !q.eq.0 
-  !
+   if(myrank.eq.0) write(6,*)'FINISH iq',iq 
+   deallocate(length_qg,atten_factor,epsmk) 
+   !
   elseif(q1==0.0d0.and.q2==0.0d0.and.q3==0.0d0) then 
+   !
+   !q.eq.0 
+   !
    NG_for_eps=NGQ_eps(bnq+iq-1)
    allocate(length_qg(NG_for_eps));length_qg=0.0d0 
    allocate(atten_factor(NG_for_eps));atten_factor=0.0d0  
@@ -612,7 +646,7 @@ if(calc_sc)then!.true.=default
 !$OMP END DO
     deallocate(fftwk,wfunc,rho_tmp,C0_K,C0_KmQ)
 !$OMP END PARALLEL
-!---
+!--
 !$OMP PARALLEL PRIVATE(ik,jb,kb,ie,SUM_CMPX,igL,jgL,vecf,je,veca,ikq,delta,ikir,ikqir,de,sgn,dnm) 
     allocate(vecf(ne));vecf=0.0d0
     allocate(veca(ne));veca=0.0d0
@@ -740,55 +774,20 @@ if(calc_sc)then!.true.=default
    if(myrank.eq.0) write(6,*)'FINISH iq',iq 
   endif 
  enddo!iq 
- !
  call MPI_BARRIER(comm,ierr)
  write(file_id,*)'I finished pSC calc' 
  !
- if(myrank.eq.0)then
-  allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
- endif 
- call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
- !
- allocate(SC(Mb,Mb,NTK,nsgm));SC=0.0d0
- !
+ allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
+ mem_size=dble(nsgm*Mb*Mb*Nk_irr) 
+ mem_size=mem_size*16.0d0/1024.0d0/1024.0d0/1024.0d0 
  if(myrank.eq.0)then 
-  do ik=1,NTK 
-   ikir=numirr(ik) 
-   if(trs(ik)==1)then 
-    do ie=1,nsgm
-     do ib=1,Nb(ik)!Mb
-      do jb=1,Nb(ik)!Mb 
-       SC(ib,jb,ik,ie)=SCirr(ie,ib,jb,ikir) 
-      enddo 
-     enddo 
-    enddo 
-   elseif(trs(ik)==-1)then 
-    do ie=1,nsgm  
-     do ib=1,Nb(ik)!Mb
-      do jb=1,Nb(ik)!Mb 
-       SC(ib,jb,ik,ie)=SCirr(ie,jb,ib,ikir) 
-      enddo 
-     enddo 
-    enddo 
-   endif 
-  enddo 
-  deallocate(SCirr) 
- endif!myrank.eq.0
+  write(6,'(a35,f20.15)')'mem size pSC or SCirr (GB)',mem_size
+ endif 
  !
- call MPI_Bcast(SC,Mb*Mb*NTK*nsgm,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+ call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
  call MPI_BARRIER(comm,ierr)
- !
- allocate(pf(NTK,-Na1:Na1,-Na2:Na2,-Na3:Na3)); pf=0.0d0     
- do ik=1,NTK 
-  do ia3=-Na3,Na3 
-   do ia2=-Na2,Na2 
-    do ia1=-Na1,Na1 
-     phase=tpi*(SK0(1,ik)*dble(ia1)+SK0(2,ik)*dble(ia2)+SK0(3,ik)*dble(ia3)) 
-     pf(ik,ia1,ia2,ia3)=exp(-ci*phase) 
-    enddo  
-   enddo  
-  enddo  
- enddo  
+ call MPI_Bcast(SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+ call MPI_BARRIER(comm,ierr)
  !
  !MPI for nsgm 
  !
@@ -808,10 +807,59 @@ if(calc_sc)then!.true.=default
  end if
  write(file_id,'(a,3i7)')'bnw,enw,pnw',bnw,enw,pnw            
  !
+ allocate(SC(pnw,Mb,Mb,NTK)); SC=0.0d0
+ do ik=1,NTK 
+  ikir=numirr(ik) 
+  if(trs(ik)==1)then 
+   do ie=1,pnw!nsgm
+    do ib=1,Nb(ik)!Mb
+     do jb=1,Nb(ik)!Mb 
+      SC(ie,ib,jb,ik)=SCirr(bnw+ie-1,ib,jb,ikir) 
+     enddo 
+    enddo 
+   enddo 
+  elseif(trs(ik)==-1)then 
+   do ie=1,pnw!nsgm  
+    do ib=1,Nb(ik)!Mb
+     do jb=1,Nb(ik)!Mb 
+      SC(ie,ib,jb,ik)=SCirr(bnw+ie-1,jb,ib,ikir) 
+     enddo 
+    enddo 
+   enddo 
+  endif 
+ enddo 
+ deallocate(pSC,SCirr) 
+ ! 
+ !mem_size=dble(pnw*Mb*Mb*NTK) 
+ !mem_size=mem_size*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+ !if(myrank.eq.0)then 
+ ! write(6,'(a35,f20.15)')'mem size SC (GB)',mem_size
+ !endif 
+ !
+ allocate(pf(NTK,-Na1:Na1,-Na2:Na2,-Na3:Na3)); pf=0.0d0     
+ do ik=1,NTK 
+  do ia3=-Na3,Na3 
+   do ia2=-Na2,Na2 
+    do ia1=-Na1,Na1 
+     phase=tpi*(SK0(1,ik)*dble(ia1)+SK0(2,ik)*dble(ia2)+SK0(3,ik)*dble(ia3)) 
+     pf(ik,ia1,ia2,ia3)=exp(-ci*phase) 
+    enddo  
+   enddo  
+  enddo  
+ enddo  
+ !
  !make pSCR
  !
- allocate(pSCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,pnw)); pSCR=0.0d0 
+ if(myrank.eq.0)then
+  write(6,*) 
+  write(6,*)'start SCR' 
+  write(6,*) 
+ endif 
  !
+ allocate(pSCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,pnw)); pSCR=0.0d0 
+ !--
+ !OMP CRITICAL: off-diagonal case (default)
+ !--
  do ie=1,pnw!nsgm  
   do ia1=-Na1,Na1
    do ia2=-Na2,Na2
@@ -819,33 +867,21 @@ if(calc_sc)then!.true.=default
      do iw=1,NWF
       do jw=1,NWF 
        SUM_CMPX=0.0D0 
-       if(.true.)then!ture=off-diag 
-!$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb,kb)  
+!$OMP PARALLEL private(psum,ik,jb,kb)  
         psum=0.0d0 
 !$OMP DO 
         do ik=1,NTK 
          do jb=1,Nb(ik) 
           do kb=1,Nb(ik) 
-           psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,kb,ik,bnw+ie-1)*UNT(kb,jw,ik)*pf(ik,ia1,ia2,ia3) 
+           psum=psum+CONJG(UNT(jb,iw,ik))*SC(ie,jb,kb,ik)*UNT(kb,jw,ik)*pf(ik,ia1,ia2,ia3) 
           enddo!kb 
          enddo!jb 
         enddo!ik 
 !$OMP END DO 
+!$OMP CRITICAL 
         SUM_CMPX=SUM_CMPX+psum 
+!$OMP END CRITICAL 
 !$OMP END PARALLEL 
-       else 
-!$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb)  
-        psum=0.0d0 
-!$OMP DO 
-        do ik=1,NTK 
-         do jb=1,Nb(ik) 
-          psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,jb,ik,bnw+ie-1)*UNT(jb,jw,ik)*pf(ik,ia1,ia2,ia3) 
-         enddo!jb 
-        enddo!ik 
-!$OMP END DO 
-       SUM_CMPX=SUM_CMPX+psum 
-!$OMP END PARALLEL 
-       endif 
        pSCR(iw,jw,ia1,ia2,ia3,ie)=SUM_CMPX/DBLE(NTK)
       enddo!jw
      enddo!iw
@@ -853,9 +889,44 @@ if(calc_sc)then!.true.=default
    enddo!ia2 
   enddo!ia1 
   write(file_id,'(a,i7)')'ie=',ie 
+  if(myrank.eq.0) write(6,*)'FINISH ie',ie  
  enddo!ie
- deallocate(SC,pf) 
+ !--
+ !OMP CRITICAL: diagonal case (not default)
+ !--
+ if(.false.)then 
+  do ie=1,pnw!nsgm  
+   do ia1=-Na1,Na1
+    do ia2=-Na2,Na2
+     do ia3=-Na3,Na3
+      do iw=1,NWF
+       do jw=1,NWF 
+        SUM_CMPX=0.0D0 
+!$OMP PARALLEL private(psum,ik,jb)  
+         psum=0.0d0 
+!$OMP DO 
+         do ik=1,NTK 
+          do jb=1,Nb(ik) 
+           psum=psum+CONJG(UNT(jb,iw,ik))*SC(ie,jb,jb,ik)*UNT(jb,jw,ik)*pf(ik,ia1,ia2,ia3) 
+          enddo!jb 
+         enddo!ik 
+!$OMP END DO 
+!$OMP CRITICAL 
+        SUM_CMPX=SUM_CMPX+psum 
+!$OMP END CRITICAL 
+!$OMP END PARALLEL 
+        pSCR(iw,jw,ia1,ia2,ia3,ie)=SUM_CMPX/DBLE(NTK)
+       enddo!jw
+      enddo!iw
+     enddo!ia3
+    enddo!ia2 
+   enddo!ia1 
+   write(file_id,'(a,i7)')'ie=',ie 
+   if(myrank.eq.0) write(6,*)'FINISH ie',ie  
+  enddo!ie
+ endif
  !
+ deallocate(SC,pf) 
  call MPI_BARRIER(comm,ierr)
  write(file_id,*)'I finished pSCR calc' 
  !
@@ -864,40 +935,18 @@ if(calc_sc)then!.true.=default
  if(myrank.eq.0)then 
   allocate(SCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); SCR=0.0d0 
  endif 
+ !
+ ! 
+ mem_size=dble(pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1)) 
+ mem_size=mem_size*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+ if(myrank.eq.0)then 
+  write(6,'(a35,f20.15)')'mem size pSCR (GB)',mem_size
+ endif 
+ ! 
+ !
  call MPI_Gather(pSCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,&
                   SCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,0,comm,ierr)
  !--
- !allocate(SCR(nsgm,NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3));SCR(:,:,:,:,:,:)=0.0d0 
- ! do ia3=-Na3,Na3
- !  do ia2=-Na2,Na2
- !   do ia1=-Na1,Na1
- !    do iw=1,NWF
- !     do jw=1,NWF 
- !      do ie=1,nsgm  
- !       SUM_CMPX=0.0D0 
- !!$OMP PARALLEL reduction(+:SUM_CMPX) private(psum,ik,jb,kb)  
- !       psum=0.0d0 
- !!$OMP DO 
- !       do ik=1,NTK 
- !        do jb=1,Nb(ik) 
- !         do kb=1,Nb(ik) 
- !          psum=psum+CONJG(UNT(jb,iw,ik))*SC(jb,kb,ik,ie)*UNT(kb,jw,ik)*pf(ia1,ia2,ia3,ik) 
- !         enddo!kb 
- !        enddo!jb 
- !       enddo!ik 
- !!$OMP END DO 
- !       SUM_CMPX=SUM_CMPX+psum 
- !!$OMP END PARALLEL 
- !       SCR(ie,iw,jw,ia1,ia2,ia3)=SUM_CMPX/DBLE(NTK)
- !      enddo!ie
- !     enddo!jw
- !    enddo!iw
- !    write(6,'(a20,x,3i7)')"finish ia1,ia2,ia3",ia1,ia2,ia3 
- !   enddo!ia1
- !  enddo!ia2 
- ! enddo!ia3  
- ! deallocate(SC,pf) 
- !
  !OPEN(157,W,FILE='SCR') 
  !rewind(157)
  !do ia1=-Na1,Na1
@@ -921,6 +970,8 @@ if(calc_sc)then!.true.=default
 else
  write(6,*)'skip SC calc.' 
 endif!calc SC or not 
+!
+!SX
 !
 write(file_id,'(a)')'## SX calc start ##'
 !
@@ -1138,37 +1189,18 @@ if(myrank.eq.0)then
  !
  allocate(SX_DIV(Mb,Mb,Nk_irr));SX_DIV(:,:,:)=0.0d0 
  do ikir=1,Nk_irr 
-  !
   ik=numMK(ikir)
-  ! 
   do jb=1,Nb(ik)!Mb 
-   !
    SX_DIV(jb,jb,ikir)=fbk(jb+Ns(ik),ik)*chead 
-   !
   enddo!jb 
  enddo!ik 
- !
  SXirr=SXirr+SX_DIV!fGW
  !--
  !SXirr=SXirr!cGW
- !write(1600) SXirr
- !deallocate(SXirr) 
- !end_time=MPI_Wtime()
- !diff_time=end_time-start_time 
- !write(6,*)'#TOTAL TIME=',diff_time 
- !endif!myrank.eq.0
- !call MPI_FINALIZE(ierr)
- !STOP 
- !9997 write(6,*)'skip calc sx'
- !if(myrank.eq.0)then 
- !allocate(SXirr(Mb,Mb,Nk_irr))
- !read(1600) SXirr 
  !--
  allocate(SX(Mb,Mb,NTK));SX(:,:,:)=0.0d0 
  do ik=1,NTK 
-  !
   ikir=numirr(ik) 
-  !
   if(trs(ik)==1) then 
    SX(:,:,ik)=SXirr(:,:,ikir) 
   elseif(trs(ik)==-1) then 
@@ -1185,9 +1217,7 @@ if(myrank.eq.0)then
  OPEN(154,FILE='./dat.energy_vs_sx') 
  rewind(154) 
  do ikir=1,Nk_irr 
-  !
   ik=numMK(ikir)
-  !
   do jb=1,Nb(ik)!Mb 
    en=(E_EIGI(jb+Ns(ik),ikir)-FermiEnergy)*au 
    write(154,'(3F20.10)') en,SXirr(jb,jb,ikir)*au 
@@ -1237,6 +1267,9 @@ if(myrank.eq.0)then
   enddo 
  enddo 
  deallocate(SX,pf) 
+ !
+ write(5003) MAT_SX_R 
+ write(6,*)'finish SXR' 
  !
  !OPEN(155,FILE='./dat.sx_mat_r') 
  !
@@ -1288,15 +1321,9 @@ if(myrank.eq.0)then
  !H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1))  
  !--
 endif!myrank.eq.0
-!--
-!end_time=MPI_Wtime()
-!diff_time=end_time-start_time 
-!write(6,*) '# TOTAL TIME=',diff_time 
-!call MPI_FINALIZE(ierr)
 !
-!STOP
-!END           
-!--
+!Vxc
+!
 if(myrank.eq.0)then
  !
  write(file_id,'(a)')'## Vxc calc start ##'
@@ -1357,9 +1384,7 @@ if(myrank.eq.0)then
  OPEN(152,FILE='./dat.energy_vs_vxc') 
  rewind(152) 
  do ikir=1,Nk_irr 
-  !
   ik=numMK(ikir)
-  !
   do jb=1,Nb(ik)!Mb 
    en=(E_EIGI(jb+Ns(ik),ikir)-FermiEnergy)*au 
    write(152,'(3f20.10)') en,VXCirr(jb,jb,ikir)*au 
@@ -1449,19 +1474,29 @@ if(myrank.eq.0)then
   enddo!ia2 
  enddo!ia1 
  !
+endif!myrank.eq.0
+!
+!band dispersion 
+!
+if(myrank.eq.0)then
+ !
+ write(file_id,'(a)')'## band dispersion calc start ##'
+ !
  NSK_BAND_DISP=Ndiv*(N_sym_points-1)+1
  allocate(SK_BAND_DISP(3,NSK_BAND_DISP)); SK_BAND_DISP(:,:)=0.0d0 
  call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),SK_BAND_DISP(1,1))
  !
- write(5001) H_MAT_R 
  write(5002) MAT_VXC_R 
- write(5003) MAT_SX_R 
+ write(6,*)'finish VXCR' 
+ write(5001) H_MAT_R 
  ! 
  H_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
  !
  call calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,NWF,SK_BAND_DISP(1,1),&
  H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1))  
 endif!myrank.eq.0
+!
+!FINISH 
 !
 call MPI_BARRIER(comm,ierr)
 end_time=MPI_Wtime()

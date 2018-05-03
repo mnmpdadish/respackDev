@@ -37,7 +37,7 @@ export MKL_NUM_THREADS
 #mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/calc_chiqw < input.in >> LOG.chiqw 
 #mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_w3d < input.in >> LOG.W3d 
 #mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_j3d < input.in >> LOG.J3d 
-mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -perhost 1 -np 6 $PWD/calc_gw < input.in >> LOG.GW 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 6 $PWD/calc_gw < input.in >> LOG.GW 
 
 echo ============================= >> out.sub
 date                               >> out.sub

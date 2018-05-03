@@ -2,11 +2,14 @@ module m_rd_dat_eps
 use m_rd_dat_wfn
 implicit none
 public::rd_dat_chi_cutoff
+public::rd_dat_green_function_delta_in_au
 public::rd_dat_wgrid 
 public::rd_dat_sq 
 public::rd_dat_eps 
 !chi_cutoff(300)  
 real(8),public::Ecut_for_eps
+!green_function_delta_in_au(302)  
+real(8),public::idlt!ttrhdrn Green's function delt (eV)
 !wgrid(135)  
 integer,public::Num_freq_grid
 integer,public::ne 
@@ -38,6 +41,14 @@ subroutine rd_dat_chi_cutoff
 implicit none 
 OPEN(300,FILE='./dir-eps/dat.chi_cutoff')
 read(300,*) Ecut_for_eps
+end subroutine
+!--
+!20180423 
+!--
+subroutine rd_dat_green_function_delta_in_au
+implicit none 
+OPEN(302,FILE='./dir-eps/dat.green_function_delta_in_au')
+read(302,*) idlt !ttrhdrn Green's function delt (au)
 end subroutine
 !--
 subroutine rd_dat_wgrid 

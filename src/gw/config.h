@@ -102,6 +102,7 @@ integer::NSK_BAND_DISP
 integer::ia1,ia2,ia3,iw,jw,ik,ikir,iop,ib,jb,iq,ikq,kb,ikqir,ikqop,ie,je,iqir   
 integer::igL,jgL,igL1,igL2,igL3 
 real(8)::SUM_REAL 
+real(8)::mem_size          
 complex(8)::SUM_CMPX
 !
 !end-of-config.h 
