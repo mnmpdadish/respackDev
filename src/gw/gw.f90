@@ -333,10 +333,6 @@ endif
 !
 !make sgmw
 !
-!gw_grid_separation is set to green_function_delta (default)
-!
-if(gw_grid_separation.eq.0.0d0) gw_grid_separation=idlt
-!
 if(myrank.eq.0)then 
  bandmin=minval(E_EIGI(1+minval(Ns),:)) 
  bandmax=maxval(E_EIGI(minval(Nb)+minval(Ns),:))
@@ -1353,13 +1349,14 @@ if(myrank.eq.0)then
  !
  allocate(VXCirr(Mb,Mb,Nk_irr));VXCirr(:,:,:)=0.0d0 
  allocate(MAT_VXC(Mb,Mb));MAT_VXC=0.0d0             
- do ik=1,Nk_irr 
-  write(6,*)'ik=',ik 
+ do ikir=1,Nk_irr 
+  ik=numMK(ikir)
   MAT_VXC(:,:)=0.0d0 
-  call calc_MAT_VXC(Nk_irr,Mb,NTG,NGI(1),KGI(1,1,1),vxcr(1,1,1),CIR(1,1,ik),ik,&
+  call calc_MAT_VXC(Nk_irr,Mb,NTG,NGI(1),KGI(1,1,1),vxcr(1,1,1),CIR(1,1+Ns(ik),ikir),ikir,&
   nrx2,nry2,nrz2,nfft1,nfft2,Nl123,wfunc(1),fftwk(1),fs,MAT_VXC(1,1))
-  VXCirr(:,:,ik)=MAT_VXC(:,:)
- enddo!ik
+  VXCirr(:,:,ikir)=MAT_VXC(:,:)
+  write(6,*)'ikir=',ikir 
+ enddo!ikir 
  deallocate(MAT_VXC,vxcr) 
  !
  allocate(VXC(Mb,Mb,NTK));VXC(:,:,:)=0.0d0 

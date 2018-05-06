@@ -61,9 +61,9 @@ write(6,*)
 !GREEN_FUNC_DELT=0.1d0!eV
 !
 Rc_range_spacing=2!3  
-Ncalc=0!Ncalc is set as NTB after
+Ncalc=0!Ncalc is set to NTB after
 calc_SC=.true.!calc SC: .true., not calc SC: .false.
-gw_grid_separation=0.0d0!this is set after read dat.green_function_delta_in_au in dir-eps 
+gw_grid_separation=0.05d0!(eV) 
 !--
 !open(999,file='input.in')
 !read(999,nml=param_calc_gw)
