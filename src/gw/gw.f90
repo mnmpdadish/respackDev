@@ -198,7 +198,7 @@ call MPI_BARRIER(comm,ierr)
 !
 if(myrank.eq.0)then 
  call rd_dat_chi_cutoff
- call rd_dat_green_function_delta_in_au
+ call rd_dat_ttrhdrn 
  call rd_dat_wgrid 
  call rd_dat_sq 
  call rd_dat_eps
@@ -220,9 +220,11 @@ endif!myrank.eq.0
 !
 call MPI_Bcast(Ecut_for_eps,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 !
-!green_function_delta_in_au(302) 
+!ttrhdrn(302) 
 !
 call MPI_Bcast(idlt,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+call MPI_Bcast(dmna,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+call MPI_Bcast(dmnr,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 !
 !wgrid(135)  
 !
@@ -333,6 +335,8 @@ endif
 !
 !make sgmw
 !
+if(gw_grid_separation<idlt) gw_grid_separation=idlt
+!
 if(myrank.eq.0)then 
  bandmin=minval(E_EIGI(1+minval(Ns),:)) 
  bandmax=maxval(E_EIGI(minval(Nb)+minval(Ns),:))
@@ -412,7 +416,9 @@ else
  enq=bnq+pnq-1
 end if
 !
-!SC 
+!######
+!  SC 
+!######
 !
 if(calc_sc)then!.true.=default 
  !
@@ -926,10 +932,10 @@ if(calc_sc)then!.true.=default
  call MPI_BARRIER(comm,ierr)
  write(file_id,*)'I finished pSCR calc' 
  !
- !make SCR 
+ !make MAT_SC_R 
  !
  if(myrank.eq.0)then 
-  allocate(SCR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); SCR=0.0d0 
+  allocate(MAT_SC_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); MAT_SC_R=0.0d0 
  endif 
  !
  ! 
@@ -941,16 +947,16 @@ if(calc_sc)then!.true.=default
  ! 
  !
  call MPI_Gather(pSCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,&
-                  SCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,0,comm,ierr)
+                 MAT_SC_R,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,0,comm,ierr)
  !--
- !OPEN(157,W,FILE='SCR') 
+ !OPEN(157,W,FILE='MAT_SC_R') 
  !rewind(157)
  !do ia1=-Na1,Na1
  ! do ia2=-Na2,Na2 
  !  do ia3=-Na3,Na3 
  !   do jw=1,NWF
  !    do iw=1,NWF 
- !     write(157)(SCR(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
+ !     write(157)(MAT_SC_R(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
  !    enddo!iw  
  !   enddo!jw  
  !  enddo!ia3 
@@ -959,15 +965,17 @@ if(calc_sc)then!.true.=default
  !close(157) 
  !--
  if(myrank.eq.0)then 
-  write(5004) SCR 
-  write(6,*)'finish SCR' 
+  !write(5004) MAT_SC_R 
+  write(6,*)'finish MAT_SC_R' 
  endif!myrank.eq.0 
  !
 else
  write(6,*)'skip SC calc.' 
 endif!calc SC or not 
 !
-!SX
+!######
+!  SX
+!######
 !
 write(file_id,'(a)')'## SX calc start ##'
 !
@@ -1264,8 +1272,8 @@ if(myrank.eq.0)then
  enddo 
  deallocate(SX,pf) 
  !
- write(5003) MAT_SX_R 
- write(6,*)'finish SXR' 
+ !write(5003) MAT_SX_R 
+ write(6,*)'finish MAT_SX_R' 
  !
  !OPEN(155,FILE='./dat.sx_mat_r') 
  !
@@ -1318,7 +1326,9 @@ if(myrank.eq.0)then
  !--
 endif!myrank.eq.0
 !
-!Vxc
+!#######
+!  Vxc
+!#######
 !
 if(myrank.eq.0)then
  !
@@ -1471,29 +1481,48 @@ if(myrank.eq.0)then
   enddo!ia2 
  enddo!ia1 
  !
+ !write(5002) MAT_VXC_R 
+ write(6,*)'finish MAT_VXC_R' 
 endif!myrank.eq.0
 !
-!band dispersion 
+!######################
+!  GW-DOS CALCULATION
+!######################
+!
+if(myrank.eq.0)then 
+  write(6,'(a)')'## gw-dos calc start ##'
+  call calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1(1),a2(1),a3(1),&
+  b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),MAT_VXC_R(1,1,-Na1,-Na2,-Na3),&
+  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),shift_value)            
+  write(6,'(a)')'finish gw-dos calc' 
+endif!myrank.eq.0 
+!
+!######################
+!  GW-AKW CALCULATION
+!######################
 !
 if(myrank.eq.0)then
- !
- write(file_id,'(a)')'## band dispersion calc start ##'
- !
- NSK_BAND_DISP=Ndiv*(N_sym_points-1)+1
- allocate(SK_BAND_DISP(3,NSK_BAND_DISP)); SK_BAND_DISP(:,:)=0.0d0 
- call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),SK_BAND_DISP(1,1))
- !
- write(5002) MAT_VXC_R 
- write(6,*)'finish VXCR' 
- write(5001) H_MAT_R 
- ! 
- H_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
- !
- call calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,NWF,SK_BAND_DISP(1,1),&
- H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1))  
+  write(6,'(a)')'## gw-akw calc start ##'
+  NSK_BAND_DISP=Ndiv*(N_sym_points-1)+1
+  allocate(SK_BAND_DISP(3,NSK_BAND_DISP)); SK_BAND_DISP(:,:)=0.0d0 
+  call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),SK_BAND_DISP(1,1))
+  !
+  !write(5001) H_MAT_R 
+  !H_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
+  !
+  call calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,NWF,SK_BAND_DISP(1,1),&
+  H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1))  
+  !
+  call calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,NSK_BAND_DISP,idlt,shift_value,&
+  SK_BAND_DISP(1,1),a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),sgmw(1),H_MAT_R(1,1,-Na1,-Na2,-Na3),&
+  MAT_VXC_R(1,1,-Na1,-Na2,-Na3),MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1))            
+  !
+  write(6,'(a)')'finish gw-akw calc' 
 endif!myrank.eq.0
 !
-!FINISH 
+!##########
+!  FINISH 
+!##########
 !
 call MPI_BARRIER(comm,ierr)
 end_time=MPI_Wtime()

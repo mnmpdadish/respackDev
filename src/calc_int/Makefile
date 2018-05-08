@@ -6,12 +6,12 @@ TARGET = calc_w3d calc_j3d
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
 FC = ifort  
-FFLAGS = -O2 -openmp -xHost -g -traceback
+FFLAGS = -O2 -qopenmp -xHost -g -traceback
 
 #######
 #DEBUG#
 #######
-#FFLAGS = -openmp -debug full -check all -warn all -traceback -g 
+#FFLAGS = -qopenmp -debug full -check all -warn all -traceback -g 
 
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 

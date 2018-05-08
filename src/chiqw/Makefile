@@ -6,12 +6,12 @@
 #--------------------------------------------------------------------
 #intel
 FC = mpiifort 
-FFLAGS = -O2 -openmp -xHost -mcmodel=large -shared-intel 
+FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel 
 
 #######
 #DEBUG#
 #######
-#FFLAGS = -openmp -xHost -mcmodel=large -shared-intel -debug full -check all -warn all -traceback -g  
+#FFLAGS = -qopenmp -xHost -mcmodel=large -shared-intel -debug full -check all -warn all -traceback -g  
 
 #############################
 # note by Maxime Charlebois #
@@ -24,12 +24,12 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 
 #openMPI 
 #FC = mpif90 
-#FFLAGS = -O2 -openmp -xHost -mcmodel=large -shared-intel
+#FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #sekirei 
 #FC = mpif90 
-#FFLAGS = -O2 -openmp -g -traceback
+#FFLAGS = -O2 -qopenmp -g -traceback
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #GNU 

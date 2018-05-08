@@ -1229,6 +1229,12 @@
        OPEN(300,FILE='./dat.chi_cutoff')!20170402 
        write(300,*) Ecut_for_eps!20170402  
 !--
+!OPEN(302,W,FILE='dat.ttrhdrn')!20180507 
+       OPEN(302,FILE='./dat.ttrhdrn')!20180507 
+       write(302,*) delt!au 
+       write(302,*) ttrhdrn_dmna!au 
+       write(302,*) ttrhdrn_dmnr!au 
+!--
 !OPEN(135,R,FILE='dat.wgrid') 
        OPEN(135,FILE='./dat.wgrid') 
        write(135,*) nen!20170331 nen=Num_freq_grid 

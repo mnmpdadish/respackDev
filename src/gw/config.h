@@ -34,9 +34,8 @@ complex(8),allocatable::SCirr(:,:,:,:)
 complex(8),allocatable::pSC(:,:,:,:) 
 complex(8),allocatable::pSComp(:,:,:,:) 
 complex(4),allocatable::epsmk(:,:,:) 
-!complex(8),allocatable::SCR(:,:,:,:,:,:) 
 complex(4),allocatable::pSCR(:,:,:,:,:,:) 
-complex(4),allocatable::SCR(:,:,:,:,:,:) 
+complex(4),allocatable::MAT_SC_R(:,:,:,:,:,:) 
 real(8)::sgn,de,delta 
 complex(8)::dnm 
 complex(8)::psum 
@@ -96,6 +95,10 @@ real(8)::phase,en
 !
 real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND(3,NSK_BAND_DISP)
 integer::NSK_BAND_DISP 
+!
+!DOS & AKW
+!
+real(8)::shift_value
 !
 !index 
 !
