@@ -1,39 +1,34 @@
-subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,NSK_BAND_DISP,idlt,shift_ef,&
-  SK_BAND_DISP,a1,a2,a3,b1,b2,b3,sgmw,KS_R,XC_R,SX_R,SC_R)
+subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP,idlt,shift_ef,SK_BAND_DISP,a1,a2,a3,&
+  sgmw,KS_R,XC_R,SX_R,SC_R,AKW)
   !
   implicit none 
-  integer::NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,NSK_BAND_DISP
+  integer::NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP
   real(8)::idlt,shift_ef 
   real(8)::SK_BAND_DISP(3,NSK_BAND_DISP)
   real(8)::a1(3),a2(3),a3(3)
-  real(8)::b1(3),b2(3),b3(3)
   real(8)::sgmw(nsgm)  
   complex(8)::KS_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)   
   complex(8)::XC_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)   
   complex(8)::SX_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)   
   complex(4)::SC_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)   
   !
-  real(8),allocatable::AKW(:,:)!AKW(NSK_BAND_DISP,nsgm)           
   real(8),allocatable::WEIGHT_R(:,:,:)!WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
   complex(8),allocatable::pf(:,:,:,:)!pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NSK_BAND_DISP)   
   complex(8),allocatable::EMK(:,:,:)!EMK(NWF,NSK_BAND_DISP,nsgm)           
   complex(4),allocatable::GW_R(:,:,:,:,:,:)!GW_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)   
   !
-  real(8),allocatable::DIST_K(:)!DIST_K(NSK_BAND_DISP)
-  real(8),allocatable::dist(:)!dist(0:Nblk-1)
-  real(8)::DIST_B(3),DIST_KSPACE
-  !
-  integer::ik,ib,jb,ix,ia1,ia2,ia3,ie,ks,ke,ia1min,ia2min,ia3min 
+  integer::ik,ib,jb,ia1,ia2,ia3,ie,ia1min,ia2min,ia3min 
   real(8)::PHASE           
-  real(8)::omega,delta 
   real(8)::SUM_REAL 
   complex(8)::w,d,en 
   !
   real(8),parameter::au=27.21151d0
   real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
   complex(8),parameter::ci=(0.0D0,1.0D0) 
+  !
+  real(8),intent(out)::AKW(NSK_BAND_DISP,nsgm)           
   ! 
-  !GW_R 
+  !1. GW_R 
   !
   allocate(GW_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm));GW_R=0.0d0   
   do ia1=-Na1,Na1 
@@ -53,8 +48,9 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,
     enddo
    enddo
   enddo
-  !
   write(6,*)'# finish make H(R)'
+  !
+  !2. WEIGHT_R
   !
   allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
   SUM_REAL=0.0d0 
@@ -73,6 +69,8 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,
    stop 'SUM_WEIGHT/=NTK'
   endif 
   !
+  !3. PHASE FACTOR 
+  !
   allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NSK_BAND_DISP)); pf=0.0d0 
   do ik=1,NSK_BAND_DISP          
    do ia3=-Na3,Na3 
@@ -90,31 +88,14 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,
   enddo 
   write(6,*)'# finish make pf'
   !
-  !H(k) IN WANNIER BASIS. AND DIAGONALIZE
+  !4. HGW IN WANNIER BASIS. AND DIAGONALIZE
   !
   allocate(EMK(NWF,NSK_BAND_DISP,nsgm)); EMK=0.0d0 
   call make_emk(NSK_BAND_DISP,NWF,nsgm,Na1,Na2,Na3,GW_R(1,1,-Na1,-Na2,-Na3,1),pf(-Na1,-Na2,-Na3,1),EMK(1,1,1))  
   !
-  !CALC SPECTRAL FUNCTION 
+  !5. CALC SPECTRAL FUNCTION 
   !
-  allocate(DIST_K(NSK_BAND_DISP));DIST_K(:)=0.0d0 
-  allocate(dist(0:N_sym_points-1));dist(:)=0.0d0 
-  !--
-  dist(0)=0.0d0 
-  do ix=1,N_sym_points-1 
-   ks=(ix-1)*Ndiv+1
-   ke=(ix)*Ndiv+1
-   do ik=ks,ke 
-    DIST_B(:)=(SK_BAND_DISP(1,ik)-SK_BAND_DISP(1,ks))*b1(:)&
-             +(SK_BAND_DISP(2,ik)-SK_BAND_DISP(2,ks))*b2(:)&
-             +(SK_BAND_DISP(3,ik)-SK_BAND_DISP(3,ks))*b3(:)
-    DIST_KSPACE=DSQRT(DIST_B(1)**2+DIST_B(2)**2+DIST_B(3)**2)
-    DIST_K(ik)=DIST_KSPACE+dist(ix-1) 
-   enddo!ik 
-   dist(ix)=dist(ix-1)+DIST_KSPACE
-  enddo!ix 
-  !
-  allocate(AKW(NSK_BAND_DISP,nsgm)); AKW=0.0d0
+  AKW=0.0d0
   do ik=1,NSK_BAND_DISP 
    do jb=1,NWF 
     do ie=1,nsgm 
@@ -126,18 +107,7 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,Ndiv,N_sym_points,
    enddo 
   enddo 
   !
-  rewind(161) 
-  do ie=1,nsgm 
-   omega=sgmw(ie) 
-   do ik=1,NSK_BAND_DISP 
-    delta=DIST_K(ik)/DIST_K(NSK_BAND_DISP)
-    if(AKW(ik,ie)>=500.0d0) AKW(ik,ie)=500.0d0 
-    write(161,*) delta,omega*au,AKW(ik,ie) 
-   enddo 
-   write(161,*) 
-  enddo 
-  !
-  deallocate(AKW,WEIGHT_R,pf,EMK,GW_R,DIST_K,dist) 
+  deallocate(WEIGHT_R,pf,EMK,GW_R) 
   !
 return
 end

@@ -1,4 +1,5 @@
-subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,SK_BAND_DISP,H_MAT_R,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3)  
+subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,SK_BAND_DISP,H_MAT_R,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,&
+  kdata,E_BAND_DISP)  
   implicit none 
   !
   integer::Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ
@@ -8,7 +9,6 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
   complex(8)::H_MAT_R(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3)
   !
   real(8),allocatable::E_TMP(:)!E_TMP(n_occ)  
-  real(8),allocatable::E_BAND_DISP(:,:)!E_BAND_DISP(n_occ,NTK)
   real(8),allocatable::WEIGHT_R(:,:,:)!WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
   complex(8),allocatable::H_TMP_IN(:,:)!H_TMP_IN(n_occ,n_occ)
   complex(8),allocatable::H_TMP_OUT(:,:)!H_TMP_OUT(n_occ,n_occ)
@@ -21,17 +21,13 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
   real(8)::SUM_REAL 
   complex(8)::PHASE_FACTOR     
   complex(8)::SUM_CMPX 
-  LOGICAL::REVERSE 
   !
   real(8),parameter::au=27.21151d0
   real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
   complex(8),parameter::ci=(0.0D0,1.0D0) 
   !
-  allocate(E_TMP(n_occ));E_TMP(:)=0.0d0            
-  allocate(H_TMP_IN(n_occ,n_occ));H_TMP_IN(:,:)=0.0d0           
-  allocate(H_TMP_OUT(n_occ,n_occ));H_TMP_OUT(:,:)=0.0d0  
-  allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
-  allocate(E_BAND_DISP(n_occ,NSK_BAND_DISP));E_BAND_DISP(:,:)=0.0d0 
+  real(8),intent(out)::kdata(NSK_BAND_DISP)
+  real(8),intent(out)::E_BAND_DISP(n_occ,NSK_BAND_DISP)
   !
   !1. SAMPLE k-POINTS FOR INTERPOLATED BAND DISPERSION 
   !
@@ -47,6 +43,7 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
   !
   !2. WEIGHT_R BY YUSUKE NOMURA 
   !
+  allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
   WEIGHT_R=1.0d0; SUM_REAL=0.0d0 
   do ia1=-Na1,Na1!-1         
    do ia2=-Na2,Na2!-1         
@@ -64,6 +61,12 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
   endif 
   !
   !3. H_MAT(k') IN WANNIER BASIS AND DIAGONALIZE 
+  !
+  allocate(E_TMP(n_occ));E_TMP(:)=0.0d0            
+  allocate(H_TMP_IN(n_occ,n_occ));H_TMP_IN(:,:)=0.0d0           
+  allocate(H_TMP_OUT(n_occ,n_occ));H_TMP_OUT(:,:)=0.0d0  
+  !allocate(E_BAND_DISP(n_occ,NSK_BAND_DISP))
+  E_BAND_DISP=0.0d0 
   !
   do ik=1,NSK_BAND_DISP          
    H_TMP_IN(:,:)=0.0D0               
@@ -86,16 +89,16 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
      H_TMP_IN(ib,jb)=SUM_CMPX           
     enddo!jb
    enddo!ib
-  !
-  !4. diag H_TMP_IN
-  !
+   !
+   !4. diag H_TMP_IN
+   !
    E_TMP(:)=0.0D0                
    call diagV(n_occ,H_TMP_IN(1,1),E_TMP(1)) 
    H_TMP_OUT(:,:)=H_TMP_IN(:,:)
    E_BAND_DISP(:,ik)=E_TMP(:)            
   enddo!ik           
   !
-  !5. WRITE BAND DISPERSION 
+  !5. GENERATE KDATA (DISPERSION LINE) 
   !
   allocate(DIST_K(NSK_BAND_DISP));DIST_K(:)=0.0d0 
   allocate(dist(0:N_sym_points-1));dist(:)=0.0d0 
@@ -114,27 +117,10 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
    dist(ix)=dist(ix-1)+DIST_KSPACE
   enddo!ix 
   !
-  !OPEN(114,W,FILE='dat.iband') 
+  kdata=0.0d0 
+  kdata(:)=DIST_K(:)/DIST_K(NSK_BAND_DISP)
   !
-  OPEN(114,FILE='./dat.iband') 
-  write(114,'(a)')'#Wannier interpolaed band'
-  write(114,'(a)')'#1:k, 2:Energy [eV]' 
-  REVERSE=.TRUE.        
-  do ib=1,n_occ             
-   if(REVERSE)then 
-    do ik=1,NSK_BAND_DISP                     
-     write(114,*) DIST_K(ik)/DIST_K(NSK_BAND_DISP),E_BAND_DISP(ib,ik)*au
-    enddo!ik        
-    REVERSE=.FALSE.        
-   else         
-    do ik=NSK_BAND_DISP,1,-1          
-     write(114,*) DIST_K(ik)/DIST_K(NSK_BAND_DISP),E_BAND_DISP(ib,ik)*au
-    enddo!ik        
-    REVERSE=.TRUE.        
-   endif!REVERSE                   
-  enddo!ib 
-  !
-  deallocate(E_TMP,E_BAND_DISP,WEIGHT_R,H_TMP_IN,H_TMP_OUT,DIST_K,dist) 
+  deallocate(E_TMP,WEIGHT_R,H_TMP_IN,H_TMP_OUT,DIST_K,dist) 
   !
 return
 end

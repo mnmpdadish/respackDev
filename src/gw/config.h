@@ -16,7 +16,8 @@ real(8)::start_time,end_time,diff_time
 !integer::status(MPI_STATUS_SIZE)
 integer::nbufq,pnq,bnq,enq
 integer::nbufw,pnw,bnw,enw 
-integer::file_id 
+!
+!integer::file_id 
 !
 !fft 
 !
@@ -25,7 +26,7 @@ integer::nfft1,nfft2,nfft3,Nl123,err
 real(8),allocatable::fftwk(:)!fftwk(Nl123*2) 
 real(8),allocatable::wfunc(:)!wfunc(Nl123*2) 
 !
-!sc
+!SC 
 !
 complex(8),allocatable::vecf(:)!vecf(ne)
 complex(8),allocatable::veca(:)!veca(ne) 
@@ -40,7 +41,7 @@ real(8)::sgn,de,delta
 complex(8)::dnm 
 complex(8)::psum 
 !
-!sx 
+!SX 
 !
 !integer::Ncalc 
 integer::NG_for_eps,NG_for_psi            
@@ -82,7 +83,7 @@ integer::nsgm
 real(8),allocatable::sgmw(:)!sgmw(nsgm)  
 real(8)::bandmax,bandmin,diff_band_energy,chiqw_grd_size,emax,emin,ecmax,ecmin 
 !
-!vxc
+!XC 
 !
 complex(8),allocatable::MAT_VXC(:,:)
 complex(8),allocatable::VXCirr(:,:,:) 
@@ -96,9 +97,18 @@ real(8)::phase,en
 real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND(3,NSK_BAND_DISP)
 integer::NSK_BAND_DISP 
 !
-!DOS & AKW
+!DOS 
 !
 real(8)::shift_value
+real(8),allocatable::ksdos(:)!ksdos(nsgm) 
+real(8),allocatable::gwdos(:)!gwdos(nsgm) 
+!
+!AKW
+!
+LOGICAL::REVERSE 
+real(8),allocatable::kdata(:)!kdata(NSK_BAND_DISP) 
+real(8),allocatable::E_BAND_DISP(:,:)!E_BAND_DISP(NWF,NSK_BAND_DISP) 
+real(8),allocatable::gwakw(:,:)!gwakw(NSK_BAND_DISP,nsgm) 
 !
 !index 
 !
@@ -108,5 +118,8 @@ real(8)::SUM_REAL
 real(8)::mem_size          
 complex(8)::SUM_CMPX
 !
-!end-of-config.h 
+!file output 
 !
+integer::chdir
+!
+!end-of-config.h 

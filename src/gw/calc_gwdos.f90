@@ -1,5 +1,5 @@
 subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1,a2,a3,b1,b2,b3,sgmw,SK0,&
-  KS_R,XC_R,SX_R,SC_R,shift_value) 
+  KS_R,XC_R,SX_R,SC_R,shift_value,ksdos,gwdos) 
   !
   implicit none 
   integer::NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3 
@@ -15,8 +15,6 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   !
   real(8),allocatable::WEIGHT_R(:,:,:)!WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
   real(8),allocatable::EKS(:,:)!EKS(NWF,NTK)           
-  real(8),allocatable::dos(:)!dos(nsgm) 
-  real(8),allocatable::gwdos(:)!gwdos(nsgm) 
   complex(8),allocatable::pf(:,:,:,:)!pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK)   
   complex(8),allocatable::EMK(:,:,:)!EMK(NWF,NTK,nsgm)           
   complex(4),allocatable::GW_R(:,:,:,:,:,:)!GW_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)   
@@ -31,8 +29,10 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   complex(8),parameter::ci=(0.0D0,1.0D0) 
   !
   real(8),intent(out)::shift_value 
+  real(8),intent(out)::ksdos(nsgm) 
+  real(8),intent(out)::gwdos(nsgm) 
   !
-  !make GR_R 
+  !1. make GR_R 
   !
   allocate(GW_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm));GW_R=0.0d0   
   do ie=1,nsgm
@@ -54,7 +54,7 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   enddo 
   write(6,*)'# finish make GW_R'
   !
-  !WEIGHT_R BY Y.Nomura NOMURA 
+  !2. WEIGHT_R BY Y.Nomura NOMURA 
   !
   allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
   SUM_REAL=0.0d0 
@@ -90,41 +90,31 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   enddo!ik  
   write(6,*)'# finish make pf'
   !
-  !HKS IN WANNIER BASIS. AND DIAGONALIZE
+  !3. HKS IN WANNIER BASIS. AND DIAGONALIZE
   !
   allocate(EKS(NWF,NTK)); EKS=0.0d0 
   call make_eks(NTK,NWF,Na1,Na2,Na3,KS_R(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1))  
   !
-  !HKS DOS CALC
+  !4. KS-DOS CALC
   !
-  allocate(dos(nsgm)); dos=0.0d0 
-  call calc_dos_KS(NWF,NTK,nkb1,nkb2,nkb3,nsgm,sgmw(1),EKS(1,1),SK0(1,1),idlt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
+  ksdos=0.0d0 
+  call calc_dos_KS(NWF,NTK,nkb1,nkb2,nkb3,nsgm,sgmw(1),EKS(1,1),SK0(1,1),idlt,dmnr,dmna,b1(1),b2(1),b3(1),ksdos(1)) 
   !
-  !HGW IN WANNIER BASIS. AND DIAGONALIZE
+  !5. HGW IN WANNIER BASIS. AND DIAGONALIZE
   !
   allocate(EMK(NWF,NTK,nsgm)); EMK=0.0d0 
   call make_emk(NTK,NWF,nsgm,Na1,Na2,Na3,GW_R(1,1,-Na1,-Na2,-Na3,1),pf(-Na1,-Na2,-Na3,1),EMK(1,1,1))  
   !
-  !DETERMINE SHIFT 
+  !6. DETERMINE SHIFT 
   !
   call det_shift(NTK,NWF,nsgm,FermiEnergy,sgmw(1),EKS(1,1),EMK(1,1,1),shift_value) 
   !
-  !GW DOS CALC
+  !7. GW-DOS CALC
   !
-  allocate(gwdos(nsgm)); gwdos=0.0d0  
+  gwdos=0.0d0  
   call calc_dos_GW(nkb1,nkb2,nkb3,NTK,NWF,nsgm,idlt,dmna,dmnr,shift_value,b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),EMK(1,1,1),gwdos(1)) 
   !
-  rewind(159) 
-  do ie=1,nsgm 
-   write(159,'(2f20.10)') sgmw(ie)*au,gwdos(ie) 
-  enddo 
-  !
-  rewind(160)
-  do ie=1,nsgm
-   write(160,*) sgmw(ie)*au,dos(ie)
-  enddo 
-  !
-  deallocate(WEIGHT_R,EKS,dos,gwdos,pf,EMK,GW_R) 
+  deallocate(WEIGHT_R,EKS,pf,EMK,GW_R) 
   !
 return 
 end
