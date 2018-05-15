@@ -387,17 +387,18 @@
       RETURN
       END    
 !---
-      SUBROUTINE CALC_OVERLAP(NTK,NTB,NTG,nvx,nvy,nvz,ik,ik_ib,NG0,
-     + KG0,N_BAND,SHIFT_b,C0_BRA,C0_KET,OVERLAP_TMP,N_BAND_BOTTOM)
+      SUBROUTINE CALC_OVERLAP(NTK,NTB,NTG,ncomp,nvx,nvy,nvz,
+     + ik,ik_ib,NG0,KG0,N_BAND,SHIFT_b,C0_BRA,C0_KET,
+     + OVERLAP_TMP,N_BAND_BOTTOM)
       implicit none           
-      integer::NTK,NTB,NTG,nvx,nvy,nvz       
+      integer::NTK,NTB,NTG,nvx,nvy,nvz, ncomp 
       integer::NG0(NTK),KG0(3,NTG,NTK),N_BAND(NTK)         
       integer::SHIFT_b(3),N_BAND_BOTTOM(NTK)         
       integer::PULLBACK(NTG)           
       integer::MAP(-nvx:nvx,-nvy:nvy,-nvz:nvz)
-      integer::ik,ik_ib,ig,ig1,ig2,i_band,j_band
-      complex(8)::C0_BRA(0:NTG,NTB)    
-      complex(8)::C0_KET(0:NTG,NTB)    
+      integer::ik,ik_ib,ig,ig1,ig2,i_band,j_band, ic
+      complex(8)::C0_BRA(0:NTG,ncomp,NTB)    
+      complex(8)::C0_KET(0:NTG,ncomp,NTB)    
       complex(8)::OVERLAP_TMP(NTB,NTB)            
       complex(8)::ELEMENT_OVERLAP
 !MAP FUNCTION
@@ -422,10 +423,12 @@
         ELEMENT_OVERLAP=0.0D0 
         do ig2=1,NG0(ik_ib)     
          ig1=PULLBACK(ig2)   
-          ELEMENT_OVERLAP 
-     +  = ELEMENT_OVERLAP 
-     +  + CONJG(C0_BRA(ig1,i_band+N_BAND_BOTTOM(ik)))
-     +  *       C0_KET(ig2,j_band+N_BAND_BOTTOM(ik_ib))
+         do ic=1,ncomp
+            ELEMENT_OVERLAP 
+     +    = ELEMENT_OVERLAP 
+     +    + CONJG(C0_BRA(ig1,ic,i_band+N_BAND_BOTTOM(ik)))
+     +    *       C0_KET(ig2,ic,j_band+N_BAND_BOTTOM(ik_ib))
+         enddo
         enddo!IG2 
         OVERLAP_TMP(i_band,j_band)=ELEMENT_OVERLAP      
        enddo!j_band     
@@ -604,58 +607,119 @@
       RETURN 
       END 
 !--
-      subroutine make_C0(NTG,NTB,itrs,NG,KGtmp,RWtmp,rginvtmp,pgtmp,
+
+!-------------------------------------------------
+!
+!     NTG      : number total G vector (max(abs(NTI)))  
+!     NTB      : number of khon sham bands
+!     itrs     : time reversal symmetry for this k point
+!     NG       : Number of G for this k point
+!     KGtmp    : array of every K+G vector that respect the cutoff energy (see make_KG0)
+!     RWtmp    : delta G applied to go back in the first BZ for this k point
+!     rginvtmp : inverse matrix of the rotation for this symmetry operation
+!     pgtmp    : value of the numerators of translation for this symmetry operation
+!     nnp      : value of the denomiator of translation for this symmetry operation
+!
+!     Translation = ( pgtmp(1) * a1 + pgtmp(2) * a2 + pgtmp(3) * a3) / nnp
+!
+!     L1       : maxval(abs(KGI(1,:,:)))+1     
+!     packtmp  : 
+!     C0irr    : irreducible wavefunction (Kohn Sham) coefficient read from dat.wfn 
+!     C0_K     : total wavefunction (Kohn Sham) coefficient constructed from CIR
+!-------------------------------------------------
+
+
+      subroutine make_C0(NTG,ncomp,rinv_SO,
+     +           NTB,itrs,NG,KGtmp,RWtmp,rginvtmp,pgtmp,
      +           nnp,L1,L2,L3,packtmp,C0irr,C0_K) 
       implicit none 
 
-      integer::NTG,NTB,itrs,NG,L1,L2,L3,nnp 
+      integer::NTG,NTB,itrs,NG,L1,L2,L3,nnp,ncomp
       integer::KGtmp(3,NTG),RWtmp(3),pgtmp(3) 
       integer::packtmp(-L1:L1,-L2:L2,-L3:L3) 
-      integer::ig,jg,i1,i2,i3,j1,j2,j3,k1,k2,k3 
+      integer::ib,ig,jg,i1,i2,i3,j1,j2,j3,k1,k2,k3 
       real(8)::rginvtmp(3,3),phase 
-      complex(8)::C0irr(NTG,NTB),C0_K(NTG,NTB) 
-      complex(8)::pf
+      complex(8)::C0irr(NTG,ncomp,NTB),C0_K(NTG,ncomp,NTB)!! change 
+      complex(8)::pf,rinv_SO(2,2)
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
-      C0_K(:,:)=0.0d0 
+      C0_K(:,:,:)=0.0d0 
       select case(itrs) 
       case(1)!=== not time-reversal ===*      
       do ig=1,NG 
        i1=KGtmp(1,ig); j1=KGtmp(2,ig); k1=KGtmp(3,ig) 
        i2=i1+RWtmp(1); j2=j1+RWtmp(2); k2=k1+RWtmp(3) 
-       i3=int(rginvtmp(1,1))*i2+int(rginvtmp(1,2))*j2 
+
+       i3=int(rginvtmp(1,1))*i2
+     +   +int(rginvtmp(1,2))*j2 
      +   +int(rginvtmp(1,3))*k2 
-       j3=int(rginvtmp(2,1))*i2+int(rginvtmp(2,2))*j2 
+
+       j3=int(rginvtmp(2,1))*i2
+     +   +int(rginvtmp(2,2))*j2 
      +   +int(rginvtmp(2,3))*k2 
-       k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2 
+
+       k3=int(rginvtmp(3,1))*i2
+     +   +int(rginvtmp(3,2))*j2 
      +   +int(rginvtmp(3,3))*k2 
+
        jg=packtmp(i3,j3,k3) 
        phase=tpi*(dble(i1)*dble(pgtmp(1))
      +           +dble(j1)*dble(pgtmp(2))
      +           +dble(k1)*dble(pgtmp(3))) 
        pf=exp(-ci*phase/dble(nnp)) 
-       C0_K(ig,:)=C0irr(jg,:)*pf 
+
+       if(ncomp==2) then 
+!        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
+!        C0_K(ig,2,:)=C0irr(jg,2,:)*pf
+        C0_K(ig,1,:)=rinv_SO(1,1)*C0irr(jg,1,:)*pf
+     +              +rinv_SO(2,1)*C0irr(jg,2,:)*pf
+        C0_K(ig,2,:)=rinv_SO(1,2)*C0irr(jg,1,:)*pf
+     +              +rinv_SO(2,2)*C0irr(jg,2,:)*pf
+
+       else
+        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
+       endif
+
       enddo!ig 
       case(-1)!=== time-reversal ===*      
       do ig=1,NG 
        i1=KGtmp(1,ig); j1=KGtmp(2,ig); k1=KGtmp(3,ig) 
        i2=i1+RWtmp(1); j2=j1+RWtmp(2); k2=k1+RWtmp(3) 
-       i3=int(rginvtmp(1,1))*i2+int(rginvtmp(1,2))*j2 
+
+       i3=int(rginvtmp(1,1))*i2
+     +   +int(rginvtmp(1,2))*j2 
      +   +int(rginvtmp(1,3))*k2 
-       j3=int(rginvtmp(2,1))*i2+int(rginvtmp(2,2))*j2 
+
+       j3=int(rginvtmp(2,1))*i2
+     +   +int(rginvtmp(2,2))*j2 
      +   +int(rginvtmp(2,3))*k2 
-       k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2 
+
+       k3=int(rginvtmp(3,1))*i2
+     +   +int(rginvtmp(3,2))*j2 
      +   +int(rginvtmp(3,3))*k2 
+
        jg=packtmp(i3,j3,k3) 
        phase=tpi*(dble(i1)*dble(pgtmp(1))
      +           +dble(j1)*dble(pgtmp(2))
      +           +dble(k1)*dble(pgtmp(3))) 
        pf=exp(-ci*phase/dble(nnp)) 
-       C0_K(ig,:)=C0irr(jg,:)*pf 
+       
+       if(ncomp==2) then
+        !C0_K(ig,1,:)=-conjg(C0irr(jg,2,:)*pf)
+        !C0_K(ig,2,:)= conjg(C0irr(jg,1,:)*pf)
+        C0_K(ig,2,:)= conjg(rinv_SO(1,1)*C0irr(jg,1,:)*pf
+     +                     +rinv_SO(2,1)*C0irr(jg,2,:)*pf)
+        C0_K(ig,1,:)=-conjg(rinv_SO(1,2)*C0irr(jg,1,:)*pf
+     +                     +rinv_SO(2,2)*C0irr(jg,2,:)*pf)
+       else
+        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
+       endif 
+
+       if( abs(dble(pf)-1d0) > 1.0d-5 ) stop 'pf wrong1 (nomura)'
+       if( abs(dimag(pf)) > 1.0d-5 ) stop 'pf wrong2 (nomura)'
       enddo!ig 
-      C0_K(:,:)=conjg(C0_K(:,:))  
       end select 
 !--
 !      SUM_CMPX=0.0d0 
@@ -666,6 +730,33 @@
 !--
       return 
       end 
+
+
+
+
+      subroutine inv_2x2_complex(matrix2x2_to_be_inverted)
+      implicit none 
+
+      complex(8),intent(inout)::matrix2x2_to_be_inverted(2,2) 
+      complex(8)::mat(2,2)
+      complex(8)::det
+      
+      det=matrix2x2_to_be_inverted(1,1)*matrix2x2_to_be_inverted(2,2)
+     +   -matrix2x2_to_be_inverted(1,2)*matrix2x2_to_be_inverted(2,1)
+      
+      mat(1,1) = matrix2x2_to_be_inverted(2,2)/det
+      mat(1,2) =-matrix2x2_to_be_inverted(1,2)/det
+      mat(2,1) =-matrix2x2_to_be_inverted(2,1)/det
+      mat(2,2) = matrix2x2_to_be_inverted(1,1)/det
+      
+      matrix2x2_to_be_inverted(:,:) = mat(:,:)
+      
+      return 
+      end 
+
+
+
+
 !--
       SUBROUTINE OUTER_PRODUCT(vec_x,vec_y,vec_z)
       implicit none 
@@ -781,11 +872,11 @@
 !     + N_BAND(ik),C0(1,1,ik),N_BAND_BTM(ik),NORM_GAUSS(1),VOLUME,
 !     + A_TMP(1,1)) 
 !--
-      subroutine make_amat(nigs,NTB,NTG,NG0,SK0,KG0,b1,b2,b3,    
+      subroutine make_amat(nigs,NTB,NTG,ncomp,NG0,SK0,KG0,b1,b2,b3,    
      + TAU_GAUSS,ALPHA_GAUSS,loc_x,loc_y,loc_z,LGAUSS,MGAUSS,
      + N_BAND,C0,N_BAND_BTM,NORM_GAUSS,VOLUME,A_TMP) 
       implicit none
-      integer::nigs,NTB,NTG
+      integer::nigs,NTB,NTG, ncomp
       integer::NG0
       real(8)::SK0(3)
       integer::KG0(3,NTG)
@@ -797,12 +888,12 @@
       real(8)::loc_x(3,nigs),loc_y(3,nigs),loc_z(3,nigs) 
       integer::LGAUSS(nigs),MGAUSS(nigs)
       integer::N_BAND,N_BAND_BTM 
-      complex(8)::C0(NTG,NTB)
+      complex(8)::C0(NTG,ncomp,NTB)
       complex(8)::A_TMP(NTB,nigs)  
 !--
       real(8),parameter::pi=dacos(-1.0d0)
       complex(8),parameter::ci=(0.0D0,1.0D0) 
-      integer::j_gauss,ig,i_band,jL,jM 
+      integer::j_gauss,ig,i_band,jL,jM, ic
       real(8)::PHASE,ZETA1,ZETA2,YLM
       real(8)::VEC_KG(3,NTG)  
       real(8)::KG2(NTG) 
@@ -814,6 +905,12 @@
       A_TMP=0.0d0 
       do j_gauss=1,nigs
 !--
+       if( j_gauss <= nigs/2 ) then
+         ic = 1
+       else
+         ic = 2
+       end if
+
        VEC_KG(:,:)=0.0D0             
        PF1(:)=0.0D0 
        PF2(:)=0.0D0 
@@ -854,7 +951,7 @@
           YLM=DSQRT(1.0D0/4.0D0/pi)        
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig) 
      +   *YLM                                      
      +   *NORM_GAUSS(j_gauss) 
@@ -869,7 +966,7 @@
           YLM=DSQRT(3.0D0/4.0D0/pi)*VEC_KG(2,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)  
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
@@ -884,7 +981,7 @@
           YLM=DSQRT(3.0D0/4.0D0/pi)*VEC_KG(3,ig) 
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)            
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
@@ -899,7 +996,7 @@
           YLM=DSQRT(3.d0/4.d0/pi)*VEC_KG(1,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)  
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
@@ -914,7 +1011,7 @@
           YLM=0.5d0*DSQRT(15.d0/pi)*VEC_KG(1,ig)*VEC_KG(2,ig)       
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)     
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
@@ -929,7 +1026,7 @@
           YLM=(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(2,ig)*VEC_KG(3,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)  
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
@@ -944,7 +1041,7 @@
           YLM=(0.25d0)*DSQRT(5.d0/pi)*(3.d0*VEC_KG(3,ig)**2-KG2(ig))
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)  
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
@@ -959,7 +1056,7 @@
           YLM=(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(3,ig)*VEC_KG(1,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)           
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
@@ -975,7 +1072,7 @@
      +       *(VEC_KG(1,ig)**2-VEC_KG(2,ig)**2) 
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,i_band+N_BAND_BTM)) 
+     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
      +   *PF1(ig)              
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 

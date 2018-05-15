@@ -1,7 +1,7 @@
 # Copyright (c) 2017 Yusuke Nomura, Terumasa Tadano 
 # Simple Makefile for qe2respack
 
-QEROOT=
+QEROOT=/home/maxime/install/espresso-5.4.0/
 # Root directory of a Quantum ESPRESSO distribution.
 # Please edit QEROOT according to your environment.
 # examples: 
@@ -13,7 +13,7 @@ QEROOT=
 # Intel compiler with intel MKL
 FC = ifort
 FFLAGS = -O2 -xHOST -g -traceback
-LINKER =  mpif90 
+LINKER =  mpiifort 
 LDFLAGS = -liomp5 -lpthread
 LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
 # GNU

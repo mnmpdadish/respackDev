@@ -95,9 +95,10 @@
       allocate(rg(3,3,nsymq));rg=0
       allocate(pg(3,nsymq));pg=0
       allocate(rginv(3,3,nsymq));rginv=0.0d0 
+      allocate(rinv_SO(2,2,nsymq));rinv_SO=0.0d0 
       do iop=1,nsymq
        read(100,*)((rg(i,j,iop),i=1,3),j=1,3) 
-       read(100,*)(pg(i,iop),i=1,3)   
+       read(100,*)(pg(i,iop),i=1,3)  
       enddo 
       close(100) 
 !--
@@ -119,6 +120,50 @@
       do iop=1,nsymq
        call invmat(3,rginv(1,1,iop)) 
       enddo 
+!--
+
+      do i = 1, 3 
+       mat_b(i,1)=b1(i)
+       mat_b(i,2)=b2(i)
+       mat_b(i,3)=b3(i)
+      end do
+      
+      mat_b_inv=mat_b
+      call invmat(3,mat_b_inv(1,1))
+    
+
+  403 format(3(1x,F10.5,"        ",1x))
+  402 format(3(1x,i,"        ",1x))
+      
+      do iop=1,nsymq
+       do ii = 1, 3 
+        do jj = 1, 3 
+         SO3_matrix(ii,jj) = 0.0d0
+         do kk = 1, 3 
+          do ll = 1, 3 
+           SO3_matrix(ii,jj) = SO3_matrix(ii,jj) 
+     +             + mat_b(ii,kk)*rg(kk,ll,iop)*mat_b_inv(ll,jj)
+          end do
+         end do
+        end do
+       end do
+       
+       
+       !write(6,*)
+       !write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
+       !write(6,*)
+       !write(6,402) ((rg(ii,jj,iop), jj = 1,3), ii = 1,3)
+       !write(6,*)
+       !write(6,403) ((mat_b(ii,jj), jj = 1,3), ii = 1,3)
+       !write(6,*)
+       !write(6,403) ((mat_b_inv(ii,jj), jj = 1,3), ii = 1,3)
+  
+       call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
+       !call inv_2x2_complex(SU2_matrix) ! important, do not invert weirds...
+       
+       rinv_SO(:,:,iop)=SU2_matrix(:,:)
+      enddo
+      
 !--
       do iop=1,nsymq  
        write(6,'(a5,i4)')'sym=',iop
@@ -288,6 +333,24 @@
       call est_NTK(Nk_irr,Nsymq,SKI(1,1),rg(1,1,1),NTK)
       write(6,*)'Estimated NTK=',NTK 
 !--
+
+      OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
+      rewind(102)
+      read(102) ncomp 
+      allocate(CIR(NTG,ncomp,NTB,Nk_irr));CIR=0.0d0  
+      do ik=1,Nk_irr
+       do ic=1,ncomp
+        do ib=1,NBAND 
+         if((ib.ge.NB_start).and.(ib.le.NB_end)) then  
+          read(102)(CIR(IG,ic,ib-NB_start+1,ik),IG=1,NGI(ik))
+         else 
+          read(102) 
+         endif 
+        enddo!ib 
+       enddo!ic
+      enddo!ik          
+      close(102) 
+
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
@@ -309,11 +372,17 @@
       do iop=1,Nsymq
 !sym
        ktmp(:)=0.0d0;RWtmp(:)=0  
-       ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
+
+       ktmp(1)=rg(1,1,iop)*SKI(1,ik)
+     +        +rg(1,2,iop)*SKI(2,ik)
      +        +rg(1,3,iop)*SKI(3,ik)
-       ktmp(2)=rg(2,1,iop)*SKI(1,ik)+rg(2,2,iop)*SKI(2,ik)
+
+       ktmp(2)=rg(2,1,iop)*SKI(1,ik)
+     +        +rg(2,2,iop)*SKI(2,ik)
      +        +rg(2,3,iop)*SKI(3,ik)
-       ktmp(3)=rg(3,1,iop)*SKI(1,ik)+rg(3,2,iop)*SKI(2,ik)
+
+       ktmp(3)=rg(3,1,iop)*SKI(1,ik)
+     +        +rg(3,2,iop)*SKI(2,ik)
      +        +rg(3,3,iop)*SKI(3,ik)
        call kcheck(ktmp(1),RWtmp(1))!rewind check 
        do iik=1,jk
@@ -325,14 +394,19 @@
 !      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=ktmp(:)
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
-!      if(.true.)goto 2000
 !time-reversal
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
-       ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
+
+       ktmp(1)=rg(1,1,iop)*SKI(1,ik)
+     +        +rg(1,2,iop)*SKI(2,ik)
      +        +rg(1,3,iop)*SKI(3,ik)
-       ktmp(2)=rg(2,1,iop)*SKI(1,ik)+rg(2,2,iop)*SKI(2,ik)
+
+       ktmp(2)=rg(2,1,iop)*SKI(1,ik)
+     +        +rg(2,2,iop)*SKI(2,ik)
      +        +rg(2,3,iop)*SKI(3,ik)
-       ktmp(3)=rg(3,1,iop)*SKI(1,ik)+rg(3,2,iop)*SKI(2,ik)
+
+       ktmp(3)=rg(3,1,iop)*SKI(1,ik)
+     +        +rg(3,2,iop)*SKI(2,ik)
      +        +rg(3,3,iop)*SKI(3,ik)
        call kcheck_trs(ktmp(1),RWtmp(1))!rewind check modified 20170316  
        do iik=1,jk
@@ -391,42 +465,10 @@
 !--
 !     stop
 !--
-!OPEN(102,R,FILE='dat.wfn',FORM='unformatted') 
-      OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
-!old--
-!      allocate(CIR(NTG,NTB,Nk_irr));CIR=0.0d0  
-!      rewind(102)
-!      do ik=1,Nk_irr 
-!       do ib=1,NBAND!NBI(ik) 
-!        if((ib.ge.NB_start).and.(ib.le.NB_end)) then  
-!         read(102)(CIR(IG,ib-NB_start+1,ik),IG=1,NGI(ik))
-!        else 
-!         read(102) 
-!        endif 
-!       enddo!ib 
-!      enddo!ik          
-!      close(102) 
-!new--
-      rewind(102)
-      read(102) ncomp 
-      if(ncomp/=1)then 
-       write(6,*)'This program not suport ncomp/=1; then stop'
-       stop
-      endif 
-      allocate(CIR(NTG,NTB,Nk_irr));CIR=0.0d0  
-      do ik=1,Nk_irr 
-       do ib=1,NBAND 
-        if((ib.ge.NB_start).and.(ib.le.NB_end)) then  
-         read(102)(CIR(IG,ib-NB_start+1,ik),IG=1,NGI(ik))
-        else 
-         read(102) 
-        endif 
-       enddo!ib 
-      enddo!ik          
-      close(102) 
+
 !--
 !gen(C0,E_EIG,NG0,NB0,KG0) 
-      allocate(C0(NTG,NTB,NTK));C0(:,:,:)=0.0d0
+      allocate(C0(NTG,ncomp,NTB,NTK));C0(:,:,:,:)=0.0d0
       allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
       allocate(NB0(NTK));NB0(:)=0
       allocate(NG0(NTK));NG0(:)=0
@@ -442,14 +484,19 @@
 !      enddo 
 !      do jk=Nk_irr+1,NTK 
 !---
-       do jk=1,NTK 
+      do jk=1,NTK 
        if(trs(jk)==1) then 
         ik=numirr(jk);iop=numrot(jk) 
-        ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
+        ktmp(1)=rg(1,1,iop)*SKI(1,ik)
+     +         +rg(1,2,iop)*SKI(2,ik)
      +         +rg(1,3,iop)*SKI(3,ik)+dble(RW(1,jk)) 
-        ktmp(2)=rg(2,1,iop)*SKI(1,ik)+rg(2,2,iop)*SKI(2,ik)
+
+        ktmp(2)=rg(2,1,iop)*SKI(1,ik)
+     +         +rg(2,2,iop)*SKI(2,ik)
      +         +rg(2,3,iop)*SKI(3,ik)+dble(RW(2,jk))  
-        ktmp(3)=rg(3,1,iop)*SKI(1,ik)+rg(3,2,iop)*SKI(2,ik)
+
+        ktmp(3)=rg(3,1,iop)*SKI(1,ik)
+     +         +rg(3,2,iop)*SKI(2,ik)
      +         +rg(3,3,iop)*SKI(3,ik)+dble(RW(3,jk))  
         E_EIG(:,jk)=E_EIGI(:,ik) 
         NB0(jk)=NBAND!NBI(ik)
@@ -485,17 +532,23 @@
          write(6,*)'ik,jk',ik,jk;STOP
         endif 
         NG0(jk)=NG_for_psi  
-        call make_C0(NTG,NTB,trs(jk),NG0(jk),KG0(1,1,jk),RW(1,jk),
+        call make_C0(NTG,ncomp,rinv_SO(1,1,iop),NTB,trs(jk),NG0(jk),
+     +  KG0(1,1,jk),RW(1,jk),
      +  rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,packing(-L1,-L2,-L3,ik),
-     +  CIR(1,1,ik),C0(1,1,jk)) 
+     +  CIR(1,1,1,ik),C0(1,1,1,jk)) 
 !--
        elseif(trs(jk)==-1)then  
         ik=numirr(jk);iop=numrot(jk) 
-        ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
+        ktmp(1)=rg(1,1,iop)*SKI(1,ik)
+     +         +rg(1,2,iop)*SKI(2,ik)
      +         +rg(1,3,iop)*SKI(3,ik)+dble(RW(1,jk)) 
-        ktmp(2)=rg(2,1,iop)*SKI(1,ik)+rg(2,2,iop)*SKI(2,ik)
+
+        ktmp(2)=rg(2,1,iop)*SKI(1,ik)
+     +         +rg(2,2,iop)*SKI(2,ik)
      +         +rg(2,3,iop)*SKI(3,ik)+dble(RW(2,jk))  
-        ktmp(3)=rg(3,1,iop)*SKI(1,ik)+rg(3,2,iop)*SKI(2,ik)
+
+        ktmp(3)=rg(3,1,iop)*SKI(1,ik)
+     +         +rg(3,2,iop)*SKI(2,ik)
      +         +rg(3,3,iop)*SKI(3,ik)+dble(RW(3,jk))  
 !       write(6,'(i5,3f15.10,i5)') jk,ktmp(:),trs(jk)  
         E_EIG(:,jk)=E_EIGI(:,ik) 
@@ -509,9 +562,10 @@
         endif 
         NG0(jk)=NG_for_psi  
         KG0(:,:,jk)=-KGtmp(:,:)!notice on '-' sign 
-        call make_C0(NTG,NTB,trs(jk),NG0(jk),KGtmp(1,1),RW(1,jk), 
+        call make_C0(NTG,ncomp,rinv_SO(1,1,iop),NTB,trs(jk),NG0(jk),
+     +  KGtmp(1,1),RW(1,jk), 
      +  rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,packing(-L1,-L2,-L3,ik),
-     +  CIR(1,1,ik),C0(1,1,jk))!modified 20170316 KG0->KGtmp 
+     +  CIR(1,1,1,ik),C0(1,1,1,jk))!modified 20170316 KG0->KGtmp 
        endif 
       enddo 
 !--
@@ -598,7 +652,7 @@
        write(6,*)'ik=',ik 
        do ib=1,N_BAND(ik)!NTB 
         BF_REALSPACE=0.0d0           
-        call make_bf(C0(1,N_BAND_BTM(ik)+ib,ik),wfunc(1),fftwk(1),
+        call make_bf(C0(1,1,N_BAND_BTM(ik)+ib,ik),wfunc(1),fftwk(1),
      +  NG0(ik),KG0(1,1,ik),NTG,ndx2,ndy2,ndz2,nfft1,nfft2,Nl123,fs,
      +  BF_REALSPACE(0,0,0)) 
 !--
@@ -621,7 +675,7 @@
        deallocate(BF_REALSPACE,fftwk,wfunc)
        write(6,*) 
        write(6,*)'==================================='
-       write(6,*)'FINIDH VISUALIZE BLOCH FUNCTION ==='
+       write(6,*)'FINISH VISUALIZE BLOCH FUNCTION ==='
        write(6,*)'!!!!!! We stop calculation !!!!!!!!'
        write(6,*)'==================================='
        write(6,*) 
@@ -1122,16 +1176,18 @@
 !--
 !$OMP PARALLEL PRIVATE(ik,C0_BRA,ig,ibvec,SHIFT_b,ik_ib,C0_KET,
 !$OMP&  OVERLAP_TMP)
-      allocate(C0_BRA(0:NTG,NTB));C0_BRA(0,:)=0.0D0       
-      allocate(C0_KET(0:NTG,NTB));C0_KET(0,:)=0.0D0       
+      allocate(C0_BRA(0:NTG,ncomp,NTB));C0_BRA(0,:,:)=0.0D0       
+      allocate(C0_KET(0:NTG,ncomp,NTB));C0_KET(0,:,:)=0.0D0       
       allocate(SHIFT_b(3));SHIFT_b=0 
       allocate(OVERLAP_TMP(NTB,NTB));OVERLAP_TMP=0.0d0 
 !$OMP DO 
       do ik=1,NTK       
 !C0_BRA
-       C0_BRA(0,:)=0.0D0       
-       do ig=1,NG0(ik) 
-        C0_BRA(ig,:)=C0(ig,:,ik)  
+       C0_BRA(0,:,:)=0.0D0       
+       do ic=1,ncomp 
+        do ig=1,NG0(ik) 
+         C0_BRA(ig,ic,:)=C0(ig,ic,:,ik)  
+        enddo 
        enddo 
 !SHIFT VECTOR
        do ibvec=1,NB               
@@ -1139,14 +1195,16 @@
      +  SHIFT_b(1),ik_ib)
         KPT(ik,ibvec)=ik_ib                
 !C0_KET
-        C0_KET(0,:)=0.0D0       
-        do ig=1,NG0(ik_ib) 
-         C0_KET(ig,:)=C0(ig,:,ik_ib)  
+        C0_KET(0,:,:)=0.0D0       
+        do ic=1,ncomp 
+         do ig=1,NG0(ik_ib) 
+          C0_KET(ig,ic,:)=C0(ig,ic,:,ik_ib)  
+         enddo 
         enddo 
 !CALC OVERLAP 
-        CALL CALC_OVERLAP(NTK,NTB,NTG,nvx,nvy,nvz,ik,ik_ib,NG0(1),
-     +  KG0(1,1,1),N_BAND(1),SHIFT_b(1),C0_BRA(0,1),C0_KET(0,1),
-     +  OVERLAP_TMP(1,1),N_BAND_BTM(1))  
+        CALL CALC_OVERLAP(NTK,NTB,NTG,ncomp,nvx,nvy,nvz,ik,ik_ib,
+     +  NG0(1),KG0(1,1,1),N_BAND(1),SHIFT_b(1),C0_BRA(0,1,1),
+     +  C0_KET(0,1,1),OVERLAP_TMP(1,1),N_BAND_BTM(1))  
         OVERLAP(:,:,ik,ibvec)=OVERLAP_TMP(:,:)          
 !--
        enddo!ibvec                
@@ -1288,11 +1346,11 @@
       allocate(A_TMP(NTB,nigs));A_TMP=0.0d0 
 !$OMP DO 
       do ik=1,NTK         
-       call make_amat(nigs,NTB,NTG,NG0(ik),SK0(1,ik),KG0(1,1,ik),
-     + b1(1),b2(1),b3(1),TAU_GAUSS(1,1),ALPHA_GAUSS(1),
-     + loc_x(1,1),loc_y(1,1),loc_z(1,1),LGAUSS(1),MGAUSS(1),
-     + N_BAND(ik),C0(1,1,ik),N_BAND_BTM(ik),NORM_GAUSS(1),VOLUME,
-     + A_TMP(1,1)) 
+       call make_amat(nigs,NTB,NTG,ncomp,NG0(ik),SK0(1,ik),
+     + KG0(1,1,ik),b1(1),b2(1),b3(1),TAU_GAUSS(1,1),
+     + ALPHA_GAUSS(1), loc_x(1,1),loc_y(1,1),loc_z(1,1),LGAUSS(1),
+     + MGAUSS(1),N_BAND(ik),C0(1,1,1,ik),N_BAND_BTM(ik),
+     + NORM_GAUSS(1),VOLUME,A_TMP(1,1)) 
        A_MAT(:,:,ik)=A_TMP(:,:) 
       enddo!ik           
 !$OMP END DO 
@@ -1443,7 +1501,7 @@
          C_MAT(ib,jg,ik)=SUM_CMPX         
         enddo!jg       
        enddo!ib    
-      enddo!ik ===CONSTRUCT C_MAT ROOP===      
+      enddo!ik ===CONSTRUCT C_MAT LOOP===      
       deallocate(S_MAT,S_TMP,S_EIG,X_MAT,S_HALF_MAT)
 !--
 !      WRITE(6,*) 
@@ -1965,6 +2023,7 @@
 !--
       M_MAT(:,:,:,:)=OVERLAP(:,:,:,:)                      
       DEL_SPREAD=1.0d0!EPS_SPREAD=1.0D-6 default
+      if(ncomp==2) EPS_SPREAD=1.0D6 !skip spread minimization for SO case
       SPREAD_OLD=0.0D0 
       I_STEP=1        
       SPREAD=OMEGA_I+OMEGA_OD+OMEGA_D               
@@ -2146,8 +2205,8 @@
 !-- 
 !OPEN(113,W,FILE='dat.wan',FORM='unformatted') 
       OPEN(113,FILE='./dir-wan/dat.wan',FORM='unformatted') 
-      allocate(C0_TMP_1(NTG,NTB))    
-      allocate(C0_TMP_2(NTG,NTB))    
+      allocate(C0_TMP_1(NTG,ncomp,NTB))    
+      allocate(C0_TMP_2(NTG,ncomp,NTB))    
       REWIND(113)       
       write(113) n_occ!20170331(n_occ=NWF) 
       do ik=1,NTK 
@@ -2165,8 +2224,8 @@
          A_TMP(ib,jb)=SUM_CMPX 
         enddo!jb
        enddo!ib
-       C0_TMP_1(:,:)=C0(:,:,ik)        
-       C0_TMP_2(:,:)=0.0D0     
+       C0_TMP_1(:,:,:)=C0(:,:,:,ik)        
+       C0_TMP_2(:,:,:)=0.0D0     
 !--
 !write BF 
 !       A_TMP(:,:)=0.d0 
@@ -2174,18 +2233,22 @@
 !        A_TMP(k_band,k_band)=1.0d0
 !       enddo 
 !--
-       do ig=1,NG0(ik)  
-        do jb=1,n_occ        
-         SUM_CMPX=0.0D0             
-         do kb=1,N_BAND(ik)       
-          SUM_CMPX 
-     +   =SUM_CMPX 
-     +   +C0_TMP_1(ig,kb+N_BAND_BTM(ik))*A_TMP(kb,jb) 
-         enddo!kb 
-         C0_TMP_2(ig,jb)=SUM_CMPX  
-        enddo!jb 
-       enddo!ig             
-       write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
+       do ic=1,ncomp 
+        do ig=1,NG0(ik)  
+         do jb=1,n_occ        
+          SUM_CMPX=0.0D0             
+          do kb=1,N_BAND(ik)       
+           SUM_CMPX 
+     +    =SUM_CMPX 
+     +    +C0_TMP_1(ig,ic,kb+N_BAND_BTM(ik))*A_TMP(kb,jb) 
+          enddo!kb 
+          C0_TMP_2(ig,ic,jb)=SUM_CMPX  
+         enddo!jb 
+        enddo!ig
+       enddo!ic
+       !write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ)
+       write(113)(((C0_TMP_2(ig,ic,ib),ig=1,NG0(ik)),ib=1,n_occ),
+     +            ic=1,ncomp)
       enddo!ik              
 !-- 
 !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
@@ -2193,9 +2256,10 @@
       call system('pwd') 
       REWIND(113)       
       read(113) NWF 
-      allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
+      allocate(C0WN(NTG,ncomp,NWF,NTK));C0WN(:,:,:,:)=0.0D0 
       do ik=1,NTK 
-       read(113) ((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+       read(113) (((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
+     +            ic=1,ncomp)
       enddo
       write(6,*)'FINISH REDING C0_WN'
       ierr=CHDIR("..") 
@@ -2208,19 +2272,22 @@
       write(6,*)"Mb=",Mb 
       write(150,*) n_occ!20170331(n_occ=NWF) 
       allocate(UNT(Mb,n_occ,NTK));UNT(:,:,:)=0.0d0 
-      do ik=1,NTK 
-       do ib=1,N_BAND(ik)
-        do jb=1,n_occ 
-         SUM_CMPX=0.0d0 
-         do ig=1,NG0(ik)  
-          SUM_CMPX 
-     +   =SUM_CMPX
-     +   +conjg(C0(ig,ib+N_BAND_BTM(ik),ik))*C0WN(ig,jb,ik)
+      do ic=1,ncomp 
+       do ik=1,NTK 
+        do ib=1,N_BAND(ik)
+         do jb=1,n_occ 
+          SUM_CMPX=0.0d0 
+          do ig=1,NG0(ik)  
+           SUM_CMPX 
+     +    =SUM_CMPX
+     +    +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,ic,jb,ik)
+!     +    +conjg(C0(ig,ib+N_BAND_BTM(ik),ik))*C0WN(ig,jb,ik)
+          enddo 
+          UNT(ib,jb,ik)=SUM_CMPX 
          enddo 
-         UNT(ib,jb,ik)=SUM_CMPX 
         enddo 
-       enddo 
-      enddo 
+       enddo
+      enddo
       deallocate(C0WN) 
       do ik=1,NTK 
        do ib=1,N_BAND(ik)
@@ -2542,9 +2609,10 @@
        call system('pwd') 
        REWIND(113)       
        read(113) NWF!20170331(n_occ=NWF) 
-       allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
+       allocate(C0WN(NTG,ncomp,NWF,NTK));C0WN(:,:,:,:)=0.0D0 
        do ik=1,NTK 
-        read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+        read(113)(((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
+     +              ic=1,ncomp)
        enddo!ik 
        write(6,*)'FINISH REDING C0_WN'
 !--
@@ -2560,8 +2628,9 @@
      +              (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
 !$OMP DO 
         do ik=1,NTK
-         C0_I(:)=C0WN(:,iw,ik) 
-         call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),NTG,
+         C0_I(:)=C0WN(:,1,iw,ik) ! to be change Maxime Charlebois
+         call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),
+     +    NTG,
      +    nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
      +    xmin,xmax,ymin,ymax,zmin,zmax,SK0(1,ik),
      +    pw(xmin*nwx2,ymin*nwy2,zmin*nwz2)) 

@@ -11,16 +11,25 @@ program convert101
   integer, allocatable :: num_Gk(:)
   integer, allocatable :: Gk_grid(:,:)
   complex(8), allocatable :: evc(:,:)
+  complex(8):: c1
   real(8), allocatable :: eig(:)
-  character(100), allocatable :: data_wfc(:), data_Gk(:)
+  character(100), allocatable :: data_wfc1(:), data_wfc2(:), data_Gk(:)
   character(100), allocatable :: data_eig(:)
 
   real(8) :: a1(3), a2(3), a3(3)
+  real(8) :: b1(3), b2(3), b3(3)
+  real(8) :: mat_b(3,3)
+  real(8) :: mat_b_inv(3,3)
+  real(8) :: mat_tmp1(3,3)
+  real(8) :: mat_tmp2(3,3)
+  
   real(8) :: eFermi, celldm
   real(8) :: Ecut_for_psi, Etot
-  integer :: i, j, num_k, num_b
+  integer :: i, j, jj, num_k, num_b
   integer :: ncomp = 1 
   character(5) :: cwrk
+  
+  logical :: is_SpinOrbit = .false.
 
   i = command_argument_count()
   if( i /= 1 ) then 
@@ -39,9 +48,17 @@ program convert101
     call iotk_scan_dat(11,"NUMBER_OF_BANDS",num_b)
     call iotk_scan_dat(11,"FERMI_ENERGY",eFermi)
   call iotk_scan_end(11,"BAND_STRUCTURE_INFO")
+  
+  call iotk_scan_begin(11,"SPIN",attr=attr)
+    call iotk_scan_dat(11,"SPIN-ORBIT_CALCULATION",is_SpinOrbit)
+  call iotk_scan_end(11,"SPIN")
+  
+  if(is_SpinOrbit) ncomp=2 ! else default ncomp=1
+  write(6,*) 'is_SpinOrbit=', is_SpinOrbit
+  
       
   allocate(k_vec(3,num_k),k_tmp(3,num_k))
-  allocate(data_wfc(num_k),data_Gk(num_k),data_eig(num_k))
+  allocate(data_wfc1(num_k),data_wfc2(num_k),data_Gk(num_k),data_eig(num_k))
   call iotk_scan_begin(11,"EIGENVALUES",attr=attr)
   do i = 1, num_k
     !
@@ -55,10 +72,21 @@ program convert101
     !
     ! generate wfc filename
     !
-    data_wfc(i) = "/K" // cwrk
-    data_wfc(i) = trim(data_wfc(i)) // "/evc.dat"
-    data_wfc(i) = trim(data_dir) // trim(data_wfc(i))
-    write(*,*) data_wfc(i)
+    if(is_SpinOrbit) then
+      data_wfc1(i) = "/K" // cwrk
+      data_wfc1(i) = trim(data_wfc1(i)) // "/evc1.dat"
+      data_wfc1(i) = trim(data_dir) // trim(data_wfc1(i))
+      data_wfc2(i) = "/K" // cwrk
+      data_wfc2(i) = trim(data_wfc2(i)) // "/evc2.dat"
+      data_wfc2(i) = trim(data_dir) // trim(data_wfc2(i))
+    else
+      data_wfc1(i) = "/K" // cwrk
+      data_wfc1(i) = trim(data_wfc1(i)) // "/evc.dat"
+      data_wfc1(i) = trim(data_dir) // trim(data_wfc1(i))
+    endif
+    
+    write(*,*) data_wfc1(i)
+    write(*,*) data_wfc2(i)
     !
     ! generate Gk filename
     !
@@ -106,6 +134,9 @@ program convert101
   call iotk_scan_begin(11,"PLANE_WAVES",attr=attr)
     call iotk_scan_dat(11,"WFC_CUTOFF",Ecut_for_psi)
   call iotk_scan_end(11,"PLANE_WAVES")
+  
+  
+  
 
   call iotk_close_read(11)
  
@@ -130,7 +161,7 @@ program convert101
     write(105,*) a2(:)
     write(105,*) a3(:)
   close(105)
-
+  
   open(117,file='./dir-wfn/dat.bandcalc') 
     rewind(117) 
     Etot = 0d0
@@ -165,7 +196,7 @@ program convert101
     write(102) ncomp
     do i = 1, num_k
       allocate(evc(num_Gk(i),num_b))
-      call iotk_open_read(13, data_wfc(i))
+      call iotk_open_read(13, data_wfc1(i))
         do j = 1, num_b
           call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j))
         end do ! j  
@@ -173,10 +204,46 @@ program convert101
           write(102) evc(:,j)
         end do ! j 
       call iotk_close_read(13)
+      
+      !Maxime Charlebois
+      if(is_SpinOrbit) then
+        call iotk_open_read(13, data_wfc2(i))
+          do j = 1, num_b
+            call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j))
+          end do ! j  
+          do j = 1, num_b
+            write(102) evc(:,j)
+          end do ! j 
+        call iotk_close_read(13)
+      endif
+      !
       deallocate(evc)
     end do ! i 
   close(102)
+
+!  open(103,file='./dir-wfn/dat.wfn_ascii')
+!    rewind(103)
+!    write(103,*) ncomp
+!    do i = 1, num_k
+!      write(103,*) 'i= ', i
+!      allocate(evc(num_Gk(i),num_b))
+!      call iotk_open_read(13, data_wfc1(i))
+!        write(103,*) ' '
+!        write(103,*) ' '
+!        write(103,*) 'evc1 '
+!        do j = 1, 10
+!          call iotk_scan_dat(13,"evc"//iotk_index(1),evc(:,1))
+!        end do ! j  
+!        do j = 1, 10
+!          c1 = evc(j,1)/evc(1,1)*abs(evc(1,1))
+!          write(103,*) i, j, dsqrt( real(c1)*real(c1)+ imag(c1)*imag(c1) ), real(c1), imag(c1)
+!        end do ! j 
+!      call iotk_close_read(13)
+!      deallocate(evc)
+!    end do ! i 
+!  close(103)
   deallocate(num_Gk)
+
 
   open(111,file='./dir-wfn/dat.eigenvalue') 
     rewind(111)
@@ -195,7 +262,7 @@ program convert101
 
   call convert_sym(data_xml)
 
-  deallocate(data_wfc,data_Gk,data_eig)
+  deallocate(data_wfc1,data_wfc2,data_Gk,data_eig)
 
 end program
 
@@ -214,12 +281,30 @@ subroutine convert_sym(data_xml)
   integer i, j, k, l, n_sym
   integer :: torf
   integer , allocatable :: mat_sym(:,:)
+  
+  real(8) :: b1(3), b2(3), b3(3)
+  real(8) :: mat_b(3,3)
+  real(8) :: mat_b_inv(3,3)
+  real(8) :: mat_tmp1(3,3)
+  real(8) :: mat_tmp2(3,3)
+  integer:: ii,jj,kk,ll
+
+404 format(3(1x,F10.5,"        ",1x))
 
 
   open(100,file='./dir-wfn/dat.symmetry') 
   rewind(100) 
-   
+  
+  
   call iotk_open_read(11,data_xml)
+    call iotk_scan_begin(11,"CELL",attr=attr)
+    call iotk_scan_begin(11,"RECIPROCAL_LATTICE_VECTORS",attr=attr)
+      call iotk_scan_dat(11,"b1",b1)
+      call iotk_scan_dat(11,"b2",b2)
+      call iotk_scan_dat(11,"b3",b3)
+    call iotk_scan_end(11,"RECIPROCAL_LATTICE_VECTORS")
+    call iotk_scan_end(11,"CELL")
+    
   call iotk_scan_begin(11,"SYMMETRIES",attr=attr)
     call iotk_scan_dat(11,"NUMBER_OF_SYMMETRIES",n_sym)
     allocate(ftau(3,n_sym))
@@ -231,6 +316,7 @@ subroutine convert_sym(data_xml)
         call iotk_scan_dat(11,"FRACTIONAL_TRANSLATION",ftau(:,i))
       call iotk_scan_end(11,"SYMM"//iotk_index(i))
     end do ! i 
+    
 
     do i = 1, 1000
       torf = 1
@@ -253,13 +339,94 @@ subroutine convert_sym(data_xml)
     end do ! i
 
     do i = 1, n_sym 
+      write(*,*)
+      do j = 1, 3 
+        write(*,'(9I3)') (mat_sym(k+3*(j-1),i),k=1,3)
+      end do 
+    end do 
+
+    do i = 1, 3 
+      mat_b(i,1)=b1(i)
+      mat_b(i,2)=b2(i)
+      mat_b(i,3)=b3(i)
+      
+      mat_b_inv(i,1)=b1(i)
+      mat_b_inv(i,2)=b2(i)
+      mat_b_inv(i,3)=b3(i)
+    end do
+    
+    write(*,*) 
+    write(*,*) 'mat_B'
+    write(6,404), ((mat_b_inv(i,k),i=1,3), k=1,3) 
+    call inv(3,mat_b_inv)
+    write(*,*) 
+    write(*,*) 'mat_B_inv'
+    write(6,404), ((mat_b_inv(i,k),i=1,3), k=1,3) 
+    write(*,*)
+    write(*,*)
+    write(*,*)
+      
+    do i = 1, n_sym 
+      
+      
+      write(*,*)
+      write(*,*) "S"//iotk_index(i)//"="
+      write(6,'(3I3)'), ((mat_sym(ii+3*(kk-1),i),ii=1,3), kk=1,3) 
+    
+      do ii = 1, 3 
+        do jj = 1, 3
+          mat_tmp1(ii,jj) = 0.0d0 
+          do kk = 1, 3 
+            mat_tmp1(ii,jj) = mat_tmp1(ii,jj) + mat_sym(ii+3*(kk-1),i) * mat_b_inv(kk,jj)
+          end do
+        end do
+      end do
+      
+      do ii = 1, 3 
+        do jj = 1, 3 
+          mat_tmp2(ii,jj) = 0.0d0
+          do kk = 1, 3 
+            mat_tmp2(ii,jj) = mat_tmp2(ii,jj) + mat_b(ii,kk) *  mat_tmp1(kk,jj) !mat_b_inv(kk,jj)
+          end do
+        end do  
+      end do
+      
+      
+      do ii = 1, 3 
+        do jj = 1, 3 
+          mat_tmp1(ii,jj) = 0.0d0
+          do kk = 1, 3 
+            do ll = 1, 3 
+              mat_tmp1(ii,jj) = mat_tmp1(ii,jj) + mat_b(ii,kk) * mat_sym(kk+3*(ll-1),i) * mat_b_inv(ll,jj)
+            end do
+          end do
+        end do  
+      end do
+      
+      
+      write(*,*)
+      write(*,*) "R"//iotk_index(i)//"="
+      do j = 1, 3 
+        write(*,404) (mat_tmp2(j,k),k=1,3) 
+      end do 
+      
+      write(*,*)
+      write(*,*) "autre facton"//iotk_index(i)//"="
+      do j = 1, 3 
+        write(*,404) (mat_tmp1(j,k),k=1,3) 
+      end do 
+      
+      
+      
       mat = 0.0d0
       l = 0
+      !write(*,*)
       do j = 1, 3 
-      do k = 1, 3 
-        l = l+1
-        mat(k,j) = dble(mat_sym(l,i))
-      end do 
+        !write(*,'(9I3)') (mat_sym(k+3*(j-1),i),k=1,3)
+        do k = 1, 3 
+          l = l+1
+          mat(k,j) = dble(mat_sym(l,i))
+        end do 
       end do 
       call inv(3,mat) 
       do j = 1, 3 
@@ -306,4 +473,6 @@ subroutine inv(nm,mat)
 
   return 
 end subroutine
+
+
 

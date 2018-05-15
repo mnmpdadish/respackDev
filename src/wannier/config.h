@@ -1,7 +1,7 @@
 !config.h 
       implicit none 
       real(8),parameter::au=27.21151d0
-      real(8),parameter::bohr=0.529177249d0!20180412  
+      real(8),parameter::bohr=0.529177249d0!20180412
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
       integer,parameter::NBMAX = 12
@@ -29,6 +29,11 @@
       real(8)::aa1(3),aa2(3),aa3(3)
       real(8)::b1(3),b2(3),b3(3)
       real(8)::a,b,c,alp,bet,gmm  
+      
+      real(8)::mat_b(3,3)
+      real(8)::mat_b_inv(3,3)
+      real(8)::SO3_matrix(3,3)
+      complex(8)::SU2_matrix(2,2)
 !sym
       integer,allocatable::rg(:,:,:)!rg(3,3,nsymq)
       integer,allocatable::pg(:,:)!pg(3,nsymq)
@@ -37,7 +42,10 @@
       integer,allocatable::trs(:)!trs(NTK) 
       integer,allocatable::RW(:,:)!RW(3,NTK)
       real(8),allocatable::rginv(:,:,:)!rginv(3,3,nsymq) 
+      complex(8),allocatable::rinv_SO(:,:,:)!rinv_SO(2,2,nsymq) 
+      
       integer::ik,jk,iik,iop,i,j,k,l,ib,jb,kb,llb 
+      integer::ii,jj,kk,ll
       integer::ig,jg,kg,lg,j1,k1,iw 
       integer::L1,L2,L3,nnp  
       integer::RWtmp(3) 
@@ -52,13 +60,13 @@
       real(8),allocatable::LKGI(:,:)           
       real(8),allocatable::E_EIGI(:,:)           
       real(8),allocatable::E_EIG(:,:)!E_EIG(NTB,NTK)           
-      complex(8),allocatable::CIR(:,:,:) 
-      complex(8),allocatable::C0(:,:,:) 
-      complex(8),allocatable::C0_BRA(:,:)!C0_BRA(0:NTG,NTB)    
-      complex(8),allocatable::C0_KET(:,:)!C0_KET(0:NTG,NTB)    
-      complex(8),allocatable::C0_TMP_1(:,:)!C0_TMP_1(NTG,NTB)    
-      complex(8),allocatable::C0_TMP_2(:,:)!C0_TMP_2(NTG,NTB)    
-      complex(8),allocatable::C0WN(:,:,:) 
+      complex(8),allocatable::CIR(:,:,:,:) 
+      complex(8),allocatable::C0(:,:,:,:) 
+      complex(8),allocatable::C0_BRA(:,:,:)!C0_BRA(0:NTG,NTB)    
+      complex(8),allocatable::C0_KET(:,:,:)!C0_KET(0:NTG,NTB)    
+      complex(8),allocatable::C0_TMP_1(:,:,:)!C0_TMP_1(NTG,NTB)    
+      complex(8),allocatable::C0_TMP_2(:,:,:)!C0_TMP_2(NTG,NTB)    
+      complex(8),allocatable::C0WN(:,:,:,:) 
       integer::ncomp 
       integer::NWF
       integer::NBAND 
