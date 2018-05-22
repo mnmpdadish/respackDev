@@ -1,4 +1,4 @@
-subroutine make_eks(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS)  
+subroutine make_eks(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS,VKS)  
   implicit none 
   integer::NTK,NWF,Na1,Na2,Na3 
   complex(8)::pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK)   
@@ -8,6 +8,7 @@ subroutine make_eks(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS)
   integer::ik,ib,jb,ia1,ia2,ia3
   complex(8)::SUM_CMPX 
   real(8)::EKS(NWF,NTK)           
+  complex(8)::VKS(NWF,NWF,NTK)  
   !
   !HKS IN WANNIER BASIS. AND DIAGONALIZE
   !
@@ -15,6 +16,7 @@ subroutine make_eks(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS)
   allocate(E_TMP_R(NWF)); E_TMP_R=0.0d0            
   !
   EKS=0.0d0 
+  VKS=0.0d0 
   do ik=1,NTK 
    Hin(:,:)=0.0D0               
    do ib=1,NWF      
@@ -33,6 +35,7 @@ subroutine make_eks(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS)
    E_TMP_R(:)=0.0D0 
    call diagV(NWF,Hin(1,1),E_TMP_R(1)) 
    EKS(:,ik)=E_TMP_R(:) 
+   VKS(:,:,ik)=Hin(:,:) 
   enddo!ik 
   deallocate(Hin,E_TMP_R) 
   !

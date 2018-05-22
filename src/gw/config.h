@@ -40,6 +40,8 @@ complex(4),allocatable::MAT_SC_R(:,:,:,:,:,:)
 real(8)::sgn,de,delta 
 complex(8)::dnm 
 complex(8)::psum 
+integer::min_ie 
+real(8)::min_diff 
 !
 !SX 
 !
@@ -102,13 +104,15 @@ integer::NSK_BAND_DISP
 real(8)::shift_value
 real(8),allocatable::ksdos(:)!ksdos(nsgm) 
 real(8),allocatable::gwdos(:)!gwdos(nsgm) 
+complex(8),allocatable::gw_sigma_dos(:)!gw_sigma_dos(nsgm) 
 !
 !AKW
 !
 LOGICAL::REVERSE 
 real(8),allocatable::kdata(:)!kdata(NSK_BAND_DISP) 
-real(8),allocatable::E_BAND_DISP(:,:)!E_BAND_DISP(NWF,NSK_BAND_DISP) 
+real(8),allocatable::EKS(:,:)!EKS(NWF,NSK_BAND_DISP) 
 real(8),allocatable::gwakw(:,:)!gwakw(NSK_BAND_DISP,nsgm) 
+real(8),allocatable::gw_sigma_kw(:,:)!gw_sigma_kw(NSK_BAND_DISP,nsgm) 
 !
 !index 
 !

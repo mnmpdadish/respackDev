@@ -89,5 +89,7 @@ subroutine calc_dos_GW(nkb1,nkb2,nkb3,NTK,NWF,nsgm,idlt,dmna,dmnr,shift_value,b1
  AW(ie)=2.0d0*SUM_REAL/dble(NTK)/pi 
  enddo!ie  
  !
+ deallocate(imt1,index_kpt,xow) 
+ !
 RETURN  
 END 

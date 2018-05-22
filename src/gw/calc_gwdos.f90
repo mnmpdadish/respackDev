@@ -1,5 +1,5 @@
 subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1,a2,a3,b1,b2,b3,sgmw,SK0,&
-  KS_R,XC_R,SX_R,SC_R,shift_value,ksdos,gwdos) 
+  KS_R,XC_R,SX_R,SC_R,shift_value,ksdos,gwdos,gw_sigma_dos) 
   !
   implicit none 
   integer::NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3 
@@ -15,6 +15,7 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   !
   real(8),allocatable::WEIGHT_R(:,:,:)!WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
   real(8),allocatable::EKS(:,:)!EKS(NWF,NTK)           
+  complex(8),allocatable::VKS(:,:,:)!VKS(NWF,NWF,NTK)   
   complex(8),allocatable::pf(:,:,:,:)!pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK)   
   complex(8),allocatable::EMK(:,:,:)!EMK(NWF,NTK,nsgm)           
   complex(4),allocatable::GW_R(:,:,:,:,:,:)!GW_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)   
@@ -23,6 +24,7 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   integer::ia1,ia2,ia3,ik,ib,jb,ie  
   real(8)::PHASE,FermiEnergy 
   real(8)::SUM_REAL
+  complex(8)::SUM_CMPX 
   !
   real(8),parameter::au=27.21151d0
   real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
@@ -31,6 +33,7 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   real(8),intent(out)::shift_value 
   real(8),intent(out)::ksdos(nsgm) 
   real(8),intent(out)::gwdos(nsgm) 
+  complex(8),intent(out)::gw_sigma_dos(nsgm) 
   !
   !1. make GR_R 
   !
@@ -93,7 +96,8 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   !3. HKS IN WANNIER BASIS. AND DIAGONALIZE
   !
   allocate(EKS(NWF,NTK)); EKS=0.0d0 
-  call make_eks(NTK,NWF,Na1,Na2,Na3,KS_R(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1))  
+  allocate(VKS(NWF,NWF,NTK)); VKS=0.0d0 
+  call make_eks(NTK,NWF,Na1,Na2,Na3,KS_R(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1),VKS(1,1,1))  
   !
   !4. KS-DOS CALC
   !
@@ -113,8 +117,21 @@ subroutine calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   !
   gwdos=0.0d0  
   call calc_dos_GW(nkb1,nkb2,nkb3,NTK,NWF,nsgm,idlt,dmna,dmnr,shift_value,b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),EMK(1,1,1),gwdos(1)) 
+  ! 
+  !8. GW-SIGMA-DOS CALC
   !
-  deallocate(WEIGHT_R,EKS,pf,EMK,GW_R) 
+  gw_sigma_dos=0.0d0  
+  do ie=1,nsgm 
+   SUM_CMPX=0.0d0 
+   do ik=1,NTK 
+    do ib=1,NWF
+     SUM_CMPX=SUM_CMPX+(EMK(ib,ik,ie)-cmplx(EKS(ib,ik)))   
+    enddo!ib
+   enddo!ik
+   gw_sigma_dos(ie)=SUM_CMPX/dble(NTK) 
+  enddo!ie 
+  !
+  deallocate(WEIGHT_R,EKS,VKS,pf,EMK,GW_R) 
   !
 return 
 end

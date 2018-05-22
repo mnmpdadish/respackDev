@@ -845,7 +845,7 @@ if(calc_sc)then!.true.=default
    enddo 
   endif 
  enddo 
- deallocate(pSC,SCirr) 
+ deallocate(pSC)
  !
  allocate(pf(NTK,-Na1:Na1,-Na2:Na2,-Na3:Na3)); pf=0.0d0     
  do ik=1,NTK 
@@ -956,22 +956,8 @@ if(calc_sc)then!.true.=default
  !
  call MPI_Gather(pSCR,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,&
                  MAT_SC_R,pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1),MPI_COMPLEX,0,comm,ierr)
- !--
- !OPEN(157,W,FILE='MAT_SC_R') 
- !rewind(157)
- !do ia1=-Na1,Na1
- ! do ia2=-Na2,Na2 
- !  do ia3=-Na3,Na3 
- !   do jw=1,NWF
- !    do iw=1,NWF 
- !     write(157)(MAT_SC_R(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
- !    enddo!iw  
- !   enddo!jw  
- !  enddo!ia3 
- ! enddo!ia2 
- !enddo!ia1 
- !close(157) 
- !--
+ !
+ !
  if(myrank.eq.0)then 
   !write(5004) MAT_SC_R 
   write(6,*)'finish MAT_SC_R' 
@@ -979,7 +965,63 @@ if(calc_sc)then!.true.=default
  !
 else
  write(6,*)'skip SC calc.' 
+ if(myrank.eq.0)then 
+  allocate(MAT_SC_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); MAT_SC_R=0.0d0 
+ endif 
 endif!calc SC or not 
+!
+!#############
+!  OUTPUT SC 
+!#############
+!
+if(calc_sc)then!.true.=default 
+ if(myrank.eq.0)then 
+  ierr=CHDIR("./dir-gw") 
+  call system('pwd') 
+  !
+  !OPEN(156,FILE='./dat.energy_vs_sc') 
+  !
+  OPEN(156,FILE='./dat.energy_vs_sc') 
+  rewind(156) 
+  do ikir=1,Nk_irr 
+   ik=numMK(ikir)
+   do jb=1,Nb(ik)!Mb 
+    min_diff=1.0d0 
+    do ie=1,nsgm
+     en=abs(sgmw(ie)-E_EIGI(jb+Ns(ik),ikir))  
+     if(en<min_diff)then 
+      min_diff=en 
+      min_ie=ie
+     endif  
+    enddo!ie 
+    en=E_EIGI(jb+Ns(ik),ikir)-FermiEnergy 
+    write(156,'(3F20.10)') en*au,SCirr(min_ie,jb,jb,ikir)*au 
+   enddo!jb 
+  enddo!ikir 
+  close(156) 
+  !
+  !OPEN(157,W,FILE='MAT_SC_R') 
+  !
+  !rewind(157)
+  !do ia1=-Na1,Na1
+  ! do ia2=-Na2,Na2 
+  !  do ia3=-Na3,Na3 
+  !   do jw=1,NWF
+  !    do iw=1,NWF 
+  !     write(157)(MAT_SC_R(ie,iw,jw,ia1,ia2,ia3),ie=1,nsgm) 
+  !    enddo!iw  
+  !   enddo!jw  
+  !  enddo!ia3 
+  ! enddo!ia2 
+  !enddo!ia1 
+  !close(157) 
+  !
+  ierr=CHDIR("..") 
+  call system('pwd') 
+ endif!myrank.eq.0
+endif!calc SC or not 
+!
+deallocate(SCirr) 
 !
 !######
 !  SX
@@ -1314,6 +1356,7 @@ if(myrank.eq.0)then
   enddo!jb 
  enddo!ikir 
  close(154)
+ !
  deallocate(SXirr) 
  !
  !OPEN(155,FILE='./dat.sx_mat_r') 
@@ -1490,6 +1533,7 @@ if(myrank.eq.0)then
   enddo!jb 
  enddo!ikir 
  close(152)
+ !
  deallocate(VXCirr) 
  !
  !OPEN(153,W,FILE='vxc_mat_r') 
@@ -1525,9 +1569,12 @@ if(myrank.eq.0)then
   write(6,'(a)')'## gw-dos calc start ##'
   allocate(ksdos(nsgm)); ksdos=0.0d0 
   allocate(gwdos(nsgm)); gwdos=0.0d0  
+  allocate(gw_sigma_dos(nsgm)); gw_sigma_dos=0.0d0  
+  ! 
   call calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1(1),a2(1),a3(1),&
   b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),MAT_VXC_R(1,1,-Na1,-Na2,-Na3),&
-  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),shift_value,ksdos(1),gwdos(1))            
+  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),shift_value,ksdos(1),gwdos(1),gw_sigma_dos(1))
+  !
   write(6,'(a)')'finish gw-dos calc' 
 endif!myrank.eq.0 
 !
@@ -1553,9 +1600,19 @@ if(myrank.eq.0)then
  OPEN(160,FILE='./dat.ksdos') 
  rewind(160)
  do ie=1,nsgm
-  write(160,*) sgmw(ie)*au,ksdos(ie)
+  write(160,'(2f20.10)') sgmw(ie)*au,ksdos(ie)
  enddo 
  close(160) 
+ !
+ !OPEN(170,W,FILE='dat.gw_sigma_dos') 
+ !
+ OPEN(170,FILE='./dat.gw_sigma_dos') 
+ rewind(170)
+ do ie=1,nsgm
+  write(170,'(3f20.10)') sgmw(ie)*au,gw_sigma_dos(ie)
+ enddo 
+ close(170) 
+ !
  ierr=CHDIR("..") 
  call system('pwd') 
 endif!myrank.eq.0 
@@ -1574,14 +1631,15 @@ if(myrank.eq.0)then
   !H_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
   !
   allocate(kdata(NSK_BAND_DISP)); kdata=0.0d0 
-  allocate(E_BAND_DISP(NWF,NSK_BAND_DISP)); E_BAND_DISP=0.0d0 
+  allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0 
   call calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,NWF,SK_BAND_DISP(1,1),&
-  H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),kdata,E_BAND_DISP(1,1))  
+  H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),kdata,EKS(1,1))  
   !
   allocate(gwakw(NSK_BAND_DISP,nsgm)); gwakw=0.0d0
+  allocate(gw_sigma_kw(NSK_BAND_DISP,nsgm)); gw_sigma_kw=0.0d0
   call calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP,idlt,shift_value,&
   SK_BAND_DISP(1,1),a1(1),a2(1),a3(1),sgmw(1),H_MAT_R(1,1,-Na1,-Na2,-Na3),MAT_VXC_R(1,1,-Na1,-Na2,-Na3),&
-  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),gwakw(1,1))            
+  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),gwakw(1,1),gw_sigma_kw(1,1))            
   !
   write(6,'(a)')'finish gw-akw calc' 
 endif!myrank.eq.0
@@ -1603,12 +1661,12 @@ if(myrank.eq.0)then
  do ib=1,NWF 
   if(REVERSE)then 
    do ik=1,NSK_BAND_DISP                     
-    write(114,*) kdata(ik),E_BAND_DISP(ib,ik)*au
+    write(114,'(2f20.10)') kdata(ik),EKS(ib,ik)*au
    enddo!ik        
    REVERSE=.FALSE.        
   else         
    do ik=NSK_BAND_DISP,1,-1          
-    write(114,*) kdata(ik),E_BAND_DISP(ib,ik)*au
+    write(114,'(2f20.10)') kdata(ik),EKS(ib,ik)*au
    enddo!ik        
    REVERSE=.TRUE.        
   endif!REVERSE                   
@@ -1622,11 +1680,24 @@ if(myrank.eq.0)then
  do ie=1,nsgm 
   do ik=1,NSK_BAND_DISP 
    if(gwakw(ik,ie)>=500.0d0) gwakw(ik,ie)=500.0d0 
-   write(161,*) kdata(ik),sgmw(ie)*au,gwakw(ik,ie) 
+   write(161,'(3f20.10)') kdata(ik),sgmw(ie)*au,gwakw(ik,ie) 
   enddo 
   write(161,*) 
  enddo 
  close(161) 
+ ! 
+ !OPEN(171,W,FILE='dat.gw_sigma_kw') 
+ !
+ OPEN(171,FILE='./dat.gw_sigma_kw') 
+ rewind(171) 
+ do ie=1,nsgm 
+  do ik=1,NSK_BAND_DISP 
+   write(171,'(3f20.10)') kdata(ik),sgmw(ie)*au,gw_sigma_kw(ik,ie) 
+  enddo 
+  write(171,*) 
+ enddo 
+ close(171) 
+ ! 
  ierr=CHDIR("..") 
  call system('pwd') 
 endif!myrank.eq.0 

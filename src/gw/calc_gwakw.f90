@@ -1,5 +1,5 @@
 subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP,idlt,shift_ef,SK_BAND_DISP,a1,a2,a3,&
-  sgmw,KS_R,XC_R,SX_R,SC_R,AKW)
+  sgmw,KS_R,XC_R,SX_R,SC_R,AKW,gw_sigma_kw)
   !
   implicit none 
   integer::NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP
@@ -27,6 +27,7 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP,idlt
   complex(8),parameter::ci=(0.0D0,1.0D0) 
   !
   real(8),intent(out)::AKW(NSK_BAND_DISP,nsgm)           
+  real(8),intent(out)::gw_sigma_kw(NSK_BAND_DISP,nsgm)           
   ! 
   !1. GW_R 
   !
@@ -106,6 +107,17 @@ subroutine calc_gwakw(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,NSK_BAND_DISP,idlt
     enddo 
    enddo 
   enddo 
+  !
+  !6. CALC SIGMA_GW SPECTRAL FUNCTION 
+  !
+  gw_sigma_kw=0.0d0
+  do ie=1,nsgm 
+   do ik=1,NSK_BAND_DISP 
+    do jb=1,NWF 
+     gw_sigma_kw(ik,ie)=gw_sigma_kw(ik,ie)+abs(imag(EMK(jb,ik,ie))) 
+    enddo!jb 
+   enddo!ik 
+  enddo!ie  
   !
   deallocate(WEIGHT_R,pf,EMK,GW_R) 
   !

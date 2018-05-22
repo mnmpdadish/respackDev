@@ -2185,7 +2185,11 @@
          C0_TMP_2(ig,jb)=SUM_CMPX  
         enddo!jb 
        enddo!ig             
-       write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
+       !write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
+       !20180519
+       do ib=1,n_occ
+        write(113) (C0_TMP_2(ig,ib),ig=1,NG0(ik))
+       enddo!ib 
       enddo!ik              
 !-- 
 !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
@@ -2195,8 +2199,12 @@
       read(113) NWF 
       allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
       do ik=1,NTK 
-       read(113) ((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
-      enddo
+       !read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+       !20180519
+       do jb=1,NWF 
+        read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
+       enddo!jb 
+      enddo!ik
       write(6,*)'FINISH REDING C0_WN'
       ierr=CHDIR("..") 
       call system('pwd') 
@@ -2544,7 +2552,11 @@
        read(113) NWF!20170331(n_occ=NWF) 
        allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
        do ik=1,NTK 
-        read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+        !read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+        !20180519
+        do jb=1,NWF 
+         read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
+        enddo!jb 
        enddo!ik 
        write(6,*)'FINISH REDING C0_WN'
 !--
