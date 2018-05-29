@@ -148,7 +148,6 @@
         end do
        end do
        
-       
        !write(6,*)
        !write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
        !write(6,*)
@@ -159,7 +158,13 @@
        !write(6,403) ((mat_b_inv(ii,jj), jj = 1,3), ii = 1,3)
   
        call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
-       !call inv_2x2_complex(SU2_matrix) ! important, do not invert weirds...
+       !call inv_2x2_unitary(SU2_matrix) ! important, do not invert weirds...
+       !SU2_matrix(1,1) = 1.0d0
+       !SU2_matrix(1,2) = 0.0d0
+       !SU2_matrix(2,1) = 0.0d0
+       !SU2_matrix(2,2) = 1.0d0
+       
+       call print_norm_2x2(SU2_matrix(1,1))
        
        rinv_SO(:,:,iop)=SU2_matrix(:,:)
       enddo
@@ -354,6 +359,8 @@
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
+      allocate(is_irr(NTK));is_irr(:)=0
+      allocate(reorder(NTK));reorder(:)=0
       allocate(numrot(NTK));numrot(:)=0
       allocate(trs(NTK));trs(:)=0
       allocate(RW(3,NTK));RW(:,:)=0
@@ -393,6 +400,7 @@
        jk=jk+1
 !      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=ktmp(:)
+       if(iop==1) is_irr(jk)=1
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
 !time-reversal
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
@@ -418,6 +426,7 @@
 !      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=-ktmp(:) 
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=-1;RW(:,jk)=RWtmp(:) 
+       if(iop==1) is_irr(jk)=1
 2000  enddo 
       enddo 
 !--
@@ -568,6 +577,77 @@
      +  CIR(1,1,1,ik),C0(1,1,1,jk))!modified 20170316 KG0->KGtmp 
        endif 
       enddo 
+      
+      reorder_value_min =-1000.0d0
+      do ik = 1, NTK
+        reorder_value_max = 1000.0d0
+        do jk = 1, NTK
+          reorder_value = SK0(1,jk)*100.0 + SK0(2,jk)*10.0+ SK0(3,jk)
+          if(reorder_value<reorder_value_max.and.
+     +       reorder_value>reorder_value_min) then
+            reorder_value_max = reorder_value
+            reorder(ik) = jk
+          endif
+        enddo !jk
+        reorder_value_min = reorder_value_max +0.00001
+        write(6,*) reorder(ik)
+      enddo !ik 
+      
+!  140 format(4(1x,E15.5,SP,E15.5,"i        ",1x))
+!  141 format(1(1x,E15.5,"       ",1x))
+!  142 format(3(f10.5," "),(E12.5," "),2(i," "))
+!      open(103,file='./make_c0_sample')
+!      rewind(103)
+!      do ik = 1, NTK
+!        jk = reorder(ik)
+!        do ig = 1,NTG
+!!        write(6, fmt='(3(1x,i))',advance='yes') 
+!!     +            KG0(1,ig,jk), KG0(2,ig,jk),KG0(3,ig,jk)
+!        if((KG0(1,ig,jk)==0) .and.
+!     +     (KG0(2,ig,jk)==0) .and.
+!     +     (KG0(3,ig,jk)==0)) then
+!         !write(103,*) 'ik= ', ik
+!!         write(103,140) C0(1,1,1,ik)/C0(1,1,1,1)*abs(C0(1,1,1,1)),
+!!     +                  C0(1,2,1,ik)/C0(1,2,1,1)*abs(C0(1,2,1,1))
+!!         write(103,141) abs(C0(1,1,1,ik))
+!        
+!!         write(103,142,advance="no") SK0(1,jk), SK0(2,jk), 
+!!      +                 SK0(3,jk), dummy,
+!!      +                 ik, numirr(ik)
+!
+!
+!         dummy1=0.0d0
+!         dummy1=dummy1+(real(C0(ig,1,1,jk))*real(C0(ig,1,1,jk))
+!     +                + imag(C0(ig,1,1,jk))*imag(C0(ig,1,1,jk)))
+!
+!         if(ncomp==2) then
+!           dummy2=0.0d0
+!           dummy2=dummy2+(real(C0(ig,2,1,jk))*real(C0(ig,2,1,jk))
+!     +                  + imag(C0(ig,2,1,jk))*imag(C0(ig,2,1,jk)))
+!
+!           write(103,fmt="(2(E12.5,' '))",advance="no") 
+!     +                           dummy2+dummy1, dummy2
+!         endif
+!
+!         write(103,fmt="(E12.5,' ')",advance="no") dummy1
+!
+!
+!         
+!!         write(103, fmt='(3(1x,i))',advance='no') 
+!!     +                     KG0(1,ig,jk), KG0(2,ig,jk),KG0(3,ig,jk)
+!         if(is_irr(jk)==1) then
+!           write(103, *) "       ", ik, "irr"
+!         else
+!           write(103, *) "       ", ik, ""
+!         endif
+!        
+!         !NTG,ncomp,NTB,NTK
+!         exit ! to avoid the same KG0=(0,0,0) at the end.
+!        endif
+!        enddo
+!      end do ! ik
+!      close(103)
+      
 !--
       WRITE(6,*) 
       write(6,*)'==================='
@@ -576,7 +656,8 @@
       WRITE(6,*) 
       do ik=1,NTK
        write(6,'(i5,3f15.10,i5)') ik,SK0(:,ik),trs(ik)  
-      enddo 
+      enddo
+       
 !--
 !     WRITE(6,*) 
 !     write(6,*)'====================='

@@ -674,12 +674,12 @@
 !        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
 !        C0_K(ig,2,:)=C0irr(jg,2,:)*pf
         C0_K(ig,1,:)=rinv_SO(1,1)*C0irr(jg,1,:)*pf
-     +              +rinv_SO(2,1)*C0irr(jg,2,:)*pf
-        C0_K(ig,2,:)=rinv_SO(1,2)*C0irr(jg,1,:)*pf
+     +              +rinv_SO(1,2)*C0irr(jg,2,:)*pf
+        C0_K(ig,2,:)=rinv_SO(2,1)*C0irr(jg,1,:)*pf
      +              +rinv_SO(2,2)*C0irr(jg,2,:)*pf
 
        else
-        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
+        C0_K(ig,:,:)=C0irr(jg,:,:)*pf
        endif
 
       enddo!ig 
@@ -710,11 +710,11 @@
         !C0_K(ig,1,:)=-conjg(C0irr(jg,2,:)*pf)
         !C0_K(ig,2,:)= conjg(C0irr(jg,1,:)*pf)
         C0_K(ig,2,:)= conjg(rinv_SO(1,1)*C0irr(jg,1,:)*pf
-     +                     +rinv_SO(2,1)*C0irr(jg,2,:)*pf)
-        C0_K(ig,1,:)=-conjg(rinv_SO(1,2)*C0irr(jg,1,:)*pf
+     +                     +rinv_SO(1,2)*C0irr(jg,2,:)*pf)
+        C0_K(ig,1,:)=-conjg(rinv_SO(2,1)*C0irr(jg,1,:)*pf
      +                     +rinv_SO(2,2)*C0irr(jg,2,:)*pf)
        else
-        C0_K(ig,1,:)=C0irr(jg,1,:)*pf
+        C0_K(ig,:,:)=conjg(C0irr(jg,:,:)*pf)
        endif 
 
        if( abs(dble(pf)-1d0) > 1.0d-5 ) stop 'pf wrong1 (nomura)'
@@ -734,22 +734,60 @@
 
 
 
-      subroutine inv_2x2_complex(matrix2x2_to_be_inverted)
+      subroutine inv_2x2_unitary(matrix2x2_to_be_inverted)
       implicit none 
 
       complex(8),intent(inout)::matrix2x2_to_be_inverted(2,2) 
       complex(8)::mat(2,2)
       complex(8)::det
       
-      det=matrix2x2_to_be_inverted(1,1)*matrix2x2_to_be_inverted(2,2)
-     +   -matrix2x2_to_be_inverted(1,2)*matrix2x2_to_be_inverted(2,1)
+!      det=matrix2x2_to_be_inverted(1,1)*matrix2x2_to_be_inverted(2,2)
+!     +   -matrix2x2_to_be_inverted(1,2)*matrix2x2_to_be_inverted(2,1)
       
-      mat(1,1) = matrix2x2_to_be_inverted(2,2)/det
-      mat(1,2) =-matrix2x2_to_be_inverted(1,2)/det
-      mat(2,1) =-matrix2x2_to_be_inverted(2,1)/det
-      mat(2,2) = matrix2x2_to_be_inverted(1,1)/det
+!      mat(1,1) = matrix2x2_to_be_inverted(2,2)/det
+!      mat(1,2) =-matrix2x2_to_be_inverted(1,2)/det
+!      mat(2,1) =-matrix2x2_to_be_inverted(2,1)/det
+!      mat(2,2) = matrix2x2_to_be_inverted(1,1)/det
+
+      mat(:,:) = matrix2x2_to_be_inverted(:,:)
       
+      mat(1,1) = conjg(matrix2x2_to_be_inverted(1,1))
+      mat(1,2) = conjg(matrix2x2_to_be_inverted(2,1))
+      mat(2,1) = conjg(matrix2x2_to_be_inverted(1,2))
+      mat(2,2) = conjg(matrix2x2_to_be_inverted(2,2))
+
       matrix2x2_to_be_inverted(:,:) = mat(:,:)
+      
+      return 
+      end 
+
+
+      subroutine print_norm_2x2(matrix2x2)
+      implicit none 
+
+      complex(8),intent(inout)::matrix2x2(2,2) 
+      complex(8)::mat(2,2)
+      complex(8)::result1(2,2)
+      integer::ii,jj,kk
+      
+      mat(1,1) = conjg(matrix2x2(1,1))
+      mat(1,2) = conjg(matrix2x2(2,1))
+      mat(2,1) = conjg(matrix2x2(1,2))
+      mat(2,2) = conjg(matrix2x2(2,2))
+      
+      result1(:,:)=0.0d0
+      do ii=1,2
+        do jj=1,2
+          do kk=1,2
+            result1(ii,jj)=result1(ii,jj)+matrix2x2(ii,kk)*mat(kk,jj)
+          enddo
+        enddo
+      enddo
+      
+      write(6,*)
+      write(6,*)
+      write(6,fmt='(2(1x,F10.1,SP,F10.1,"i   ",1x))') 
+     +                    ((result1(ii,jj), jj = 1,2), ii = 1,2)
       
       return 
       end 
@@ -905,11 +943,15 @@
       A_TMP=0.0d0 
       do j_gauss=1,nigs
 !--
-       if( j_gauss <= nigs/2 ) then
+       if(ncomp==2) then
+        if( j_gauss <= nigs/2 ) then
          ic = 1
-       else
+        else
          ic = 2
-       end if
+        end if
+       else
+        ic=1
+       endif
 
        VEC_KG(:,:)=0.0D0             
        PF1(:)=0.0D0 

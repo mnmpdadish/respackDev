@@ -38,6 +38,12 @@
       integer,allocatable::rg(:,:,:)!rg(3,3,nsymq)
       integer,allocatable::pg(:,:)!pg(3,nsymq)
       integer,allocatable::numirr(:)!numirr(NTK) 
+      integer,allocatable::reorder(:)!reorder(NTK) 
+      real(8)::reorder_value=0.0d0,dummy1=0.0d0,dummy2=0.0d0
+      real(8)::reorder_value_max=0.0d0
+      real(8)::reorder_value_min=0.0d0
+      integer::ivalue1 = 0
+      integer,allocatable::is_irr(:)!numirr(NTK) 
       integer,allocatable::numrot(:)!numrot(NTK) 
       integer,allocatable::trs(:)!trs(NTK) 
       integer,allocatable::RW(:,:)!RW(3,NTK)

@@ -100,13 +100,24 @@ subroutine SO3_to_SU2_rotation(SO3_matrix, SU2_matrix)
            cos3,  sin3,  0.d0 /
 
 403 format(3(1x,F10.5,"        ",1x))
-404 format(2(1x,F10.5,SP,F10.5,"i        ",1x))
+404 format(2(1x,F20.5,SP,F20.5,"i        ",1x))
 
   
   !do kk=1,32
   !  call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/2.0d0, SU2_matrix)
+  !  call SO3_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk), SO3_matrix)
+  !  write(6,*)
+  !  write(6,*)
   !  write(6,*)
   !  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+  !  
+  !  call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/(-2.0d0), SU2_matrix)
+  !  write(6,*)
+  !  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+  !  write(6,*)
+  !  write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
+  !  write(6,*)
+  !  write(6,403) ((s0(ii,jj,kk), jj = 1,3), ii = 1,3)
   !enddo
   !stop
   
@@ -171,9 +182,36 @@ subroutine SU2_rotation(nx,ny,nz,theta_2, SU2_matrix)
   !ny = n_vector(2,kk)
   !nz = n_vector(3,kk)
   SU2_matrix(1,1) = cos(theta_2)-ci*nz*sin(theta_2)
-  SU2_matrix(1,2) = (-nx-ci*ny)*sin(theta_2) 
-  SU2_matrix(2,1) = (-nx+ci*ny)*sin(theta_2) 
+  SU2_matrix(1,2) = (-ci*nx-ny)*sin(theta_2) 
+  SU2_matrix(2,1) = (-ci*nx+ny)*sin(theta_2) 
   SU2_matrix(2,2) = cos(theta_2)+ci*nz*sin(theta_2)
+  
+  return
+end subroutine
+
+
+
+subroutine SO3_rotation(nx,ny,nz,theta, SO3_matrix)
+  implicit none
+                        
+  real(8),intent(in)::nx,ny,nz
+  real(8),intent(in)::theta
+  real(8),intent(inout):: SO3_matrix(3,3)
+  
+  real(8)::tol=1e-8
+  
+  SO3_matrix(1,1) = (1.0d0 - cos(theta))*nx*nx + cos(theta)
+  SO3_matrix(1,2) = (1.0d0 - cos(theta))*nx*ny - nz*sin(theta)
+  SO3_matrix(1,3) = (1.0d0 - cos(theta))*nx*nz + ny*sin(theta)
+  
+  SO3_matrix(2,1) = (1.0d0 - cos(theta))*ny*nx + nz*sin(theta)
+  SO3_matrix(2,2) = (1.0d0 - cos(theta))*ny*ny + cos(theta)
+  SO3_matrix(2,3) = (1.0d0 - cos(theta))*ny*nz - nx*sin(theta)
+  
+  SO3_matrix(3,1) = (1.0d0 - cos(theta))*nz*nx - ny*sin(theta)
+  SO3_matrix(3,2) = (1.0d0 - cos(theta))*nz*ny + nx*sin(theta)
+  SO3_matrix(3,3) = (1.0d0 - cos(theta))*nz*nz + cos(theta)
+   
   
   return
 end subroutine
