@@ -716,9 +716,6 @@
        else
         C0_K(ig,:,:)=conjg(C0irr(jg,:,:)*pf)
        endif 
-
-       if( abs(dble(pf)-1d0) > 1.0d-5 ) stop 'pf wrong1 (nomura)'
-       if( abs(dimag(pf)) > 1.0d-5 ) stop 'pf wrong2 (nomura)'
       enddo!ig 
       end select 
 !--
