@@ -501,7 +501,7 @@ if(calc_sc)then!.true.=default
      !
      do jb=1,Nb(ik)!Mb  
       !
-      call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+      call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),nnp,&
       L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
       ! 
       shift_G(:)=0
@@ -511,7 +511,7 @@ if(calc_sc)then!.true.=default
       ikqir=numirr(ikq)
       ikqop=numrot(ikq) 
       !
-      call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+      call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),nnp,&
       L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
       !
       call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),C0_KmQ(1),C0_K(1),ikq,ik,nwx2,nwy2,nwz2,&
@@ -636,7 +636,7 @@ if(calc_sc)then!.true.=default
      !
      do jb=1,Nb(ik)!Mb 
       !
-      call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+      call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),nnp,&
       L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
       !
       shift_G(:)=0
@@ -645,7 +645,7 @@ if(calc_sc)then!.true.=default
       ikqir=numirr(ikq)
       ikqop=numrot(ikq) 
       !
-      call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+      call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),nnp,&
       L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
       !
       call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),C0_KmQ(1),C0_K(1),ikq,ik,nwx2,nwy2,nwz2,&
@@ -1078,7 +1078,7 @@ do iq=1,pnq
     !
     do jb=1,Nb(ik)!Mb 
      !
-     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),nnp,&
      L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
      ! 
      shift_G(:)=0
@@ -1088,7 +1088,7 @@ do iq=1,pnq
      ikqir=numirr(ikq)
      ikqop=numrot(ikq) 
      !
-     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),nnp,&
      L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
      !
      !
@@ -1171,7 +1171,7 @@ do iq=1,pnq
     !
     do jb=1,Nb(ik)!Mb 
      !
-     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),&
+     call make_C0_for_given_band(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),rginv(1,1,iop),pg(1,iop),nnp,&
      L1,L2,L3,packing(-L1,-L2,-L3,ikir),CIR(1,jb+Ns(ik),ikir),C0_K(1)) 
      !
      shift_G(:)=0
@@ -1180,7 +1180,7 @@ do iq=1,pnq
      ikqir=numirr(ikq)
      ikqop=numrot(ikq) 
      !
-     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),&
+     call make_C0_for_given_band(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),rginv(1,1,ikqop),pg(1,ikqop),nnp,&
      L1,L2,L3,packing(-L1,-L2,-L3,ikqir),CIR(1,ib,ikqir),C0_KmQ(1)) 
      !
      call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),C0_KmQ(1),C0_K(1),ikq,ik,nwx2,nwy2,nwz2,&

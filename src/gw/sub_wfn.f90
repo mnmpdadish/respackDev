@@ -424,9 +424,9 @@ end select
 return 
 end 
 !
-subroutine make_C0_for_given_band(NTG,itrs,NG,KGtmp,RWtmp,rginvtmp,pgtmp,L1,L2,L3,packtmp,OCCtmp,C0_K) 
+subroutine make_C0_for_given_band(NTG,itrs,NG,KGtmp,RWtmp,rginvtmp,pgtmp,nnp,L1,L2,L3,packtmp,OCCtmp,C0_K) 
 implicit none 
-integer::NTG,L1,L2,L3 
+integer::NTG,L1,L2,L3,nnp 
 integer::itrs 
 integer::NG
 integer::KGtmp(3,NTG) 
@@ -454,7 +454,7 @@ case(1)!=== not time-reversal ===
   k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2+int(rginvtmp(3,3))*k2 
   jg=packtmp(i3,j3,k3) 
   phase=tpi*(dble(i1)*dble(pgtmp(1))+dble(j1)*dble(pgtmp(2))+dble(k1)*dble(pgtmp(3))) 
-  pf=exp(-ci*phase) 
+  pf=exp(-ci*phase/dble(nnp)) 
   C0_K(ig)=OCCtmp(jg)*pf 
  enddo!ig 
 case(-1)!=== time-reversal ===      
@@ -466,7 +466,7 @@ case(-1)!=== time-reversal ===
   k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2+int(rginvtmp(3,3))*k2 
   jg=packtmp(i3,j3,k3) 
   phase=tpi*(dble(i1)*dble(pgtmp(1))+dble(j1)*dble(pgtmp(2))+dble(k1)*dble(pgtmp(3))) 
-  pf=exp(-ci*phase) 
+  pf=exp(-ci*phase/dble(nnp)) 
   C0_K(ig)=OCCtmp(jg)*pf 
  enddo !ig 
  C0_K(:)=conjg(C0_K(:))  
