@@ -121,54 +121,7 @@
        call invmat(3,rginv(1,1,iop)) 
       enddo 
 !--
-
-      do i = 1, 3 
-       mat_b(i,1)=b1(i)
-       mat_b(i,2)=b2(i)
-       mat_b(i,3)=b3(i)
-      end do
-      
-      mat_b_inv=mat_b
-      call invmat(3,mat_b_inv(1,1))
-    
-
-  403 format(3(1x,F10.5,"        ",1x))
-  402 format(3(1x,i,"        ",1x))
-      
-      do iop=1,nsymq
-       do ii = 1, 3 
-        do jj = 1, 3 
-         SO3_matrix(ii,jj) = 0.0d0
-         do kk = 1, 3 
-          do ll = 1, 3 
-           SO3_matrix(ii,jj) = SO3_matrix(ii,jj) 
-     +             + mat_b(ii,kk)*rg(kk,ll,iop)*mat_b_inv(ll,jj)
-          end do
-         end do
-        end do
-       end do
-       
-       !write(6,*)
-       !write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
-       !write(6,*)
-       !write(6,402) ((rg(ii,jj,iop), jj = 1,3), ii = 1,3)
-       !write(6,*)
-       !write(6,403) ((mat_b(ii,jj), jj = 1,3), ii = 1,3)
-       !write(6,*)
-       !write(6,403) ((mat_b_inv(ii,jj), jj = 1,3), ii = 1,3)
-  
-       call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
-       !call inv_2x2_unitary(SU2_matrix) ! important, do not invert weirds...
-       !SU2_matrix(1,1) = 1.0d0
-       !SU2_matrix(1,2) = 0.0d0
-       !SU2_matrix(2,1) = 0.0d0
-       !SU2_matrix(2,2) = 1.0d0
-       
-       call print_norm_2x2(SU2_matrix(1,1))
-       
-       rinv_SO(:,:,iop)=SU2_matrix(:,:)
-      enddo
-      
+      call SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
 !--
       do iop=1,nsymq  
        write(6,'(a5,i4)')'sym=',iop

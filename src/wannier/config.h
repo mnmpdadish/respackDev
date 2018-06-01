@@ -29,11 +29,6 @@
       real(8)::aa1(3),aa2(3),aa3(3)
       real(8)::b1(3),b2(3),b3(3)
       real(8)::a,b,c,alp,bet,gmm  
-      
-      real(8)::mat_b(3,3)
-      real(8)::mat_b_inv(3,3)
-      real(8)::SO3_matrix(3,3)
-      complex(8)::SU2_matrix(2,2)
 !sym
       integer,allocatable::rg(:,:,:)!rg(3,3,nsymq)
       integer,allocatable::pg(:,:)!pg(3,nsymq)
@@ -51,7 +46,6 @@
       complex(8),allocatable::rinv_SO(:,:,:)!rinv_SO(2,2,nsymq) 
       
       integer::ik,jk,iik,iop,i,j,k,l,ib,jb,kb,llb 
-      integer::ii,jj,kk,ll
       integer::ig,jg,kg,lg,j1,k1,iw 
       integer::L1,L2,L3,nnp  
       integer::RWtmp(3) 

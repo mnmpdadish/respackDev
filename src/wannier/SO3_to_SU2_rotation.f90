@@ -1,195 +1,48 @@
-subroutine SO3_to_SU2_rotation(SO3_matrix, SU2_matrix)
+subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
   implicit none
-  real(8),   intent(in   ):: SO3_matrix(3,3)
-  complex(8),intent(inout):: SU2_matrix(2,2)
-  
-  logical:: found=.true., inv_found=.true.
-  integer:: ii,jj,kk
-  real(8), parameter :: sin3 = 0.866025403784438597d0, &
-                        cos3 = 0.5d0
-                        
-  real(8), parameter :: s2m1 = 0.707106781186547524d0, &
-                        s3m1 = 0.57735026918962573d0, &
-                        pi   = 3.141592653589793d0, &
-                        pi_2 = 1.5707963267948966d0, &
-                        pi2_3 = 2.0943951023931953, &
-                        pi_3 = 1.0471975511965976d0, &
-                        pi_6 = 0.5235987755982988d0
-                        
-  real(8)::s0(3, 3, 32)
-  real(8)::n_vector(3, 32),nx,ny,nz
-  real(8)::angles(32),theta_2
-  real(8)::tol=1e-8
-  complex(8)::ci=(0.0d0,1.0d0)
+  real(8), intent(in)::b1(3),b2(3),b3(3)
+  integer, intent(in)::nsymq
+  integer, intent(in)::rg(3,3,nsymq)
+  complex(8),intent(inout)::rinv_SO(2,2,nsymq) 
 
-  !from quantum espresso:
-  data s0/ 1.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0,  0.d0,  0.d0,  1.d0, &
-          -1.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0,  0.d0,  0.d0,  1.d0, &
-          -1.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0,  0.d0,  0.d0, -1.d0, &
-           1.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0,  0.d0,  0.d0, -1.d0, &
-           0.d0,  1.d0,  0.d0,  1.d0,  0.d0,  0.d0,  0.d0,  0.d0, -1.d0, &
-           0.d0, -1.d0,  0.d0, -1.d0,  0.d0,  0.d0,  0.d0,  0.d0, -1.d0, &
-           0.d0, -1.d0,  0.d0,  1.d0,  0.d0,  0.d0,  0.d0,  0.d0,  1.d0, &
-           0.d0,  1.d0,  0.d0, -1.d0,  0.d0,  0.d0,  0.d0,  0.d0,  1.d0, &
-           0.d0,  0.d0,  1.d0,  0.d0, -1.d0,  0.d0,  1.d0,  0.d0,  0.d0, &
-           0.d0,  0.d0, -1.d0,  0.d0, -1.d0,  0.d0, -1.d0,  0.d0,  0.d0, &
-           0.d0,  0.d0, -1.d0,  0.d0,  1.d0,  0.d0,  1.d0,  0.d0,  0.d0, &
-           0.d0,  0.d0,  1.d0,  0.d0,  1.d0,  0.d0, -1.d0,  0.d0,  0.d0, &
-          -1.d0,  0.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0,  1.d0,  0.d0, &
-          -1.d0,  0.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0, -1.d0,  0.d0, &
-           1.d0,  0.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0,  1.d0,  0.d0, &
-           1.d0,  0.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0, -1.d0,  0.d0, &
-           0.d0,  0.d0,  1.d0,  1.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0, &
-           0.d0,  0.d0, -1.d0, -1.d0,  0.d0,  0.d0,  0.d0,  1.d0,  0.d0, &
-           0.d0,  0.d0, -1.d0,  1.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0, &
-           0.d0,  0.d0,  1.d0, -1.d0,  0.d0,  0.d0,  0.d0, -1.d0,  0.d0, &
-           0.d0,  1.d0,  0.d0,  0.d0,  0.d0,  1.d0,  1.d0,  0.d0,  0.d0, &
-           0.d0, -1.d0,  0.d0,  0.d0,  0.d0, -1.d0,  1.d0,  0.d0,  0.d0, &
-           0.d0, -1.d0,  0.d0,  0.d0,  0.d0,  1.d0, -1.d0,  0.d0,  0.d0, &
-           0.d0,  1.d0,  0.d0,  0.d0,  0.d0, -1.d0, -1.d0,  0.d0,  0.d0, &
-           cos3,  sin3,  0.d0, -sin3,  cos3,  0.d0,  0.d0,  0.d0,  1.d0, &
-           cos3, -sin3,  0.d0,  sin3,  cos3,  0.d0,  0.d0,  0.d0,  1.d0, &
-          -cos3,  sin3,  0.d0, -sin3, -cos3,  0.d0,  0.d0,  0.d0,  1.d0, &
-          -cos3, -sin3,  0.d0,  sin3, -cos3,  0.d0,  0.d0,  0.d0,  1.d0, &
-           cos3, -sin3,  0.d0, -sin3, -cos3,  0.d0,  0.d0,  0.d0, -1.d0, &
-           cos3,  sin3,  0.d0,  sin3, -cos3,  0.d0,  0.d0,  0.d0, -1.d0, &
-          -cos3, -sin3,  0.d0, -sin3,  cos3,  0.d0,  0.d0,  0.d0, -1.d0, &
-          -cos3,  sin3,  0.d0,  sin3,  cos3,  0.d0,  0.d0,  0.d0, -1.d0 /
+  integer:: ii,jj,kk,ll, iop
+  real(8)::mat_b(3,3)
+  real(8)::mat_b_inv(3,3)
+  real(8)::SO3_matrix(3,3)
+  complex(8)::SU2_matrix(2,2)
   
-  data angles/   0.,    pi,    pi,    pi, &
-                 pi,    pi,  pi_2,  pi_2, & 
-                 pi,    pi,  pi_2,  pi_2, &
-                 pi,    pi,  pi_2,  pi_2, &
-              pi2_3, pi2_3, pi2_3, pi2_3, &
-              pi2_3, pi2_3, pi2_3, pi2_3, &
-               pi_3,  pi_3, pi2_3, pi2_3, &
-                 pi,    pi,    pi,    pi /
-
-  
-  data n_vector/ 1.d0,  0.d0,  0.d0, &
-           0.d0,  0.d0,  1.d0, &
-           0.d0,  1.d0,  0.d0, &
-           1.d0,  0.d0,  0.d0, &
-           s2m1,  s2m1,  0.d0, &
-           s2m1, -s2m1,  0.d0, &
-           0.d0,  0.d0, -1.d0, &
-           0.d0,  0.d0,  1.d0, &
-           s2m1,  0.d0,  s2m1, &
-          -s2m1,  0.d0,  s2m1, &
-           0.d0,  1.d0,  0.d0, &
-           0.d0, -1.d0,  0.d0, &
-           0.d0,  s2m1,  s2m1, &
-           0.d0,  s2m1, -s2m1, &
-          -1.d0,  0.d0,  0.d0, &
-           1.d0,  0.d0,  0.d0, &
-          -s3m1, -s3m1, -s3m1, &
-          -s3m1,  s3m1,  s3m1, &
-           s3m1,  s3m1, -s3m1, &
-           s3m1, -s3m1,  s3m1, &
-           s3m1,  s3m1,  s3m1, &
-          -s3m1,  s3m1, -s3m1, &
-           s3m1, -s3m1, -s3m1, &
-          -s3m1, -s3m1,  s3m1, &
-           0.d0,  0.d0,  1.d0, &
-           0.d0,  0.d0, -1.d0, &
-           0.d0,  0.d0,  1.d0, &
-           0.d0,  0.d0, -1.d0, &
-           sin3, -cos3,  0.d0, &
-           sin3,  cos3,  0.d0, &
-           cos3, -sin3,  0.d0, &
-           cos3,  sin3,  0.d0 /
-
-403 format(3(1x,F10.5,"        ",1x))
-404 format(2(1x,F20.2,SP,F20.2,"i   ",1x))
-
-  
-  !kk = 8
-  !call SO3_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk), SO3_matrix)
-  !call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
-  !stop
-  
-  
-  
-  !do kk=1,32
-  !  call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/2.0d0, SU2_matrix)
-  !  call SO3_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk), SO3_matrix)
-  !  write(6,*)
-  !  write(6,*)
-  !  write(6,*)
-  !  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
-
+  do ii = 1, 3 
+    mat_b(ii,1)=b1(ii)
+    mat_b(ii,2)=b2(ii)
+    mat_b(ii,3)=b3(ii)
+  end do
+      
+  mat_b_inv=mat_b
+  call invmat(3,mat_b_inv(1,1))
     
-  !  call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
-    !call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/(-2.0d0), SU2_matrix)
-  !  write(6,*)
-  !  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
-    
-  !  call from_SO3_matrix_to_SU2_matrix(-SO3_matrix,SU2_matrix)
-    !call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/(-2.0d0), SU2_matrix)
-  !  write(6,*)
-  !  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
-    
-    !write(6,*)
-    !write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
-    !write(6,*)
-    !write(6,403) ((s0(ii,jj,kk), jj = 1,3), ii = 1,3)
-  !enddo
-  !stop
+  do iop=1,nsymq
+   do ii = 1, 3 
+    do jj = 1, 3 
+     SO3_matrix(ii,jj) = 0.0d0
+     do kk = 1, 3 
+      do ll = 1, 3   ! double matrix multiplication
+       SO3_matrix(ii,jj) = SO3_matrix(ii,jj) + mat_b(ii,kk)*rg(kk,ll,iop)*mat_b_inv(ll,jj)
+      end do
+     end do
+    end do
+   end do
+   
+   !call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
+   call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
+   
+   write(6,*)
+   write(6,*)
+   write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
+   write(6,*)
+   write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+   rinv_SO(:,:,iop)=SU2_matrix(:,:)
+  enddo
   
-  !do kk=1,32
-  !  !write(6,*) kk
-  !  found=.true.
-  !  inv_found=.true.
-  !  do ii=1,3
-  !    do jj=1,3
-  !      !write(6,*) SO3_matrix(ii,jj), s0(ii,jj,kk)
-  !      if(abs(SO3_matrix(ii,jj)-s0(ii,jj,kk))>tol) found=.false.
-  !      if(abs(SO3_matrix(ii,jj)+s0(ii,jj,kk))>tol) inv_found=.false.
-  !    enddo
-  !  enddo
-  !  if((found==.true.).or.(inv_found==.true.)) then
-  !    exit
-  !    !write(6,*) 'symmetry found.'
-  !  elseif(kk==32) then
-  !    write(6,*) 'ERROR. rotation symmetry not found.'
-  !    stop 
-  !  endif
-  !enddo
-  
-  
-  
-  
-  
-  !if(found==.true.) then
-  !  call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),angles(kk)/2.0d0, SU2_matrix)
-  !elseif(inv_found==.true.) then
-  !  call SU2_rotation(n_vector(1,kk),n_vector(2,kk),n_vector(3,kk),-angles(kk)/2.0d0, SU2_matrix)
-  !else
-  !  write(6,*) 'ERROR. rotation symmetry not found.'
-  !  stop 
-  !endif
-  ! 
-  !write(6,*)
-  !write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
-  
-  
-  call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
-  !write(6,*)
-  !write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
-  
-  !do ii=1,3
-  !  do jj=1,3
-  !    if(abs(SO3_matrix(ii,jj)-s0(ii,jj,kk))<tol) found=.false.
-  !    if(abs(SO3_matrix(ii,jj)+s0(ii,jj,kk))<tol) inv_found=.false.
-  !  enddo
-  !enddo
-  
-  
-  write(6,*)
-  write(6,*)
-  write(6,403) ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
-  write(6,*)
-  write(6,404) ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
   
   return
 end subroutine
@@ -240,7 +93,6 @@ subroutine SO3_rotation(nx,ny,nz,theta, SO3_matrix)
   SO3_matrix(3,1) = (1.0d0 - cos(theta))*nz*nx - ny*sin(theta)
   SO3_matrix(3,2) = (1.0d0 - cos(theta))*nz*ny + nx*sin(theta)
   SO3_matrix(3,3) = (1.0d0 - cos(theta))*nz*nz + cos(theta)
-   
   
   return
 end subroutine
@@ -356,13 +208,6 @@ subroutine from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
       write(6,fmt='(3(1x,F10.5,"        ",1x))') ((matrix2(ii,jj), jj = 1,3), ii = 1,3)
       stop
     endif
-    
-!    if (abs(ny)<tol) then
-!      if(abs(nx+nz)<tol) then
-!        nx = -nx
-!        nz = -nz
-!      endif
-!    endif
         
   else !nn>2
   
@@ -375,17 +220,10 @@ subroutine from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
   !write(6,*) 'n=', nx,ny,nz
   
   if(isInv) then
-    call SU2_rotation(nx,ny,nz,-theta/2.0d0,SU2_matrix)
+    call SU2_rotation(nx,ny,nz,theta/2.0d0,SU2_matrix)
   else
     call SU2_rotation(nx,ny,nz,theta/2.0d0,SU2_matrix)
   endif
-  
-  !if (costheta < -tol ) SU2_matrix=-SU2_matrix
-  !if (abs(costheta) < tol ) then
-  !  if(nx*nz < -tol) then
-  !    SU2_matrix = -SU2_matrix
-  !  endif
-  !endif
   
   return
 end subroutine
