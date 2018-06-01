@@ -34,7 +34,7 @@ subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
    
    !call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
    call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
-   
+      
    write(6,*)
    write(6,*)
    write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
@@ -135,7 +135,7 @@ subroutine from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
   matrix1 = s
   matrix2 = s
   
-  do nn=1,10
+  do nn=1,100
     
     diff=0.0d0
     do ii=1,3
@@ -219,13 +219,31 @@ subroutine from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
   
   !write(6,*) 'n=', nx,ny,nz
   
+  
+  !to be removed (the if at least), but tested
   if(isInv) then
     call SU2_rotation(nx,ny,nz,theta/2.0d0,SU2_matrix)
   else
     call SU2_rotation(nx,ny,nz,theta/2.0d0,SU2_matrix)
   endif
   
+  
+  call internal_check(s,SU2_matrix)
+  
+  
+  
   return
 end subroutine
 
+
+subroutine internal_check(SO3_matrix,SU2_matrix)
+  implicit none
+                        
+  real(8),intent(in):: SO3_matrix(3,3)
+  complex(8),intent(in)::SU2_matrix(2,2)
+  
+  
+  
+  return
+end subroutine
 

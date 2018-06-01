@@ -60,12 +60,12 @@
       real(8),allocatable::LKGI(:,:)           
       real(8),allocatable::E_EIGI(:,:)           
       real(8),allocatable::E_EIG(:,:)!E_EIG(NTB,NTK)           
-      complex(8),allocatable::CIR(:,:,:,:) 
-      complex(8),allocatable::C0(:,:,:,:) 
-      complex(8),allocatable::C0_BRA(:,:,:)!C0_BRA(0:NTG,NTB)    
-      complex(8),allocatable::C0_KET(:,:,:)!C0_KET(0:NTG,NTB)    
-      complex(8),allocatable::C0_TMP_1(:,:,:)!C0_TMP_1(NTG,NTB)    
-      complex(8),allocatable::C0_TMP_2(:,:,:)!C0_TMP_2(NTG,NTB)    
+      complex(8),allocatable::CIR(:,:,:,:)!CIR(NTG,ncomp,NTB,Nk_irr)
+      complex(8),allocatable::C0(:,:,:,:)!C0(NTG,ncomp,NTB,NTK)
+      complex(8),allocatable::C0_BRA(:,:,:)!C0_BRA(0:NTG,ncomp,NTB)    
+      complex(8),allocatable::C0_KET(:,:,:)!C0_KET(0:NTG,ncomp,NTB)    
+      complex(8),allocatable::C0_TMP_1(:,:,:)!C0_TMP_1(NTG,ncomp,NTB)    
+      complex(8),allocatable::C0_TMP_2(:,:,:)!C0_TMP_2(NTG,ncomp,NTB)    
       complex(8),allocatable::C0WN(:,:,:,:) 
       integer::ncomp 
       integer::NWF
