@@ -1,0 +1,40 @@
+&control
+ calculation = 'scf'
+ prefix='GaAs',
+ tstress = .true.
+ tprnfor = .true.
+ pseudo_dir = './' ,
+ outdir='./band/',
+ wf_collect=.true.
+/
+&system
+ ibrav = 2,
+ celldm(1) = 10.68,
+ noncolin = .true.,
+ lspinorb = .true.,
+ nat = 2,
+ ntyp = 2,
+ ecutwfc = 80.0,
+ occupations = 'smearing'
+ smearing = 'm-p'
+ degauss = 0.01
+ use_all_frac = .true.
+ nbnd = 40
+/
+&electrons
+ mixing_beta = 0.3
+ conv_thr = 1.0d-8
+/
+ATOMIC_SPECIES
+  Ga  68.926 Ga_ONCV_PBE_fr.upf 
+  As  74.922 As_ONCV_PBE_fr.upf
+ATOMIC_POSITIONS {crystal}
+  Ga 0.00 0.00 0.00
+  As 0.25 0.25 0.25
+K_POINTS {crystal_b}
+  5
+  0.500 0.500 0.500 20
+  0.000 0.000 0.000 20
+  0.500 0.000 0.500 20
+  0.500 0.250 0.750 20
+  0.500 0.500 0.500 20

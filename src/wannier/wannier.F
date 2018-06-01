@@ -312,8 +312,8 @@
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
       allocate(numirr(NTK));numirr(:)=0
-      allocate(is_irr(NTK));is_irr(:)=0
-      allocate(reorder(NTK));reorder(:)=0
+      !allocate(is_irr(NTK));is_irr(:)=0
+      !allocate(reorder(NTK));reorder(:)=0
       allocate(numrot(NTK));numrot(:)=0
       allocate(trs(NTK));trs(:)=0
       allocate(RW(3,NTK));RW(:,:)=0
@@ -353,7 +353,7 @@
        jk=jk+1
 !      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=ktmp(:)
-       if(iop==1) is_irr(jk)=1
+       !if(iop==1) is_irr(jk)=1
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
 !time-reversal
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
@@ -379,7 +379,7 @@
 !      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=-ktmp(:) 
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=-1;RW(:,jk)=RWtmp(:) 
-       if(iop==1) is_irr(jk)=1
+       !if(iop==1) is_irr(jk)=1
 2000  enddo 
       enddo 
 !--
@@ -530,22 +530,26 @@
      +  CIR(1,1,1,ik),C0(1,1,1,jk))!modified 20170316 KG0->KGtmp 
        endif 
       enddo 
+
+
+! some section to output the value of C0 after reconstruction
       
-      reorder_value_min =-1000.0d0
-      do ik = 1, NTK
-        reorder_value_max = 1000.0d0
-        do jk = 1, NTK
-          reorder_value = SK0(1,jk)*100.0 + SK0(2,jk)*10.0+ SK0(3,jk)
-          if(reorder_value<reorder_value_max.and.
-     +       reorder_value>reorder_value_min) then
-            reorder_value_max = reorder_value
-            reorder(ik) = jk
-          endif
-        enddo !jk
-        reorder_value_min = reorder_value_max +0.00001
-        write(6,*) reorder(ik)
-      enddo !ik 
-      
+!      reorder_value_min =-1000.0d0
+!      do ik = 1, NTK
+!        reorder_value_max = 1000.0d0
+!        do jk = 1, NTK
+!          reorder_value = SK0(1,jk)*100.0 + SK0(2,jk)*10.0+ SK0(3,jk)
+!          if(reorder_value<reorder_value_max.and.
+!     +       reorder_value>reorder_value_min) then
+!            reorder_value_max = reorder_value
+!            reorder(ik) = jk
+!          endif
+!        enddo !jk
+!        reorder_value_min = reorder_value_max +0.00001
+!        write(6,*) reorder(ik)
+!      enddo !ik 
+!
+!      
 !  140 format(4(1x,E15.5,SP,E15.5,"i        ",1x))
 !  141 format(1(1x,E15.5,"       ",1x))
 !  142 format(3(f10.5," "),(E12.5," "),2(i," "))

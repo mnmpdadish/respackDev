@@ -1,0 +1,40 @@
+ &CONTROL
+                       title = BiTeI ,
+                 calculation = 'scf' ,
+                  wf_collect = .true.
+                restart_mode = 'from_scratch' ,
+                      outdir = './tmp/' ,
+                  pseudo_dir = './' ,
+                      prefix = 'BiTeI' ,
+                     tstress = .true. ,
+                     tprnfor = .true. ,
+ /
+ &SYSTEM
+                       ibrav = 4,
+                    noncolin = .true. 
+                    lspinorb = .true.,
+                   celldm(1) = 8.202646,
+                   celldm(3) = 1.579490,
+                         nat = 3,
+                        ntyp = 3,
+                     ecutwfc = 40 ,
+                 occupations ='smearing',
+                    smearing ='methfessel-paxton',
+                       nosym = .true.
+                       noinv = .true.
+                    degauss =0.02
+ /
+ &ELECTRONS
+                    conv_thr = 1.0d-8 ,
+ /
+ATOMIC_SPECIES
+   Bi  208.98038  Bi.UPF 
+   Te  127.60000  Te.UPF 
+    I  126.90447  I.UPF 
+ATOMIC_POSITIONS crystal 
+   Bi      0.000000000    0.000000000    0.000000000    
+   Te      0.666666667    0.333333333    0.747700000    
+    I      0.333333333    0.666666667    0.307500000    
+K_POINTS automatic 
+  7 7 7   0 0 0 
+

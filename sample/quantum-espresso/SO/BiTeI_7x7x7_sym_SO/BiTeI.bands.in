@@ -1,0 +1,5 @@
+ &BANDS
+    prefix = 'BiTeI'
+    outdir='./band/'
+    filband='BiTeI.band'
+ /

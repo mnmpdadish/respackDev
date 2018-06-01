@@ -1,0 +1,38 @@
+&param_chiqw 
+Ecut_for_eps=3.0d0,!cutoff energy for dielectric matrix (Ry)
+flg_cRPA=1/        !fRPA=0; cRPA=1
+
+&param_wannier 
+N_wannier=8,                  !Total number of considerd band in wannier calc 
+Lower_energy_window=-5.0d0,   !LOWER BOUND OF ENERGY WINDOW (eV)
+Upper_energy_window= 9.209841537652997d0, !UPPER BOUND OF ENERGY WINDOW (eV)
+N_initial_guess=8/            !TOTAL NUMBER OF INITIAL GUESS GAUSSIAN       
+s   0.20D0 0.25D0  0.25D0  0.25D0
+px  0.20D0 0.25D0  0.25D0  0.25D0
+py  0.20D0 0.25D0  0.25D0  0.25D0
+pz  0.20D0 0.25D0  0.25D0  0.25D0
+s   0.20D0 0.25D0  0.25D0  0.25D0
+px  0.20D0 0.25D0  0.25D0  0.25D0
+py  0.20D0 0.25D0  0.25D0  0.25D0
+pz  0.20D0 0.25D0  0.25D0  0.25D0
+
+
+&param_interpolation
+N_sym_points=5/      !The total number of symmetry points
+0.50d0 0.50d0 0.50d0 !L
+0.00d0 0.00d0 0.00d0 !G
+0.50d0 0.00d0 0.50d0 !X
+0.50d0 0.25d0 0.75d0 !W
+0.50d0 0.50d0 0.50d0 !L
+
+
+&param_visualization   
+/
+
+&param_calc_int 
+IX_INTJ_MIN =-1,
+IX_INTJ_MAX = 1,
+IY_INTJ_MIN =-1,
+IY_INTJ_MAX = 1,
+IZ_INTJ_MIN =-1,
+IZ_INTJ_MAX = 1/

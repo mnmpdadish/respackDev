@@ -1,0 +1,5 @@
+ &BANDS
+    prefix = 'GaAs'
+    outdir='./band/'
+    filband='GaAs.band'
+ /
