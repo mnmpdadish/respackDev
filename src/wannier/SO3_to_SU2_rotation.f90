@@ -11,6 +11,7 @@ subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
   real(8)::SO3_matrix(3,3)
   complex(8)::SU2_matrix(2,2)
   
+  
   do ii = 1, 3 
     mat_b(ii,1)=b1(ii)
     mat_b(ii,2)=b2(ii)
@@ -19,7 +20,7 @@ subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
       
   mat_b_inv=mat_b
   call invmat(3,mat_b_inv(1,1))
-    
+  
   do iop=1,nsymq
    do ii = 1, 3 
     do jj = 1, 3 
@@ -241,9 +242,102 @@ subroutine internal_check(SO3_matrix,SU2_matrix)
                         
   real(8),intent(in):: SO3_matrix(3,3)
   complex(8),intent(in)::SU2_matrix(2,2)
+  complex(8)::SU2_matrix_dag(2,2)
+  complex(8)::sigma_n1(2,2) !original sigma*n
+  complex(8)::sigma_n2(2,2) !sigma*(R*n)
+  complex(8)::sigma_n3(2,2) !U*sigma*n*U^dag
+  !goal of this function, test sigma_n2 =? sigma_n3
+  !for a random n_axis
   
+  real(8)::n_axis1(3)
+  real(8)::n_norm1, tol=1e-8
+   
+  real(8)::n_axis2(3)
+  
+  complex(8)::pauli_x(2,2)
+  complex(8)::pauli_y(2,2)
+  complex(8)::pauli_z(2,2)
+  
+  integer::ii,jj,kk,ll
+  complex(8)::ci=(0,1)
+  !real(8)::rand
+    
+  !call srand(314123) ! just to be sure to have the same behavior
+
+
+  pauli_x(:,:)=0.0d0
+  pauli_y(:,:)=0.0d0
+  pauli_z(:,:)=0.0d0
+  
+  pauli_x(1,2)=1.0d0
+  pauli_x(2,1)=1.0d0
+  
+  pauli_y(1,2)=-ci
+  pauli_y(2,1)=ci
+  
+  pauli_z(1,1)= 1.0d0
+  pauli_z(2,2)=-1.0d0
+  
+  !! define the same random n_vector and normalize it:
+  n_axis1(1) = 0.4783927!rand()
+  n_axis1(2) = 0.9843871!rand()
+  n_axis1(3) = 0.1328451!rand()
+  
+  n_norm1 = dsqrt(n_axis1(1)*n_axis1(1) + n_axis1(2)*n_axis1(2) + n_axis1(3)*n_axis1(3))
+  do ii =1,3
+    n_axis1(ii) = n_axis1(ii)/n_norm1
+  enddo
+  
+  !! n_axis2 = SO3_matrix * n_axis1
+  n_axis2(1) = SO3_matrix(1,1)*n_axis1(1) + SO3_matrix(1,2)*n_axis1(2) + SO3_matrix(1,3)*n_axis1(3)
+  n_axis2(2) = SO3_matrix(2,1)*n_axis1(1) + SO3_matrix(2,2)*n_axis1(2) + SO3_matrix(2,3)*n_axis1(3)
+  n_axis2(3) = SO3_matrix(3,1)*n_axis1(1) + SO3_matrix(3,2)*n_axis1(2) + SO3_matrix(3,3)*n_axis1(3)
+  
+  do ii=1,2
+    do jj=1,2
+      sigma_n1(ii,jj) = pauli_x(ii,jj)*n_axis1(1) + pauli_y(ii,jj)*n_axis1(2) + pauli_z(ii,jj)*n_axis1(3)
+      sigma_n2(ii,jj) = pauli_x(ii,jj)*n_axis2(1) + pauli_y(ii,jj)*n_axis2(2) + pauli_z(ii,jj)*n_axis2(3)
+    enddo
+  enddo
+  
+  sigma_n3(:,:) = 0.0d0 
+  do ii = 1,2 
+   do jj = 1,2 
+     SU2_matrix_dag(ii,jj) = conjg(SU2_matrix(jj,ii))
+   end do
+  end do
+  
+  do ii = 1,2 
+   do jj = 1,2 
+    do kk = 1,2 
+     do ll = 1,2   ! double matrix multiplication
+       sigma_n3(ii,jj) = sigma_n3(ii,jj) + SU2_matrix(ii,kk)*sigma_n1(kk,ll)*SU2_matrix_dag(ll,jj)
+     end do
+    end do
+   end do
+  end do
+
+  do ii = 1,2 
+   do jj = 1,2 
+    if(abs(sigma_n3(ii,jj) - sigma_n2(ii,jj)) > tol) then
+     write(6,*)
+     write(6,*) 'error, internal check failed:'
+     write(6,*) 'sigma*(R*n) should be equal to U*(sigma*n)*U^dag'
+     write(6,*)
+     write(6,*) 'sigma*(R*n)='
+     write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((sigma_n3(kk,ll), ll = 1,2), kk = 1,2)
+     write(6,*)
+     write(6,*) 'U*(sigma*n)*U^dag='
+     write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((sigma_n2(kk,ll), ll = 1,2), kk = 1,2)
+     stop
+    endif
+   end do
+  end do
+  write(6,*) 'internal test passed: sigma*(R*n) == U*(sigma*n)*U^dag'
   
   
   return
 end subroutine
+
+
 
