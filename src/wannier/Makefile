@@ -50,6 +50,8 @@ frmsf_wan.o: frmsf_wan.F90 m_rdinput.o
 
 est_NTK.o: est_NTK.f90 wannier_sub.o
 
+wrt_mvmc.o: wrt_mvmc.f90 inv.o 
+
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 
 #--------------------------------------------------------------------

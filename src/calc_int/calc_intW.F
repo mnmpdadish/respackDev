@@ -1169,12 +1169,43 @@
       call system("pwd") 
       ie=calc_ifreq          
       wcut_mvmc=wcut_mvmc/au 
-      call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,wcut_mvmc,
-     +     W_MAT(1,1,-Na1,-Na2,-Na3,ie)) 
+      !
+      !old: 20180604
+      !
+      ! call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,wcut_mvmc,
+      !+     W_MAT(1,1,-Na1,-Na2,-Na3,ie)) 
+      !
+      !new: 20180604
+      !
+      !WEIGHT_R 20170317 by Y.Nomura 
+      !
+      allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
+      SUM_REAL=0.0d0 
+      do ia1=-Na1,Na1
+       do ia2=-Na2,Na2
+        do ia3=-Na3,Na3
+         if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
+        enddo!ia3
+       enddo!ia2
+      enddo!ia1 
+      write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+      if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
+       stop 'SUM_WEIGHT/=NTK'
+      endif 
+      !
+      call wrt_mvmc(NTK,Na1,Na2,Na3,NWF,W_MAT(1,1,-Na1,-Na2,-Na3,ie),
+     +     WEIGHT_R(-Na1,-Na2,-Na3)) 
+      !
       ierr=CHDIR("..") 
       call system("pwd") 
-!--
+      !
       deallocate(C0,epsirr) 
-!--
+      !
       STOP
       END           

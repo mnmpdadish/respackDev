@@ -2428,8 +2428,20 @@
       call system('rm -rf dir-mvmc') 
       call system('mkdir dir-mvmc') 
       tcut_mvmc=tcut_mvmc/au 
-      call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,n_occ,tcut_mvmc,
-     +     H_MAT_R(1,1,-Na1,-Na2,-Na3)) 
+      !--
+      !OLD: 20180604 
+      !
+      !call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,n_occ,tcut_mvmc,
+      !+     H_MAT_R(1,1,-Na1,-Na2,-Na3)) 
+      !--
+      !
+      !NEW: 20180604 
+      !
+      call wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
+     + WEIGHT_R(-Na1,-Na2,-Na3)) 
+      !
+      call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))
+      !
 !--
 !(4) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 
       do ik=1,NSK_BAND_DISP          

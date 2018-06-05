@@ -111,6 +111,9 @@
 !W_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne) 
       real(8)::phase 
       complex(8)::pf,SUM_CMPX
+!mvmc 
+      real(8)::SUM_REAL 
+      real(8),allocatable::WEIGHT_R(:,:,:) 
 !local 
       integer::ik,ikq,jk,iik,iqir,iop,i,j,iw,jw,ix  
       integer::i1,j1,k1,ia1,ia2,ia3
