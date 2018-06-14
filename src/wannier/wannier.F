@@ -297,17 +297,17 @@
       read(102) ncomp 
       allocate(CIR(NTG,ncomp,NTB,Nk_irr));CIR=0.0d0  
       do ik=1,Nk_irr
-       do ic=1,ncomp
-        do ib=1,NBAND 
+       do ib=1,NBAND
+        do ic=1,ncomp
          if((ib.ge.NB_start).and.(ib.le.NB_end)) then  
           read(102)(CIR(IG,ic,ib-NB_start+1,ik),IG=1,NGI(ik))
-         else 
+         else
           read(102) 
-         endif 
-        enddo!ib 
-       enddo!ic
-      enddo!ik          
-      close(102) 
+         endif
+        enddo!ic 
+       enddo!ib
+      enddo!ik
+      close(102)
 
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0

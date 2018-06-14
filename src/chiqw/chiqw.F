@@ -83,6 +83,16 @@
        WRITE(6,*)'============='
        WRITE(6,*) 
       endif 
+
+      OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
+      rewind(102) 
+      read(102) ncomp!need to know ncomp this soon
+      if(ncomp>2)then 
+       write(6,*)'ncomp should be 1 or 2, nothing else.'
+       stop
+      endif 
+      close(102)
+      
 !--
 !OPEN(117,R,FILE='dat.bandcalc') 
       OPEN(117,FILE='./dir-wfn/dat.bandcalc') 
@@ -191,6 +201,7 @@
       allocate(rg(3,3,nsymq));rg(:,:,:)=0 
       allocate(pg(3,nsymq));pg(:,:)=0
       allocate(rginv(3,3,nsymq));rginv(:,:,:)=0.0d0 
+      allocate(rinv_SO(2,2,nsymq));rinv_SO(:,:,:)=0.0d0 
       do iop=1,nsymq
        read(100,*)((rg(i,j,iop),i=1,3),j=1,3) 
        read(100,*)(pg(i,iop),i=1,3)   
@@ -200,6 +211,11 @@
       do iop=1,nsymq
        call invmat(3,rginv(1,1,iop)) 
       enddo 
+
+!--      
+      call SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
+!--
+
       if(myrank_glb.eq.0)then!master
        write(6,*) 
        write(6,*)'========'
@@ -615,7 +631,8 @@
        if(flg_calc_type==1)then!gamma-only 
         iq=0;ix=0  
         do ik=1,Nk_irr 
-         if(abs(SKI(1,ik))<1.0d-5.and.abs(SKI(2,ik))<1.0d-5.and.
+         if(abs(SKI(1,ik))<1.0d-5.and.
+     +      abs(SKI(2,ik))<1.0d-5.and.
      +      abs(SKI(3,ik))<1.0d-5)then 
           ix=ik 
          endif 
@@ -1102,43 +1119,48 @@
       flush(6) 
 !-- 
       call MPI_BARRIER(comm_glb,ierr)
-      allocate(OCC(NTG,1:nbufo,Nk_irr));OCC(:,:,:)=0.0d0 
-      allocate(VIR(NTG,1:nbufv,Nk_irr));VIR(:,:,:)=0.0d0 
-      allocate(VIR_new(NTG,1:nbufv,Nk_irr));VIR_new(:,:,:)=0.0d0 
+      allocate(OCC(NTG,ncomp,1:nbufo,Nk_irr));OCC(:,:,:,:)=0.0d0 
+      allocate(VIR(NTG,ncomp,1:nbufv,Nk_irr));VIR(:,:,:,:)=0.0d0 
+      allocate(VIR_new(NTG,ncomp,1:nbufv,Nk_irr));
+      VIR_new(:,:,:,:)=0.0d0
       call MPI_BARRIER(comm_glb,ierr)
 !--
 !OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
       OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
       rewind(102) 
-      read(102) ncomp!20170512  
-      if(ncomp/=1)then 
-       write(6,*)'This program not suport ncomp/=1; then stop'
+      read(102) ncomp!20170512
+      if(ncomp>2)then
+       write(6,*)'ncomp should be 1 or 2, nothing else.'
        stop
       endif 
       call system('pwd') 
       do ik=1,Nk_irr  
        if(myrank/=0)then!not master  
         dest=0
-        pnocld=pno 
+        pnocld=pno
         call MPI_Send(pnocld,1,MPI_INTEGER,dest,0,comm,ierr) 
-        call MPI_Recv(OCC(1,1,ik),nbufo*NTG,MPI_DOUBLE_COMPLEX,
+        call MPI_Recv(OCC(1,1,1,ik),ncomp*nbufo*NTG,MPI_DOUBLE_COMPLEX,
      +                dest,0,comm,status,ierr) 
-        pnvcld=pnv 
+        pnvcld=pnv
         call MPI_Send(pnvcld,1,MPI_INTEGER,dest,0,comm,ierr) 
-        call MPI_Recv(VIR(1,1,ik),nbufv*NTG,MPI_DOUBLE_COMPLEX,
+        call MPI_Recv(VIR(1,1,1,ik),ncomp*nbufv*NTG,MPI_DOUBLE_COMPLEX,
      +                dest,0,comm,status,ierr) 
-       else 
+       else
         do ib=1,pno
-         read(102)(OCC(ig,ib,ik),ig=1,NGI(ik))
-        enddo 
-        allocate(Otmp(NTG,nbufo));Otmp(:,:)=0.0d0  
+         do ic=1,ncomp
+          read(102)(OCC(ig,ic,ib,ik),ig=1,NGI(ik))
+         enddo!ic
+        enddo!ib
+        allocate(Otmp(NTG,ncomp,nbufo));Otmp(:,:,:)=0.0d0  
         do source=1,nproc-1
          write(6,*)'source=',source 
          call MPI_Recv(pnocld,1,MPI_INTEGER,source,0,comm,status,ierr) 
          do ib=1,pnocld 
-          read(102)(Otmp(ig,ib),ig=1,NGI(ik))
-         enddo 
-         call MPI_Send(Otmp(1,1),nbufo*NTG,MPI_DOUBLE_COMPLEX,
+          do ic=1,ncomp
+           read(102)(Otmp(ig,ic,ib),ig=1,NGI(ik))
+          enddo 
+         enddo
+         call MPI_Send(Otmp(1,1,1),ncomp*nbufo*NTG,MPI_DOUBLE_COMPLEX,
      +                 source,0,comm,ierr) 
         enddo!source 
         deallocate(Otmp) 
@@ -1149,38 +1171,49 @@
         !
         !do ib=1,N_pocc
         ! backspace(102)
-        !enddo 
+        !enddo
         !
         rewind(102)
         read(102) ncomp
         do jk=1,ik-1
          do ib=1,NTB 
-          read(102) 
+          do ic=1,ncomp
+           read(102) 
+          enddo!ic
          enddo!ib
         enddo!jk  
+        
         do ib=1,N_docc
-         read(102) 
-        enddo!ib 
+         do ic=1,ncomp
+          read(102) 
+         enddo!ic
+        enddo!ib
         !
         do ib=1,pnv 
-         read(102)(VIR(ig,ib,ik),ig=1,NGI(ik))
-        enddo 
-        allocate(Vtmp(NTG,nbufv));Vtmp(:,:)=0.0d0  
+         do ic=1,ncomp
+          read(102)(VIR(ig,ic,ib,ik),ig=1,NGI(ik))
+         enddo!ic
+        enddo!ib 
+        allocate(Vtmp(NTG,ncomp,nbufv));Vtmp(:,:,:)=0.0d0  
         do source=1,nproc-1
          call MPI_Recv(pnvcld,1,MPI_INTEGER,source,0,comm,status,ierr) 
-         do ib=1,pnvcld 
-          read(102)(Vtmp(ig,ib),ig=1,NGI(ik))
-         enddo 
-         call MPI_Send(Vtmp(1,1),nbufv*NTG,MPI_DOUBLE_COMPLEX,
-     +                 source,0,comm,ierr) 
-        enddo!source 
-        deallocate(Vtmp) 
-        do ib=1,NTB-N_CALC_BAND 
-        read(102)
-        enddo 
-       endif  
-      enddo 
-!MPI_Broadcast
+         do ib=1,pnvcld
+          do ic=1,ncomp
+           read(102)(Vtmp(ig,ic,ib),ig=1,NGI(ik))
+          enddo!ic
+         enddo!ib
+         call MPI_Send(Vtmp(1,1,1),ncomp*nbufv*NTG,MPI_DOUBLE_COMPLEX,
+     +                 source,0,comm,ierr)
+        enddo!source
+        deallocate(Vtmp)
+        do ib=1,NTB-N_CALC_BAND
+         do ic=1,ncomp
+          read(102)
+         enddo!ic
+        enddo!ib
+       endif
+      enddo!ik
+!MPI_Broadcast.m
       IF(num_of_comm.gt.1)then 
        id_sub_perp=MOD(myrank_glb,num_of_mpi_per_comm)  
        write(6,*)'glb=',myrank_glb,'id_sub_perp=',id_sub_perp 
@@ -1327,8 +1360,8 @@
        allocate(wfunc(Nl123*2)) 
        allocate(m_tmp(NG_for_eps))
        allocate(ism(NTK,NG_for_eps))
-       allocate(C0_K(NTG))    
-       allocate(C0_KQ(NTG))    
+       allocate(C0_K(NTG,ncomp))    
+       allocate(C0_KQ(NTG,ncomp))    
        allocate(kpq(NTK)) 
        allocate(e1_1D(NTK))
        allocate(e2_1D(NTK))
@@ -1348,27 +1381,29 @@
 !C0_K=OCC(jb,ik)
          ikir=numirr(ik)
          iop=numrot(ik) 
-         C0_K(:)=0.0d0 
-         call make_C0(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),
+         C0_K(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ik),
+     +   NG0(ik),KG0(1,1,ik),RW(1,ik),
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),OCC(1,j_band,ikir),C0_K(1)) 
+     +   packing(-L1,-L2,-L3,ikir),OCC(1,1,j_band,ikir),C0_K(1,1)) 
 !C0_KQ=VIR(ib,ikq)
          ikir=numirr(ikq)
          iop=numrot(ikq) 
-         C0_KQ(:)=0.0d0 
-         call make_C0(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
+         C0_KQ(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ikq),
+     +   NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),VIR(1,i_band,ikir),C0_KQ(1)) 
+     +   packing(-L1,-L2,-L3,ikir),VIR(1,1,i_band,ikir),C0_KQ(1,1)) 
 !calc ISM 
-         call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),
-     +                              C0_K(1),C0_KQ(1),
+         call calc_InterStateMatrix(NTK,NTG,ncomp,NG0(1),KG0(1,1,1),
+     +                              C0_K(1,1),C0_KQ(1,1),
      +                              ik,ikq,nwx2,nwy2,nwz2,
      +                              nfft1,nfft2,Nl123,
      +                              wfunc(1),fftwk(1),fs,LG0(1,1,iq),
      +                              NG_for_eps,shift_G(1),m_tmp(1))
          ism(ik,:)=m_tmp(:) 
-        enddo!ik 
-!Using ttrhdrn_chi0 
+        enddo!ik
+!Using ttrhdrn_chi0
         e1_1D(:)=0.0d0
         e2_1D(:)=0.0d0 
         do ik=1,NTK
@@ -1475,18 +1510,21 @@
      +                   P_VIR_new, nbufv*NTK, MPI_DOUBLE_COMPLEX, 
      +                      source,         0, 
      +                        comm,    status,                  ierr)
-       call MPI_SENDRECV(    VIR, nbufv*Nk_irr*NTG, MPI_DOUBLE_COMPLEX,
+       call MPI_SENDRECV(    VIR, ncomp*nbufv*Nk_irr*NTG, 
+     +                                MPI_DOUBLE_COMPLEX,
      +                      dest,             0, 
-     +                    VIR_new, nbufv*Nk_irr*NTG, MPI_DOUBLE_COMPLEX,
-     +                     source,             0,
+     +                   VIR_new, ncomp*nbufv*Nk_irr*NTG, 
+     +                                MPI_DOUBLE_COMPLEX,
+     +                    source,             0,
      +                      comm,        status,             ierr)
        pnv=newpnv
        bnv=newbnv
-       env=newenv
+       env=newenv 
        W_VIR(1:nbufv)=W_VIR_new(1:nbufv)
        E_VIR(1:nbufv,1:Nk_irr)=E_VIR_new(1:nbufv,1:Nk_irr)
        P_VIR(1:nbufv,1:NTK)=P_VIR_new(1:nbufv,1:NTK)
-       VIR(1:NTG,1:nbufv,1:Nk_irr)=VIR_new(1:NTG,1:nbufv,1:Nk_irr)
+       VIR(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)=
+     +                   VIR_new(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)
        if(myrank.eq.0)write(6,*)'#MPI end' 
        enddo!irot 
 !--
@@ -1575,6 +1613,31 @@
        endif 
        deallocate(chiqw,pchiqw,i_for_pair,j_for_pair) 
 !--
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 !q.eq.0 
       elseif(q1==0.0d0.and.q2==0.0d0.and.q3==0.0d0)then 
        if(myrank.eq.0)then 
@@ -1658,30 +1721,35 @@
        allocate(gk_1D(NTK)) 
        allocate(gk_3D(nkb1,nkb2,nkb3)) 
        allocate(xo(nkb1,nkb2,nkb3))  
-       do ij_intra=1,N_INTRA 
+       do ij_intra=1,N_INTRA
+        !write(6,*) 'ij_intra=', ij_intra
         ib=i_for_intra(ij_intra)
         jb=j_for_intra(ij_intra)
         gk_1D(:)=0.0d0 
         fk_1D(:)=0.0d0
         pk_1D(:,:)=0.0d0
         do ik=1,NTK 
+         !write(6,*) 'ik=', ik
          ikq=ik 
          SKT(:)=SK0(:,ik) 
 !C0_K(:)=OCC(:,jb,ik) 
          ikir=numirr(ik)
          iop=numrot(ik) 
-         allocate(C0_K(NTG));C0_K(:)=0.0d0 
-         call make_C0(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),
+         allocate(C0_K(NTG,ncomp));C0_K(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ik),
+     +   NG0(ik),KG0(1,1,ik),RW(1,ik),
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),OCC(1,jb,ikir),C0_K(1)) 
+     +   packing(-L1,-L2,-L3,ikir),OCC(1,1,jb,ikir),C0_K(1,1)) 
 !C0_KQ(:)=VIR(:,ib,ikq) 
          ikir=numirr(ikq)
          iop=numrot(ikq) 
-         allocate(C0_KQ(NTG));C0_KQ(:)=0.0d0 
-         call make_C0(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
+         allocate(C0_KQ(NTG,ncomp));C0_KQ(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ikq),
+     +   NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),VIR(1,ib,ikir),C0_KQ(1)) 
-         call calc_VMaa(NTK,NTG,NG0(1),KG0(1,1,1),C0_K(1),C0_KQ(1),ik, 
+     +   packing(-L1,-L2,-L3,ikir),VIR(1,1,ib,ikir),C0_KQ(1,1)) 
+         call calc_VMaa(NTK,NTG,ncomp,NG0(1),KG0(1,1,1),
+     +                  C0_K(1,1),C0_KQ(1,1),ik, 
      +                  b1(1),b2(1),b3(1),SKT(1),vm(1))  
          deallocate(C0_K,C0_KQ) 
 !20170424 
@@ -1720,7 +1788,7 @@
      +    *pk_3D(ikb1,ikb2,ikb3,:)*pk_3D(ikb1,ikb2,ikb3,:) 
           enddo 
          enddo 
-        enddo 
+        enddo  
 !--
 !20170324 
 !        xo_1D(:)=0.0d0 
@@ -1767,8 +1835,8 @@
        allocate(m_tmp(NG_for_eps))
        allocate(fftwk(Nl123*2)) 
        allocate(wfunc(Nl123*2)) 
-       allocate(C0_K(NTG))    
-       allocate(C0_KQ(NTG))    
+       allocate(C0_K(NTG,ncomp))    
+       allocate(C0_KQ(NTG,ncomp))    
        allocate(kpq(NTK)) 
        allocate(e1_1D(NTK))
        allocate(e2_1D(NTK))
@@ -1779,33 +1847,38 @@
        allocate(ca1(4*nen))  
 !$OMP DO
        do ij=1,N_PAIR 
+        !write(6,*) 'ij=', ij
         ib=i_for_pair(ij) 
         jb=j_for_pair(ij) 
         do ik=1,NTK 
+         !write(6,*) 'ik=', ik
          ikq=ik 
          kpq(ik)=ikq
          shift_G(:)=0 
          ikir=numirr(ik)
          iop=numrot(ik) 
 !C0_K(:)=OCC(:,jb,ik) 
-         C0_K(:)=0.0d0 
-         call make_C0(NTG,trs(ik),NG0(ik),KG0(1,1,ik),RW(1,ik),
+         C0_K(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ik),
+     +   NG0(ik),KG0(1,1,ik),RW(1,ik),
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),OCC(1,jb,ikir),C0_K(1)) 
+     +   packing(-L1,-L2,-L3,ikir),OCC(1,1,jb,ikir),C0_K(1,1)) 
          ikir=numirr(ikq)
          iop=numrot(ikq) 
 !C0_KQ(:)=VIR(:,ib,ikq) 
-         C0_KQ(:)=0.0d0 
-         call make_C0(NTG,trs(ikq),NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
+         C0_KQ(:,:)=0.0d0 
+         call make_C0(NTG,ncomp,rinv_SO(1,1,iop),trs(ikq),
+     +   NG0(ikq),KG0(1,1,ikq),RW(1,ikq),     
      +   rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,
-     +   packing(-L1,-L2,-L3,ikir),VIR(1,ib,ikir),C0_KQ(1)) 
-         call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),
-     +                              C0_K(1),C0_KQ(1),
+     +   packing(-L1,-L2,-L3,ikir),VIR(1,1,ib,ikir),C0_KQ(1,1)) 
+         call calc_InterStateMatrix(NTK,NTG,ncomp,NG0(1),KG0(1,1,1),
+     +                              C0_K(1,1),C0_KQ(1,1),
      +                              ik,ikq,nwx2,nwy2,nwz2,
      +                              nfft1,nfft2,Nl123,
      +                              wfunc(1),fftwk(1),fs,LG0(1,1,iq),
      +                              NG_for_eps,shift_G(1),m_tmp(1))
-         call calc_VMab(NTK,NTG,NG0(1),KG0(1,1,1),C0_K(1),C0_KQ(1),ik, 
+         call calc_VMab(NTK,NTG,ncomp,NG0(1),KG0(1,1,1),
+     +                  C0_K(1,1),C0_KQ(1,1),ik, 
      +                  b1(1),b2(1),b3(1),vm(1))  
 !--
          del_eps=E_VIR(ib,numirr(ikq))-E_OCC(jb,numirr(ik))
@@ -1985,9 +2058,11 @@
      +                   P_VIR_new, nbufv*NTK, MPI_DOUBLE_COMPLEX, 
      +                      source,         0, 
      +                        comm,    status,                  ierr)
-       call MPI_SENDRECV(    VIR, nbufv*Nk_irr*NTG, MPI_DOUBLE_COMPLEX,
+       call MPI_SENDRECV(    VIR, ncomp*nbufv*Nk_irr*NTG, 
+     +                                MPI_DOUBLE_COMPLEX,
      +                      dest,             0, 
-     +                   VIR_new, nbufv*Nk_irr*NTG, MPI_DOUBLE_COMPLEX,
+     +                   VIR_new, ncomp*nbufv*Nk_irr*NTG, 
+     +                                MPI_DOUBLE_COMPLEX,
      +                    source,             0,
      +                      comm,        status,             ierr)
        pnv=newpnv
@@ -1998,7 +2073,8 @@
        EV_AVE(1:nbufv)=EV_AVE_new(1:nbufv)
        E_VIR(1:nbufv,1:Nk_irr)=E_VIR_new(1:nbufv,1:Nk_irr)
        P_VIR(1:nbufv,1:NTK)=P_VIR_new(1:nbufv,1:NTK)
-       VIR(1:NTG,1:nbufv,1:Nk_irr)=VIR_new(1:NTG,1:nbufv,1:Nk_irr)
+       VIR(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)=
+     +               VIR_new(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)
        if(myrank.eq.0) write(6,*)'#MPI end' 
       enddo!irot 
 !--

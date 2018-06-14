@@ -10,7 +10,7 @@ program convert101
   real(8), allocatable :: k_vec(:,:), k_tmp(:,:)
   integer, allocatable :: num_Gk(:)
   integer, allocatable :: Gk_grid(:,:)
-  complex(8), allocatable :: evc(:,:)
+  complex(8), allocatable :: evc(:,:,:) ! change
   complex(8):: c1
   real(8), allocatable :: eig(:)
   character(100), allocatable :: data_wfc1(:), data_wfc2(:), data_Gk(:)
@@ -25,7 +25,7 @@ program convert101
   
   real(8) :: eFermi, celldm
   real(8) :: Ecut_for_psi, Etot
-  integer :: i, j, jj, num_k, num_b
+  integer :: i, j, jj, num_k, num_b, ic
   integer :: ncomp = 1 
   character(5) :: cwrk
   
@@ -195,28 +195,34 @@ program convert101
     rewind(102)
     write(102) ncomp
     do i = 1, num_k
-      allocate(evc(num_Gk(i),num_b))
+      allocate(evc(num_Gk(i),num_b,ncomp))
       call iotk_open_read(13, data_wfc1(i))
         do j = 1, num_b
-          call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j))
+          call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j,1))
         end do ! j  
-        do j = 1, num_b
-          write(102) evc(:,j)
-        end do ! j 
+!        do j = 1, num_b
+!          write(102) evc(:,j)
+!        end do ! j 
       call iotk_close_read(13)
       
       !Maxime Charlebois
       if(is_SpinOrbit) then
         call iotk_open_read(13, data_wfc2(i))
           do j = 1, num_b
-            call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j))
+            call iotk_scan_dat(13,"evc"//iotk_index(j),evc(:,j,2))
           end do ! j  
-          do j = 1, num_b
-            write(102) evc(:,j)
-          end do ! j 
+!          do j = 1, num_b
+!            write(102) evc(:,j)
+!          end do ! j 
         call iotk_close_read(13)
       endif
       !
+      do j = 1, num_b
+       do ic = 1,ncomp ! changed the order or writting, for easier reading in chiqw. The reason is mainly to be more coherent with the usual order of indices C0_K(ig,ic,ib,ik)
+        write(102) evc(:,j,ic)
+       end do ! ic
+      end do ! j 
+      
       deallocate(evc)
     end do ! i 
   close(102)
@@ -410,11 +416,11 @@ subroutine convert_sym(data_xml)
         write(*,404) (mat_tmp2(j,k),k=1,3) 
       end do 
       
-      write(*,*)
-      write(*,*) "autre facton"//iotk_index(i)//"="
-      do j = 1, 3 
-        write(*,404) (mat_tmp1(j,k),k=1,3) 
-      end do 
+      !write(*,*)
+      !write(*,*) "autre facton"//iotk_index(i)//"="
+      !do j = 1, 3 
+      !  write(*,404) (mat_tmp1(j,k),k=1,3) 
+      !end do 
       
       
       

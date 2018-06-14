@@ -94,7 +94,8 @@
       RETURN  
       END 
 !--
-      subroutine calc_InterStateMatrix(NTK,NTG,NG0,KG0,C0_K,C0_KQ,
+      subroutine calc_InterStateMatrix(NTK,NTG,ncomp,NG0,KG0,
+     +                                 C0_K,C0_KQ,
      +                                 ik,ikq,nwx2,nwy2,nwz2,
      +                                 nfft1,nfft2,Nl123,
      +                                 wfunc,fftwk,fs,LG0,NG_for_eps,
@@ -103,16 +104,16 @@
       use fft_3d 
       implicit none 
       type(fft3_struct)::fs 
-      integer::NTK,NTG 
+      integer::NTK,NTG,ncomp,ncomp1=1
       integer::NG0(NTK),KG0(3,NTG,NTK) 
-      complex(8)::C0_K(NTG),C0_KQ(NTG) 
+      complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
       integer::ik,ikq 
       integer::nwx2,nwy2,nwz2,nfft1,nfft2,Nl123 
       real(8)::wfunc(Nl123*2),fftwk(Nl123*2) 
       integer::NG_for_eps 
       integer::LG0(3,NTG) 
       integer::shift_G(3)
-      integer::ig,igb1,igb2,igb3,ind,igL,igL1,igL2,igL3  
+      integer::ig,igb1,igb2,igb3,ind,igL,igL1,igL2,igL3, ic
       integer::ir,ir1,ir2,ir3 
       complex(8)::cell_periodic_k(Nl123)  
       complex(8)::cell_periodic_kq(Nl123)  
@@ -125,6 +126,10 @@
       real(8),parameter::tpi=2.0d0*pi 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
+
+      m_tmp(:)=0.0d0
+      do ic=1,ncomp ! we sum spins: m_tmp = <up|up> + <down|down>
+      
       wfunc(:)=0.0D0
       fftwk(:)=0.0D0
       do ig=1,NG0(ik) 
@@ -135,8 +140,8 @@
        igb2=MOD(nwy2+igb2,nwy2)+1
        igb3=MOD(nwz2+igb3,nwz2)+1
        ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
-       wfunc(ind)=dble(C0_K(ig))
-       wfunc(ind+Nl123)=dimag(C0_K(ig))
+       wfunc(ind)=dble(C0_K(ig,ic))
+       wfunc(ind+Nl123)=dimag(C0_K(ig,ic))
       enddo 
       call fft3_bw(fs,wfunc(1),fftwk(1)) 
       do ir=1,Nl123 
@@ -154,8 +159,8 @@
        igb2=MOD(nwy2+igb2,nwy2)+1      
        igb3=MOD(nwz2+igb3,nwz2)+1 
        ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
-       wfunc(ind)=dble(C0_KQ(ig))
-       wfunc(ind+Nl123)=dimag(C0_KQ(ig)) 
+       wfunc(ind)=dble(C0_KQ(ig,ic))
+       wfunc(ind+Nl123)=dimag(C0_KQ(ig,ic)) 
       enddo 
       call fft3_bw(fs,wfunc,fftwk)    
       do ir=1,Nl123
@@ -198,73 +203,81 @@
        igL2=MOD(nwy2+igL2,nwy2)+1
        igL3=MOD(nwz2+igL3,nwz2)+1
        ind=igL1+(igL2-1)*nfft1+(igL3-1)*nfft1*nfft2
-       m_tmp(igL)=cmplx(wfunc(ind),wfunc(ind+Nl123))
-      enddo 
+       m_tmp(igL)=m_tmp(igL)+cmplx(wfunc(ind),wfunc(ind+Nl123)) !adding
+      enddo
+      
+      enddo !ic=1,ncomp 
 !--
+      m_tmp(:) = m_tmp(:)/ncomp
       RETURN  
       END 
 !--
-      subroutine calc_VMab(NTK,NTG,NG0,KG0,C0_K,C0_KQ,ik,b1,b2,b3,vm)  
+      subroutine calc_VMab(NTK,NTG,ncomp,NG0,KG0,C0_K,C0_KQ,
+     +                                        ik,b1,b2,b3,vm)  
       implicit none 
-      integer::NTK,NTG,ik 
+      integer::NTK,NTG,ik, ncomp,ncomp1=1
       integer::NG0(NTK),KG0(3,NTG,NTK) 
       real(8)::b1(3),b2(3),b3(3) 
-      complex(8)::C0_K(NTG),C0_KQ(NTG) 
-      integer::ig,igb1,igb2,igb3 
+      complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
+      integer::ig,igb1,igb2,igb3, ic
       real(8)::G_VEC(3)
       complex(8)::SUM_VEC(3)
       complex(8)::vm(3) 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
       SUM_VEC(:)=0.0D0 
-      do ig=1,NG0(ik) 
-       igb1=KG0(1,ig,ik) 
-       igb2=KG0(2,ig,ik) 
-       igb3=KG0(3,ig,ik) 
-       G_VEC(:)=dble(igb1)*b1(:)+dble(igb2)*b2(:)+dble(igb3)*b3(:) 
-       SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig))*C0_K(ig) 
-      enddo 
+      do ic=1,ncomp
+       do ig=1,NG0(ik) 
+        igb1=KG0(1,ig,ik) 
+        igb2=KG0(2,ig,ik) 
+        igb3=KG0(3,ig,ik) 
+        G_VEC(:)=dble(igb1)*b1(:)+dble(igb2)*b2(:)+dble(igb3)*b3(:) 
+        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
+       enddo!ig
+      enddo!ic
 !"vm" depends on the direction of q approaching the zero limit
 !We employ q=[001],[010],[100] therefore
 !Kazuma Nakamura bugfix 2010 10 12
-      vm(:)=SUM_VEC(:)*ci!ci is multiplied  
+      vm(:)=SUM_VEC(:)*ci/ncomp!ci is multiplied
       RETURN  
       END 
 !--
-      subroutine calc_VMaa(NTK,NTG,NG0,KG0,C0_K,C0_KQ,ik,b1,b2,b3,SKT, 
-     +                     vm)  
+      subroutine calc_VMaa(NTK,NTG,ncomp,NG0,KG0,C0_K,C0_KQ,
+     +                                    ik,b1,b2,b3,SKT,vm)  
       implicit none 
-      integer::NTK,NTG,ik 
+      integer::NTK,NTG,ik, ncomp,ncomp1=1
       integer::NG0(NTK),KG0(3,NTG,NTK) 
       real(8)::b1(3),b2(3),b3(3),SKT(3) 
-      complex(8)::C0_K(NTG),C0_KQ(NTG) 
-      integer::ig,igb1,igb2,igb3 
+      complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
+      integer::ig,igb1,igb2,igb3, ic
       real(8)::G_VEC(3)
       complex(8)::SUM_VEC(3)
       complex(8) :: vm(3) 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
       SUM_VEC(:)=0.0D0 
-      do ig=1,NG0(ik) 
-       igb1=KG0(1,ig,ik) 
-       igb2=KG0(2,ig,ik) 
-       igb3=KG0(3,ig,ik) 
-       G_VEC(:)=(SKT(1)+dble(igb1))*b1(:)
-     +         +(SKT(2)+dble(igb2))*b2(:)
-     +         +(SKT(3)+dble(igb3))*b3(:) 
-       SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig))*C0_K(ig) 
-      enddo 
+      do ic=1,ncomp
+       do ig=1,NG0(ik) 
+        igb1=KG0(1,ig,ik) 
+        igb2=KG0(2,ig,ik) 
+        igb3=KG0(3,ig,ik) 
+        G_VEC(:)=(SKT(1)+dble(igb1))*b1(:)
+     +          +(SKT(2)+dble(igb2))*b2(:)
+     +          +(SKT(3)+dble(igb3))*b3(:) 
+        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
+       enddo!ig
+      enddo!ic
 !"vm" depends on the direction of q approaching the zero limit 
 !We employ q=[001],[010],[100] therefore
 !Kazuma Nakamura bugfix 2010 10 12
-      vm(:)=SUM_VEC(:)*ci!ci is multiplied  
+      vm(:)=SUM_VEC(:)*ci/ncomp!ci is multiplied  
       RETURN  
       END 
 !--
-      subroutine make_C0(NTG,itrs,NG,KGtmp,RWtmp,rginvtmp,pgtmp,
-     +           nnp,L1,L2,L3,packtmp,OCCtmp,C0_K) 
+      subroutine make_C0(NTG,ncomp,rinv_SO,itrs,NG,KGtmp,RWtmp,
+     +           rginvtmp,pgtmp,nnp,L1,L2,L3,packtmp,OCCtmp,C0_K) 
       implicit none 
-      integer::NTG,L1,L2,L3,nnp  
+      integer::NTG,ncomp,L1,L2,L3,nnp  
       integer::itrs 
       integer::NG
       integer::KGtmp(3,NTG) 
@@ -272,51 +285,77 @@
       real(8)::rginvtmp(3,3) 
       integer::pgtmp(3) 
       integer::packtmp(-L1:L1,-L2:L2,-L3:L3) 
-      complex(8)::OCCtmp(NTG) 
+      complex(8)::OCCtmp(NTG,ncomp) 
       integer::ig,jg,i1,i2,i3,j1,j2,j3,k1,k2,k3 
       real(8)::phase 
-      complex(8)::pf 
-      complex(8)::C0_K(NTG) 
+      complex(8)::pf,rinv_SO(2,2)
+      complex(8)::C0_K(NTG,ncomp) 
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
-      C0_K(:)=0.0d0 
+      C0_K(:,:)=0.0d0 
       if(itrs==1) then 
        do ig=1,NG 
         i1=KGtmp(1,ig); j1=KGtmp(2,ig); k1=KGtmp(3,ig) 
         i2=i1+RWtmp(1); j2=j1+RWtmp(2); k2=k1+RWtmp(3) 
-        i3=int(rginvtmp(1,1))*i2+int(rginvtmp(1,2))*j2 
+        i3=int(rginvtmp(1,1))*i2
+     +    +int(rginvtmp(1,2))*j2 
      +    +int(rginvtmp(1,3))*k2 
-        j3=int(rginvtmp(2,1))*i2+int(rginvtmp(2,2))*j2 
+        j3=int(rginvtmp(2,1))*i2
+     +    +int(rginvtmp(2,2))*j2 
      +    +int(rginvtmp(2,3))*k2 
-        k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2 
+        k3=int(rginvtmp(3,1))*i2
+     +    +int(rginvtmp(3,2))*j2 
      +    +int(rginvtmp(3,3))*k2 
         jg=packtmp(i3,j3,k3) 
         phase=tpi*(dble(i1)*dble(pgtmp(1))
      +            +dble(j1)*dble(pgtmp(2))
      +            +dble(k1)*dble(pgtmp(3))) 
         pf=exp(-ci*phase/dble(nnp)) 
-        C0_K(ig)=OCCtmp(jg)*pf 
+!        C0_K(ig)=OCCtmp(jg)*pf 
+
+        if(ncomp==2) then
+         C0_K(ig,1)=rinv_SO(1,1)*OCCtmp(jg,1)*pf
+     +             +rinv_SO(1,2)*OCCtmp(jg,2)*pf
+         C0_K(ig,2)=rinv_SO(2,1)*OCCtmp(jg,1)*pf
+     +             +rinv_SO(2,2)*OCCtmp(jg,2)*pf
+        else
+         C0_K(ig,:)=OCCtmp(jg,:)*pf
+        endif
+
        enddo!ig 
       elseif(itrs==-1) then  
        do ig=1,NG 
         i1=-KGtmp(1,ig); j1=-KGtmp(2,ig); k1=-KGtmp(3,ig) 
         i2=i1+RWtmp(1); j2=j1+RWtmp(2); k2=k1+RWtmp(3) 
-        i3=int(rginvtmp(1,1))*i2+int(rginvtmp(1,2))*j2 
+        i3=int(rginvtmp(1,1))*i2
+     +    +int(rginvtmp(1,2))*j2 
      +    +int(rginvtmp(1,3))*k2 
-        j3=int(rginvtmp(2,1))*i2+int(rginvtmp(2,2))*j2 
+        j3=int(rginvtmp(2,1))*i2
+     +    +int(rginvtmp(2,2))*j2 
      +    +int(rginvtmp(2,3))*k2 
-        k3=int(rginvtmp(3,1))*i2+int(rginvtmp(3,2))*j2 
+        k3=int(rginvtmp(3,1))*i2
+     +    +int(rginvtmp(3,2))*j2 
      +    +int(rginvtmp(3,3))*k2 
         jg=packtmp(i3,j3,k3) 
         phase=tpi*(dble(i1)*dble(pgtmp(1))
      +            +dble(j1)*dble(pgtmp(2))
      +            +dble(k1)*dble(pgtmp(3))) 
         pf=exp(-ci*phase/dble(nnp)) 
-        C0_K(ig)=OCCtmp(jg)*pf 
+
+        !C0_K(ig)=OCCtmp(jg)*pf 
+        if(ncomp==2) then
+         C0_K(ig,2)= conjg(rinv_SO(1,1)*OCCtmp(jg,1)*pf
+     +                    +rinv_SO(1,2)*OCCtmp(jg,2)*pf)
+         C0_K(ig,1)=-conjg(rinv_SO(2,1)*OCCtmp(jg,1)*pf
+     +                    +rinv_SO(2,2)*OCCtmp(jg,2)*pf)
+        else
+         C0_K(ig,:)=conjg(OCCtmp(jg,:)*pf)
+        endif 
+
        enddo!ig 
-       C0_K(:)=conjg(C0_K(:))  
+!       C0_K(:)=conjg(C0_K(:))  
       endif 
       return 
       end 

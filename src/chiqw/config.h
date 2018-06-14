@@ -58,9 +58,11 @@
       integer,allocatable::numrot(:)!numrot(NTK) 
       integer,allocatable::trs(:)!trs(NTK) 
       integer,allocatable::RW(:,:)!RW(3,NTK)
-      real(8),allocatable::rginv(:,:,:)!rginv(3,3,nsymq) 
+      real(8),allocatable::rginv(:,:,:)!rginv(3,3,nsymq)
+      complex(8),allocatable::rinv_SO(:,:,:)!rinv_SO(2,2,nsymq) 
+      
       integer::RWtmp(3) 
-      integer::ik,jk,iik,ikir,iop,i,j,ib,ig,jg 
+      integer::ik,jk,iik,ikir,iop,i,j,ib,ig,jg,ic
       integer::i1,j1,k1
       integer::L1,L2,L3,nnp  
 !fft 
@@ -88,8 +90,8 @@
 !i_for_pair(N_CALC_BAND*N_CALC_BAND)
 !j_for_pair(N_CALC_BAND*N_CALC_BAND)
       complex(8)::vm(3) 
-      complex(8),allocatable::C0_K(:)!C0_K(NTG)    
-      complex(8),allocatable::C0_KQ(:)!C0_KQ(NTG)    
+      complex(8),allocatable::C0_K(:,:)!C0_K(NTG,ncomp)    
+      complex(8),allocatable::C0_KQ(:,:)!C0_KQ(NTG,ncomp)    
       complex(8),allocatable::e1_1D(:)!e1_1D(NTK)
       complex(8),allocatable::e2_1D(:)!e2_1D(NTK)
       complex(8),allocatable::e1_3D(:,:,:)!e1_3D(nkb1,nkb2,nkb3) 
@@ -127,12 +129,12 @@
       real(8)::b1(3),b2(3),b3(3)
 !mpi 
       integer::id,ip,iu,N_docc,N_pocc,N_uocc,N_occ,N_vir 
-      complex(8),allocatable::OCC(:,:,:)!OCC(NTG,1:nbufo,Nk_irr)
-      complex(8),allocatable::VIR(:,:,:)!VIR(NTG,1:nbufv,Nk_irr)
-      complex(8),allocatable::VIR_new(:,:,:)
+      complex(8),allocatable::OCC(:,:,:,:)!OCC(NTG,ncomp,1:nbufo,Nk_irr)
+      complex(8),allocatable::VIR(:,:,:,:)!VIR(NTG,ncomp,1:nbufv,Nk_irr)
+      complex(8),allocatable::VIR_new(:,:,:,:)
 !VIR_new(NTG,1:nbufv,Nk_irr) 
-      complex(8),allocatable::Otmp(:,:)!Otmp(NTG,1:nbufo) 
-      complex(8),allocatable::Vtmp(:,:)!Vtmp(NTG,1:nbufv) 
+      complex(8),allocatable::Otmp(:,:,:)!Otmp(NTG,ncomp,1:nbufo) 
+      complex(8),allocatable::Vtmp(:,:,:)!Vtmp(NTG,ncomp,1:nbufv) 
       real(8),allocatable::E_OCC(:,:)!E_OCC(1:nbufo,Nk_irr) 
       real(8),allocatable::E_VIR(:,:),E_VIR_new(:,:)
       integer,allocatable::W_OCC(:),W_VIR(:),W_VIR_new(:)

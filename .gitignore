@@ -31,4 +31,5 @@ sample/xtapp/La2CuO4.bct.6x6x6/fort.10
 sample/xtapp/La2CuO4.bct.6x6x6/log.La2CuO4-cgmrpt
 sample/xtapp/La2CuO4.bct.6x6x6/log.La2CuO4-inipot
 
-
+tmp/
+ref/
