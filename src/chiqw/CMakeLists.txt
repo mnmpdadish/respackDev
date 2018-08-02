@@ -14,8 +14,8 @@ m_fft3d_20150826.f90 m_rdinput.f90 m_tetrahedron_20170325.F chiqw_sub.F)
 add_library(chiqw_com ${SOURCES_CHIQW} )
 target_link_libraries(chiqw_com ${LAPACK_LIBRARIES} m)
 
-add_executable(chiqw chiqw.F)
-target_link_libraries(chiqw chiqw_com)
-target_link_libraries(chiqw chiqw_com ${MPI_Fortran_LIBRARIES})
+add_executable(calc_chiqw chiqw.F)
+target_link_libraries(calc_chiqw chiqw_com)
+target_link_libraries(calc_chiqw chiqw_com ${MPI_Fortran_LIBRARIES})
 
-install(TARGETS chiqw ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS calc_chiqw ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
