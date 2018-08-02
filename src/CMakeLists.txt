@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
+if(${CMAKE_PROJECT_NAME} STREQUAL "Project")
+  message(FATAL_ERROR "cmake should be executed not for 'src' subdirectory, but for the top directory of RESPACK.")
+endif(${CMAKE_PROJECT_NAME} STREQUAL "Project")
+add_subdirectory(calc_int)
+#add_subdirectory(chiqw)
+#add_subdirectory(gw)
+#add_subdirectory(wannier)
