@@ -12,7 +12,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(ENABLE_MPI "Enable MPI Parallelization" ON)
-enable_language(Fortran)
+enable_language(Fortran C)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
