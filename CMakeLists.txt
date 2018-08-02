@@ -25,7 +25,8 @@ option(DEBUG "Debug" OFF)
 find_package(LAPACK)
 
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-  if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_LESS "15.0.0.20140528")
+#CMAKE_Fortran_COMPILER_VERSION cannot be detected
+if("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS "15.0.0.20140528")
      set(OMP_FLAG_Intel "-openmp")
   else()
      set(OMP_FLAG_Intel "-qopenmp")
