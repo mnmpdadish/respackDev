@@ -38,20 +38,4 @@ else()
   endif(OPENMP_FOUND)
 endif()
 
-
-if(ENABLE_MPI)
-  find_package(MPI)
-endif(ENABLE_MPI)
-enable_testing()
-option(Testing "Enable testing" ON)
-
-if(ENABLE_MPI)
-  find_package(MPI)
-  if(MPI_FOUND)
-    include_directories(${MPI_Fortran_INCLUDE_PATH})
-    add_definitions(-DMPI)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
-  endif(MPI_FOUND)
-endif(ENABLE_MPI)
-
 add_subdirectory(src)
