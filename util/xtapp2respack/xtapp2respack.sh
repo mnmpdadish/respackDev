@@ -51,3 +51,15 @@ if [ $status -ne 0 ]; then
 fi
 ( cd dir-wfn; grep 'fermi_energy' ../$target.str ) | awk '{print $3}' | sed -e 's/,$//' >> dir-wfn/dat.bandcalc
 ( cd dir-wfn; grep 'total_energy' ../$target.str ) | awk '{print $3}' | sed -e 's/,$//' >> dir-wfn/dat.bandcalc
+
+##########################
+#added by Kazuma Nakamura#
+##########################
+
+nelem=`grep 'number_element' ./$target.str | awk '{print $3}' | sed -e 's/,$//'`
+natom=`grep 'number_atom'    ./$target.str | awk '{print $3}' | sed -e 's/,$//'` 
+echo $nelem >> dir-wfn/dat.atom_kind
+echo $natom >> dir-wfn/dat.atom_position 
+grep -A $nelem 'valence_charge' ./$target.str | tail -$nelem >> dir-wfn/dat.atom_kind
+grep -A $natom 'atom_kind'      ./$target.str | tail -$natom >> dir-wfn/dat.atom_position 
+

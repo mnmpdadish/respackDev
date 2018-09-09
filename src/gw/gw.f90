@@ -610,6 +610,9 @@ if(calc_sc)then!.true.=default
     igL3=LG0(3,igL,bnq+iq-1)
     if(igL1==0.and.igL2==0.and.igL3==0)then 
      No_G_0=igL  
+     !20180822
+     length_qg(igL)=1.0d0 
+     atten_factor(igL)=0.0d0 
     else
      qgL(:)=(q1+dble(igL1))*b1(:)+(q2+dble(igL2))*b2(:)+(q3+dble(igL3))*b3(:)
      qgL2=qgL(1)**2+qgL(2)**2+qgL(3)**2
@@ -673,9 +676,9 @@ if(calc_sc)then!.true.=default
        do ie=1,ne 
         SUM_CMPX=0.0d0
         do igL=1,NG_for_eps 
-         if(igL==No_G_0) cycle 
+         !if(igL==No_G_0) cycle 
          do jgL=1,NG_for_eps 
-          if(jgL==No_G_0) cycle 
+          !if(jgL==No_G_0) cycle 
           !
           SUM_CMPX=SUM_CMPX+rho(igL,jb,ikir)/length_qg(igL)*atten_factor(igL)*epsmk(igL,jgL,ie)&
           *CONJG(rho(jgL,kb,ikir))/length_qg(jgL)*atten_factor(jgL) 
@@ -900,7 +903,8 @@ if(calc_sc)then!.true.=default
    enddo!ia2 
   enddo!ia1 
   !write(file_id,'(a,i7)')'ie=',ie 
-  if(myrank.eq.0) write(6,*)'FINISH ie',ie  
+  !if(myrank.eq.0) write(6,*)'FINISH ie',ie  
+  write(6,*)'FINISH ie myrank',ie,myrank   
  enddo!ie
  !--
  !OMP CRITICAL: diagonal case (not default)
@@ -1147,6 +1151,9 @@ do iq=1,pnq
    igL3=LG0(3,igL,bnq+iq-1)
    if(igL1==0.and.igL2==0.and.igL3==0)then 
     No_G_0=igL  
+    !20180822
+    length_qg(igL)=1.0d0 
+    atten_factor(igL)=0.0d0 
    else
     qgL(:)=(q1+dble(igL1))*b1(:)+(q2+dble(igL2))*b2(:)+(q3+dble(igL3))*b3(:)
     qgL2=qgL(1)**2+qgL(2)**2+qgL(3)**2
@@ -1205,11 +1212,11 @@ do iq=1,pnq
      do kb=1,Nb(ik)!Mb 
       SUM_CMPX=0.0d0
       do igL=1,NG_for_psi 
-       if(igL.ne.No_G_0) then 
-        !
-        SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ikir)*CONJG(rho(igL,kb,ikir))/((length_qg(igL))**2)*atten_factor(igL)
-        !
-       endif 
+       !if(igL.ne.No_G_0)then 
+       !
+       SUM_CMPX=SUM_CMPX+fbk(ib,ikq)*rho(igL,jb,ikir)*CONJG(rho(igL,kb,ikir))/((length_qg(igL))**2)*atten_factor(igL)
+       !
+       !endif 
       enddo!igL 
       !
       pSX(jb,kb,ikir)=pSX(jb,kb,ikir)+SUM_CMPX 
@@ -1221,7 +1228,8 @@ do iq=1,pnq
 !$OMP END PARALLEL 
   enddo ! ib 
   !write(file_id,*)'FINISH iq',iq
-  if(myrank.eq.0) write(6,*)'FINISH iq',iq 
+  !if(myrank.eq.0) write(6,*)'FINISH iq',iq 
+  write(6,*)'FINISH iq myrank',iq,myrank  
   deallocate(length_qg,atten_factor,rho) 
  endif 
 enddo!iq 

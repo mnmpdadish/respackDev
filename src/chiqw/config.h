@@ -107,6 +107,7 @@
       complex(8),allocatable::pc0dgm(:,:,:,:)
       complex(8),allocatable::ismgm(:,:,:)
       complex(8),allocatable::epsqwgm(:,:,:,:)
+      complex(8),allocatable::eps00w(:,:)
 !     complex(8),allocatable::m_tmp_st(:)!m_tmp_st(NGeps) 
 !     complex(8),allocatable::ism_st(:,:)!ism_st(NTK,NGeps) 
 !epsqw(NGeps,NGeps,nen)

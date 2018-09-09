@@ -85,6 +85,30 @@
       call est_latparam(a1(1),a2(1),a3(1),a,b,c,alp,bet,gmm) 
       write(6,'(6f15.10)') a,b,c,alp,bet,gmm 
 !--
+!20180906
+!OPEN(107,R,FILE='dat.atom_kind')
+      OPEN(107,FILE='./dir-wfn/dat.atom_kind') 
+      rewind(107)
+      read(107,*) nkd 
+      allocate(zo(nkd));zo=0.0d0
+      allocate(zn(nkd));zn=0.0d0
+      do i=1,nkd 
+       read(107,*) zo(i),zn(i)
+      enddo
+      close(107)
+!--
+!20180906
+!OPEN(108,R,FILE='dat.atom_position')
+      OPEN(108,FILE='./dir-wfn/dat.atom_position') 
+      rewind(108)
+      read(108,*) nsi 
+      allocate(kd(nsi));kd=0 
+      allocate(asi(3,nsi));asi=0.0d0
+      do i=1,nsi  
+       read(108,*) kd(i),(asi(j,i),j=1,3) 
+      enddo 
+      close(108)
+!--
 !OPEN(100,R,FILE='dat.symmetry') 
       OPEN(100,FILE='./dir-wfn/dat.symmetry') 
       rewind(100) 
@@ -576,49 +600,73 @@
        write(149,*) N_BAND_BTM(ik)+NB_start-1,N_BAND(ik) 
       enddo!ik 
 !--
+!20180906 
       if(CALC_REAL_SPACE_BLOCH)then 
        write(6,*) 
        write(6,*)'================================'
        write(6,*)'=== VISUALIZE BLOCH FUNCTION ==='
        write(6,*)'================================'
        write(6,*) 
-       ndx2=2*nwx2;ndy2=2*nwy2;ndz2=2*nwz2 
-       nfft1=ndx2+1;nfft2=ndy2+1;nfft3=ndz2+1
+       !--
+       nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 
-       write(6,'(a15,i5,i5,i5)')'ndx2,ndy2,ndz2',ndx2,ndy2,ndz2 
-       write(6,'(a15,i5,i5,i5)')'nfft1,nfft2,nfft3',nfft1,nfft2,nfft3 
+       write(6,'(a15,i5,i5,i5)')'nwx2,nwy2,nwz2',nwx2,nwy2,nwz2 
+       write(6,'(a15,i5,i5,i5)')'nfft1,nfft2,nfft2',nfft1,nfft2,nfft3 
        write(6,'(a15,i10)')'Nl123',Nl123 
-       call fft3_init(ndx2,ndy2,ndz2,nfft1,nfft2,nfft3,fs) 
-!--
-       allocate(BF_REALSPACE(0:ndx2-1,0:ndy2-1,0:ndz2-1))
+       call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
        allocate(fftwk(Nl123*2),stat=err) 
        allocate(wfunc(Nl123*2),stat=err) 
+       !--
        write(6,'(a,3f15.10)')'calc_k',calc_k
        call search_ik(NTK,SK0(1,1),calc_k(1),ik) 
-       write(6,*)'ik=',ik 
-       do ib=1,N_BAND(ik)!NTB 
+       write(6,'(a,i10)')'ik=',ik 
+       call search_vis_range(calc_k(1),amin,amax,bmin,bmax,cmin,cmax) 
+       write(6,'(a,3i10)')'supercell=',amax,bmax,cmax 
+       allocate(BF_REALSPACE((amin)*nwx2:(amax)*nwx2-1,
+     +                       (bmin)*nwy2:(bmax)*nwy2-1, 
+     +                       (cmin)*nwz2:(cmax)*nwz2-1))!<--complex(8)
+       !-- 
+       do ib=1,N_BAND(ik)
         BF_REALSPACE=0.0d0           
-        call make_bf(C0(1,N_BAND_BTM(ik)+ib,ik),wfunc(1),fftwk(1),
-     +  NG0(ik),KG0(1,1,ik),NTG,ndx2,ndy2,ndz2,nfft1,nfft2,Nl123,fs,
-     +  BF_REALSPACE(0,0,0)) 
-!--
-!normalize 
-!       BF_REALSPACE=BF_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
-!OUTPUT by VESTA format 
-!OPEN(116,W,FILE='dat.bf-realspace-xxx.grd')
+        call make_pw(C0(1,N_BAND_BTM(ik)+ib,ik),wfunc(1),fftwk(1),
+     +   NG0(ik),KG0(1,1,ik),NTG,nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
+     +   amin,amax,bmin,bmax,cmin,cmax,SK0(1,ik),
+     +   BF_REALSPACE(amin*nwx2,bmin*nwy2,cmin*nwz2)) 
+        call phase_fix_bf(nwx2,nwy2,nwz2,amin,amax,bmin,bmax,
+     +   cmin,cmax,BF_REALSPACE(amin*nwx2,bmin*nwy2,cmin*nwz2)) 
+        !--
+        !normalize 
+        !BF_REALSPACE=BF_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
+        !--
+        !OUTPUT by VESTA format 
+        !OPEN(116,W,FILE='dat.bf-realspace-xxx.grd')
         write(filename,"('dat.bf-realspace-',i3.3,'.grd')")ib 
         OPEN(116,FILE=filename) 
         REWIND(116)
-        call est_latparam(a1(1),a2(1),a3(1),a,b,c,alp,bet,gmm) 
+        na_grid=nwx2 
+        nb_grid=nwy2
+        nc_grid=nwz2 
+        aa1=a1*dble(amax-amin)
+        aa2=a2*dble(bmax-bmin)
+        aa3=a3*dble(cmax-cmin)
+        call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
         write(116,'(a,f10.5)')'Electron density and energy (eV)',
      +  E_EIG(N_BAND_BTM(ik)+ib,ik)*au 
-        write(116,'(6f15.10)') a,b,c,alp,bet,gmm 
-        write(116,'(3I5)') ndx2,ndy2,ndz2 
-        write(116,"(6g25.16)")((((BF_REALSPACE(i1,i2,i3)),
-     +  i3=0,ndz2-1),i2=0,ndy2-1),i1=0,ndx2-1)
+        write(116,'(6f15.10)') a*bohr,b*bohr,c*bohr,alp,bet,gmm  
+        write(116,'(3I5)')
+     +  (amax-amin)*na_grid,(bmax-bmin)*nb_grid,(cmax-cmin)*nc_grid 
+        write(116,'(6g25.16)')(((dble(BF_REALSPACE(i1,i2,i3)),
+     +  i3=(cmin)*nc_grid,(cmax)*nc_grid-1),
+     +  i2=(bmin)*nb_grid,(bmax)*nb_grid-1),
+     +  i1=(amin)*na_grid,(amax)*na_grid-1)
         CLOSE(116)
        enddo!ib 
        deallocate(BF_REALSPACE,fftwk,wfunc)
+       !--
+       !gencif 20180906  
+       call gencif(a1(1),a2(1),a3(1),amin,amax,bmin,bmax,cmin,cmax, 
+     +  nkd,nsi,zo(1),zn(1),kd(1),asi(1,1))
+       !
        write(6,*) 
        write(6,*)'==================================='
        write(6,*)'FINIDH VISUALIZE BLOCH FUNCTION ==='
@@ -1445,6 +1493,10 @@
        enddo!ib    
       enddo!ik ===CONSTRUCT C_MAT ROOP===      
       deallocate(S_MAT,S_TMP,S_EIG,X_MAT,S_HALF_MAT)
+      ! 
+      !write(6,*)'C_MAT'
+      !write(6,*) C_MAT 
+      ! 
 !--
 !      WRITE(6,*) 
 !      WRITE(6,*)'==========================='
@@ -2185,11 +2237,13 @@
          C0_TMP_2(ig,jb)=SUM_CMPX  
         enddo!jb 
        enddo!ig             
-       !write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
+       write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
+       !
        !20180519
-       do ib=1,n_occ
-        write(113) (C0_TMP_2(ig,ib),ig=1,NG0(ik))
-       enddo!ib 
+       !do ib=1,n_occ
+       ! write(113) (C0_TMP_2(ig,ib),ig=1,NG0(ik))
+       !enddo!ib 
+       !
       enddo!ik              
 !-- 
 !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
@@ -2199,11 +2253,13 @@
       read(113) NWF 
       allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
       do ik=1,NTK 
-       !read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+       read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+       !
        !20180519
-       do jb=1,NWF 
-        read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
-       enddo!jb 
+       !do jb=1,NWF 
+       ! read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
+       !enddo!jb 
+       !
       enddo!ik
       write(6,*)'FINISH REDING C0_WN'
       ierr=CHDIR("..") 
@@ -2532,19 +2588,20 @@
      +                      a1,a2,a3,b1,b2,b3,FermiEnergy,
      +                      WEIGHT_R,H_MAT_R)
       END IF
-      
+
 !==================================
 !=== VISUALIZE WANNIER FUNCTION ===
 !==================================
 
       if(CALC_REAL_SPACE_WANNIER)then 
+       !--
        nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 
        write(6,'(a15,i5,i5,i5)')'nwx2,nwy2,nwz2',nwx2,nwy2,nwz2 
        write(6,'(a15,i5,i5,i5)')'nfft1,nfft2,nfft2',nfft1,nfft2,nfft3 
        write(6,'(a15,i10)')'Nl123',Nl123 
-      call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
-!--
+       call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
+       !--
        mem_size=dble((xmax-xmin)*nwx2+(ymax-ymin)*nwy2+(zmax-zmin)*nwz2)
        mem_size=mem_size*16.0d0/1024.0d0/1024.0d0/1024.0d0 
        write(6,'(a35,f20.15)')'mem size realspace wannier (GB)',mem_size
@@ -2552,26 +2609,28 @@
         write(6,'(a35,f20.15)')'mem size > 1 GB; skipp' 
         go to 9999
        endif  
-!--
+       !--
        allocate(WANNIER_REALSPACE((xmin)*nwx2:(xmax)*nwx2-1,
      +                            (ymin)*nwy2:(ymax)*nwy2-1, 
      +                            (zmin)*nwz2:(zmax)*nwz2-1))
-!--
-!OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
+       !--
+       !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
        ierr=CHDIR("./dir-wan") 
        call system('pwd') 
        REWIND(113)       
        read(113) NWF!20170331(n_occ=NWF) 
        allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
        do ik=1,NTK 
-        !read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+        read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
+        !
         !20180519
-        do jb=1,NWF 
-         read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
-        enddo!jb 
+        !do jb=1,NWF 
+        ! read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
+        !enddo!jb 
+        !
        enddo!ik 
        write(6,*)'FINISH REDING C0_WN'
-!--
+       !--
        do ix=1,N_write_wannier!NWF 
         iw=wrt_list(ix)!20170406  
         WANNIER_REALSPACE=0.0d0           
@@ -2596,11 +2655,12 @@
 !$OMP END CRITICAL
         deallocate(C0_I,fftwk,wfunc,pw)
 !$OMP END PARALLEL
-!--
-!normalize 
+        !--
+        !normalize 
         WANNIER_REALSPACE=WANNIER_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
-!OUTPUT by VESTA format 
-!OPEN(116,W,FILE='dat.wan-realspace-xxx.grd')
+        !--
+        !OUTPUT by VESTA format 
+        !OPEN(116,W,FILE='dat.wan-realspace-xxx.grd')
         write(filename,"('dat.wan-realspace-',i3.3,'.grd')") iw 
         OPEN(116,FILE=filename) 
         REWIND(116)
@@ -2613,8 +2673,7 @@
         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
         write(116,*)'Electron density'
         write(116,'(6f15.10)')
-!    +  a*0.529177249,b*0.529177249,c*0.529177249,alp,bet,gmm!bohr->angstrom
-     +  a*bohr,b*bohr,c*bohr,alp,bet,gmm !bohr->angstrom
+     +  a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
         write(116,'(3I5)') 
      +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
         write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
@@ -2623,6 +2682,11 @@
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
         CLOSE(116)
        enddo!ix 
+       !--
+       !gencif 20180906  
+       call gencif(a1(1),a2(1),a3(1),xmin,xmax,ymin,ymax,zmin,zmax, 
+     +  nkd,nsi,zo(1),zn(1),kd(1),asi(1,1))
+       !--
        ierr=CHDIR("..") 
        call system('pwd') 
 9999  endif!CALC_REAL_SPACE_WANNIER 

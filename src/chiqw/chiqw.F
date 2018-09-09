@@ -2103,8 +2103,18 @@
        write(file_num_log,*)'#' 
        close(file_num_log)
 !--
+!20180907 
+!optical properties
+       ierr=CHDIR("..")
+       allocate(eps00w(1:nen,1:3));eps00w=0.0d0  
+       eps00w(:,:)=epsqwgm(No_G_0,No_G_0,:,:) 
+       call wrt_optical_property(nen,em(1),eps00w(1,1)) 
+       deallocate(eps00w) 
+       ierr=CHDIR("..")
        deallocate(epsqwgm,eps_rpa,chi0)
-       ierr=CHDIR("../..")!20170413 
+       !--
+       !ierr=CHDIR("../..")!20170413 
+       !--
        call system('pwd') 
       endif!myrank==0  
       deallocate(chiqwgm,pchiqwgm,i_for_pair,j_for_pair)

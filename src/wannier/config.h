@@ -4,9 +4,9 @@
       real(8),parameter::bohr=0.529177249d0!20180412  
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
-      integer,parameter::NBMAX = 12
-      integer,parameter::maxshell = 10 
-      integer,parameter::verbosity = 0
+      integer,parameter::NBMAX=12
+      integer,parameter::maxshell=20 
+      integer,parameter::verbosity=0
       complex(8),parameter::ci=(0.0D0,1.0D0) 
       complex(8),parameter::tci=(0.0D0,2.0D0) 
 !param-bandcalc 
@@ -41,7 +41,6 @@
       integer::ig,jg,kg,lg,j1,k1,iw 
       integer::L1,L2,L3,nnp  
       integer::RWtmp(3) 
-!      complex(8)::pf 
 !sample-k
       real(8),allocatable::SKI(:,:) 
       real(8),allocatable::SK0(:,:)!SK0(3,NTK) 
@@ -92,7 +91,6 @@
       integer,allocatable::inner(:,:)!inner(NTB,NTK)
       complex(8),allocatable::P_MAT(:,:)!P_MAT(NTB,NTB)
       complex(8),allocatable::Qin(:,:)!Qin(NTB,NTB)
-
 !triclinic Wannier 
       real(8),allocatable::VEC_d(:)!VEC_d(6)
       real(8),allocatable::bb(:,:)!bb(NBh,6)
@@ -147,7 +145,7 @@
       real(8)::OMEGA_I,OMEGA_OD,OMEGA_D,SPREAD,SPREAD_OLD,DEL_SPREAD
       real(8)::STEP_LENGTH,DELTA(4),OMEGA(4) 
       integer::ILS,I_STEP      
-!interpolated band
+!iband
       real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND(3,NSK_BAND_DISP)
       real(8),allocatable::E_TMP(:)!E_TMP(n_occ)  
       real(8),allocatable::E_BAND_DISP(:,:)!E_BAND_DISP(n_occ,NTK)
@@ -161,10 +159,12 @@
       real(8)::PHASE 
       complex(8)::PHASE_FACTOR     
       LOGICAL::REVERSE 
-!visualization(yoshimoto-fft)  
+!
+!vis-WAN(yoshimoto-fft)  
+!
       type(fft3_struct)::fs 
       character(99)::filename 
-      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123,err !,m1,m2,m3
+      integer::nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,Nl123,err
       real(8)::htmp,d1,d2,d3,qwf,h1(3),h2(3),h3(3)   
       integer::ndx2,ndy2,ndz2 
       integer::algn235
@@ -178,10 +178,22 @@
       complex(8),allocatable::H_MAT_R(:,:,:,:,:) 
       integer::i1,i2,i3,na_grid,nb_grid,nc_grid
       real(8)::mem_size          
+!vis-Bloch 
+      complex(8),ALLOCATABLE::BF_REALSPACE(:,:,:) 
+      integer::amin,amax,bmin,bmax,cmin,cmax 
 !basic variables 
       integer::iL,IC,JC,SUM_INT,ierr,chdir            
       real(8)::SUM_REAL,tmp(3)
       complex(8)::SUM_CMPX        
-
-      real(8),ALLOCATABLE::BF_REALSPACE(:,:,:) 
+!
+!20180906 
+!
+!atom_kind
+      integer::nkd
+      real(8),allocatable::zo(:),zn(:)!zo(nkd),zn(nkd)
+!atom_position
+      integer::nsi 
+      integer,allocatable::kd(:)!kd(nsi) 
+      real(8),allocatable::asi(:,:)!asi(3,nsi) 
+!
 !end config.h 
