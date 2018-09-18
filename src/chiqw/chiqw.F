@@ -1459,7 +1459,7 @@
             pc0d(ig,jg,ie)
      +     =pc0d(ig,jg,ie)
      +     +xow_1D(ik,ie)
-     +     *CONJG(ism(ik,ig))*ism(ik,jg)/dble(NTK)
+     +     *CONJG(ism(ik,ig))*ism(ik,jg)/dble(NTK*ncomp)
      +     *(1.0d0-P_OCC(j_band,ik)*P_VIR(i_band,ikq)) 
            enddo 
           enddo 
@@ -1620,24 +1620,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 !q.eq.0 
       elseif(q1==0.0d0.and.q2==0.0d0.and.q3==0.0d0)then 
        if(myrank.eq.0)then 
@@ -1755,6 +1737,7 @@
 !20170424 
         NLvm(:)=0.0d0 
         NLvm(:)=MAT_NLr_rNL(:,ib+(N_docc+bnv-1),jb+(bno-1),numirr(ik))
+        !careful: the behavior of NLvm != 0.0 has not been tested with ncomp=2
         pk_1D(ik,:)=-ci*(vm(:)-NLvm(:)) 
 !--
         fk_1D(ik)=1.0d0
@@ -1785,7 +1768,7 @@
            ik=index_kpt(ikb1,ikb2,ikb3)
            pwpl(:)
      +    =pwpl(:)+dimag(xo(ikb1,ikb2,ikb3))
-     +    *pk_3D(ikb1,ikb2,ikb3,:)*pk_3D(ikb1,ikb2,ikb3,:) 
+     +    *pk_3D(ikb1,ikb2,ikb3,:)*pk_3D(ikb1,ikb2,ikb3,:)/dble(ncomp)
           enddo 
          enddo 
         enddo  
@@ -1890,6 +1873,7 @@
 !2017022 
          NLvm(:)=0.0d0 
          NLvm(:)=MAT_NLr_rNL(:,ib+(N_docc+bnv-1),jb+(bno-1),numirr(ik))
+         !careful: the behavior of NLvm != 0.0 has not been tested with ncomp=2
          vm(:)=-ci*(vm(:)-NLvm(:))/del_eps!correct  
 !20170424 
          do ix=1,3
@@ -1962,7 +1946,7 @@
             pc0dgm(ig,jg,ie,:)
      +     =pc0dgm(ig,jg,ie,:)
      +     +xow_1D(ik,ie)
-     +     *CONJG(ismgm(ik,ig,:))*ismgm(ik,jg,:)/dble(NTK)
+     +     *CONJG(ismgm(ik,ig,:))*ismgm(ik,jg,:)/dble(NTK*ncomp)
      +     *(1.0d0-P_OCC(jb,ik)*P_VIR(ib,ikq)) 
            enddo!ik 
           enddo!jg 

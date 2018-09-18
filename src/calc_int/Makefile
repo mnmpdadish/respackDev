@@ -33,6 +33,7 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 COMMONOBJ = m_rdinput.o m_fft3d_20150826.o inv.o est_NTK.o est_nwx2.o calc_int_sub.o 
 W3dOBJ = calc_intW.o wrt_mvmc_w3d.o ${COMMONOBJ} 
 J3dOBJ = calc_intJ.o wrt_mvmc_j3d.o ${COMMONOBJ}
+TRNOBJ = translate_dat_wan.o ${COMMONOBJ}
 MOD_FILES = m_rdinput.mod fft_3d.mod 
 
 all: calc_w3d calc_j3d 
@@ -42,6 +43,9 @@ calc_w3d: ${W3dOBJ}
 
 calc_j3d: ${J3dOBJ} 
 	  ${FC} ${LDFLAGS} -o $@ ${J3dOBJ} ${LIBBLAS} 
+
+translate_dat_wan: ${TRNOBJ}
+	  ${FC} ${LDFLAGS} -o $@ ${TRNOBJ} ${LIBBLAS}
 
 calc_intW.o: calc_intW.F config_w3d.h m_rdinput.o m_fft3d_20150826.o inv.o est_NTK.o est_nwx2.o wrt_mvmc_w3d.o \
              calc_int_sub.o 

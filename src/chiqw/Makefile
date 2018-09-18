@@ -6,12 +6,12 @@
 #--------------------------------------------------------------------
 #intel
 FC = mpiifort 
-FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel 
+FFLAGS = -O1 -qopenmp -xHost -mcmodel=large -shared-intel 
 
 #######
 #DEBUG#
 #######
-#FFLAGS = -openmp -xHost -mcmodel=large -shared-intel -debug full -check all -warn all -traceback -g  
+#FFLAGS = -qopenmp -xHost -mcmodel=large -shared-intel -debug full -check all -warn all -traceback -g  
 
 #############################
 # note by Maxime Charlebois #

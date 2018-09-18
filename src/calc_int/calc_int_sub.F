@@ -99,123 +99,122 @@
       RETURN  
       END 
 !--
-      subroutine calc_InterStateMatrix(NTK,NTG,NG0,KG0,C0_K,C0_KQ,
+!--- Maxime Charlebois 20180702: copied from chiqw_sub.F
+      subroutine calc_InterStateMatrix(NTK,NTG,ncomp,NG0,KG0,
+     +                                 C0_K,C0_KQ,
      +                                 ik,ikq,nwx2,nwy2,nwz2,
      +                                 nfft1,nfft2,Nl123,
      +                                 wfunc,fftwk,fs,LG0,NG_for_eps,
      +                                 shift_G,m_tmp)
+!--
       use fft_3d 
       implicit none 
       type(fft3_struct)::fs 
-      integer::NTK,NTG 
+      integer::NTK,NTG,ncomp
       integer::NG0(NTK),KG0(3,NTG,NTK) 
-      complex(8)::C0_K(NTG),C0_KQ(NTG) 
+      complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
       integer::ik,ikq 
       integer::nwx2,nwy2,nwz2,nfft1,nfft2,Nl123 
-      real(8)::wfunc(Nl123*2),fftwk(Nl123*2) 
+      real(8)::wfunc(Nl123*2),fftwk(Nl123*2)
       integer::NG_for_eps 
       integer::LG0(3,NTG) 
       integer::shift_G(3)
-      integer::ig,igb1,igb2,igb3,ind,igL,igL1,igL2,igL3  
-      integer::ir,ir1,ir2,ir3
-      real(8)::dG1,dG2,dG3,phase 
-      complex(8),allocatable::cell_periodic_k(:)
-      complex(8),allocatable::cell_periodic_kq(:)
-      complex(8)::f,pf
-      complex(kind=8)::phx(nwx2),phy(nwy2),phz(nwz2)
-      complex(kind=8)::m_tmp(NG_for_eps) 
+      integer::ig,igb1,igb2,igb3,ind,igL,igL1,igL2,igL3, ic
+      integer::ir,ir1,ir2,ir3 
+      complex(8)::cell_periodic_k(Nl123)  
+      complex(8)::cell_periodic_kq(Nl123)  
+      complex(8)::f
+      real(8)::dG1,dG2,dG3
+      real(8)::phase 
+      complex(8)::pf 
+      complex(8)::m_tmp(NG_for_eps) 
       real(8),parameter::pi=dacos(-1.0d0)
       real(8),parameter::tpi=2.0d0*pi 
       complex(8),parameter::ci=(0.0D0,1.0D0) 
 !--
-      allocate(cell_periodic_k(Nl123))
-      allocate(cell_periodic_kq(Nl123))
+
+      m_tmp(:)=0.0d0
+      do ic=1,ncomp ! we sum spins: m_tmp = <up|up> + <down|down>
+      
       wfunc(:)=0.0D0
       fftwk(:)=0.0D0
       do ig=1,NG0(ik) 
-      igb1=KG0(1,ig,ik) 
-      igb2=KG0(2,ig,ik) 
-      igb3=KG0(3,ig,ik) 
-      igb1=MOD(nwx2+igb1,nwx2)+1
-      igb2=MOD(nwy2+igb2,nwy2)+1
-      igb3=MOD(nwz2+igb3,nwz2)+1
-      ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
-      wfunc(ind)=dble(C0_K(ig))
-      wfunc(ind+Nl123)=dimag(C0_K(ig))
+       igb1=KG0(1,ig,ik) 
+       igb2=KG0(2,ig,ik) 
+       igb3=KG0(3,ig,ik) 
+       igb1=MOD(nwx2+igb1,nwx2)+1
+       igb2=MOD(nwy2+igb2,nwy2)+1
+       igb3=MOD(nwz2+igb3,nwz2)+1
+       ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
+       wfunc(ind)=dble(C0_K(ig,ic))
+       wfunc(ind+Nl123)=dimag(C0_K(ig,ic))
       enddo 
-      call fft3_bw(fs,wfunc,fftwk) 
+      call fft3_bw(fs,wfunc(1),fftwk(1)) 
       do ir=1,Nl123 
-      cell_periodic_k(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
+       cell_periodic_k(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
       enddo 
+!     write(6,*) 'cell_k',cell_periodic_k  
 !--
       wfunc(:)=0.0D0
       fftwk(:)=0.0D0
       do ig=1,NG0(ikq)
-      igb1=KG0(1,ig,ikq)
-      igb2=KG0(2,ig,ikq) 
-      igb3=KG0(3,ig,ikq) 
-      igb1=MOD(nwx2+igb1,nwx2)+1
-      igb2=MOD(nwy2+igb2,nwy2)+1      
-      igb3=MOD(nwz2+igb3,nwz2)+1 
-      ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
-      wfunc(ind)=dble(C0_KQ(ig))
-      wfunc(ind+Nl123)=dimag(C0_KQ(ig)) 
+       igb1=KG0(1,ig,ikq)
+       igb2=KG0(2,ig,ikq) 
+       igb3=KG0(3,ig,ikq) 
+       igb1=MOD(nwx2+igb1,nwx2)+1
+       igb2=MOD(nwy2+igb2,nwy2)+1      
+       igb3=MOD(nwz2+igb3,nwz2)+1 
+       ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
+       wfunc(ind)=dble(C0_KQ(ig,ic))
+       wfunc(ind+Nl123)=dimag(C0_KQ(ig,ic)) 
       enddo 
       call fft3_bw(fs,wfunc,fftwk)    
       do ir=1,Nl123
-      cell_periodic_kq(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
+       cell_periodic_kq(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
       enddo 
+!    write(6,*) 'cell_kq',cell_periodic_kq  
 !--
       dG1=dble(shift_G(1))
       dG2=dble(shift_G(2))
       dG3=dble(shift_G(3))
-!YOSHIHIDE YOSHIMOTO 20080620 
-      do ir1=1,nwx2
-        phase = tpi*(dble(ir1-1)*dG1/dble(nwx2))
-        phx(ir1) = exp(-ci*phase)
-      end do
-      do ir2=1,nwy2
-        phase = tpi*(dble(ir2-1)*dG2/dble(nwy2))
-        phy(ir2) = exp(-ci*phase)
-      end do
-      do ir3=1,nwz2
-        phase = tpi*(dble(ir3-1)*dG3/dble(nwz2))
-        phz(ir3) = exp(-ci*phase)
-      end do
+!     write(6,*) 'dG=',dG1,dG2,dG3
 !--
       do ir3=1,nwz2
-      do ir2=1,nwy2
-      do ir1=1,nwx2
-       ir=ir1+(ir2-1)*nfft1+(ir3-1)*nfft1*nfft2 
-!YOSHIHIDE YOSHIMOTO 20080620 
-         pf=phx(ir1)*phy(ir2)*phz(ir3)
+       do ir2=1,nwy2
+        do ir1=1,nwx2
+         ir=ir1+(ir2-1)*nfft1+(ir3-1)*nfft1*nfft2 
+         phase=tpi*(dble(ir1-1)*dG1/dble(nwx2)
+     +             +dble(ir2-1)*dG2/dble(nwy2) 
+     +             +dble(ir3-1)*dG3/dble(nwz2)) 
+         pf=exp(-ci*phase) 
          cell_periodic_kq(ir)
-     + = cell_periodic_kq(ir) * pf 
-      enddo 
-      enddo 
+     +  =cell_periodic_kq(ir)*pf 
+        enddo 
+       enddo 
       enddo 
 !--
       wfunc(:)=0.0D0
       fftwk(:)=0.0D0
       do ir=1,Nl123 
-      f=CONJG(cell_periodic_kq(ir))*cell_periodic_k(ir)
-      wfunc(ir)=dble(f)
-      wfunc(ir+Nl123)=dimag(f) 
+       f=CONJG(cell_periodic_kq(ir))*cell_periodic_k(ir)
+       wfunc(ir)=dble(f)
+       wfunc(ir+Nl123)=dimag(f) 
       enddo 
       call fft3_fw(fs,wfunc,fftwk) 
       do igL=1,NG_for_eps
-      igL1=-LG0(1,igL)
-      igL2=-LG0(2,igL)
-      igL3=-LG0(3,igL) 
-      igL1=MOD(nwx2+igL1,nwx2)+1
-      igL2=MOD(nwy2+igL2,nwy2)+1
-      igL3=MOD(nwz2+igL3,nwz2)+1
-      ind=igL1+(igL2-1)*nfft1+(igL3-1)*nfft1*nfft2
-      m_tmp(igL)=cmplx(wfunc(ind),wfunc(ind+Nl123))
-      enddo 
+       igL1=-LG0(1,igL)
+       igL2=-LG0(2,igL)
+       igL3=-LG0(3,igL) 
+       igL1=MOD(nwx2+igL1,nwx2)+1
+       igL2=MOD(nwy2+igL2,nwy2)+1
+       igL3=MOD(nwz2+igL3,nwz2)+1
+       ind=igL1+(igL2-1)*nfft1+(igL3-1)*nfft1*nfft2
+       m_tmp(igL)=m_tmp(igL)
+     +   +cmplx(wfunc(ind),wfunc(ind+Nl123)) !adding
+      enddo
+      
+      enddo !ic=1,ncomp 
 !--
-      deallocate(cell_periodic_k)
-      deallocate(cell_periodic_kq)
       RETURN  
       END 
 !--

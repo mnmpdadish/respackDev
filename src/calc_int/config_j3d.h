@@ -58,8 +58,9 @@
       integer,allocatable::KG0(:,:,:)!KG0(3,NTG,NTK)
 !wannier 
       real(8),allocatable::coord(:,:)!coord(3,NWF)  
-      complex(8),allocatable::C0(:,:,:) 
+      complex(8),allocatable::C0(:,:,:,:)!C0(NTG,ncomp,NWF,NTK)
       integer::NWF 
+      integer::ncomp,ic
 !sqirr 
       real(8),allocatable::SQI(:,:)  
       integer::Nq_irr 
@@ -91,8 +92,8 @@
       logical::file_e 
 !matJ
       real(8),ALLOCATABLE::length_qg(:) 
-      complex(8),allocatable::C0_K(:)!C0_K(NTG)    
-      complex(8),allocatable::C0_KQ(:)!C0_KQ(NTG)    
+      complex(8),allocatable::C0_K(:,:)!C0_K(NTG,ncomp)    
+      complex(8),allocatable::C0_KQ(:,:)!C0_KQ(NTG,ncomp)    
       complex(8),ALLOCATABLE::rho_tmp(:) 
       complex(8),ALLOCATABLE::rho(:,:,:)!prho(NG_for_psi,NWF,NWF) 
       complex(8),allocatable::prho(:,:,:)!prho(NG_for_psi,NWF,NWF) 

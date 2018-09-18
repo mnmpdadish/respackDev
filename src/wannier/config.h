@@ -66,7 +66,7 @@
       complex(8),allocatable::C0_KET(:,:,:)!C0_KET(0:NTG,ncomp,NTB)    
       complex(8),allocatable::C0_TMP_1(:,:,:)!C0_TMP_1(NTG,ncomp,NTB)    
       complex(8),allocatable::C0_TMP_2(:,:,:)!C0_TMP_2(NTG,ncomp,NTB)    
-      complex(8),allocatable::C0WN(:,:,:,:) 
+      complex(8),allocatable::C0WN(:,:,:,:)
       integer::ncomp 
       integer::NWF
       integer::NBAND 

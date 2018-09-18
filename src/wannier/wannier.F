@@ -356,6 +356,7 @@
        !if(iop==1) is_irr(jk)=1
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
 !time-reversal
+!1000   goto 2000
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
 
        ktmp(1)=rg(1,1,iop)*SKI(1,ik)
@@ -421,13 +422,12 @@
       write(6,*)'write Fermi surface'
       call system('rm -rf dir-wan') 
       call system('mkdir dir-wan') 
-      call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
-     +     FermiENergy,b1(1),b2(1),b3(1)) 
+!      call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
+!     +     FermiENergy,b1(1),b2(1),b3(1)) 
       deallocate(E_EIG)
 !--
 !     stop
 !--
-
 !--
 !gen(C0,E_EIG,NG0,NB0,KG0) 
       allocate(C0(NTG,ncomp,NTB,NTK));C0(:,:,:,:)=0.0d0
@@ -446,7 +446,9 @@
 !      enddo 
 !      do jk=Nk_irr+1,NTK 
 !---
+      !write(6,*)'test1.5'
       do jk=1,NTK 
+       !write(6,*)'test jk ', jk
        if(trs(jk)==1) then 
         ik=numirr(jk);iop=numrot(jk) 
         ktmp(1)=rg(1,1,iop)*SKI(1,ik)
@@ -530,6 +532,8 @@
      +  CIR(1,1,1,ik),C0(1,1,1,jk))!modified 20170316 KG0->KGtmp 
        endif 
       enddo 
+      
+
 
 
 ! some section to output the value of C0 after reconstruction
@@ -1208,6 +1212,9 @@
       WRITE(6,*)' INTERSTATE MATRIX '
       WRITE(6,*)'==================='
       WRITE(6,*) 
+      WRITE(6,*) 'NTB, NTK, NB=', NTB, NTK, NB
+      WRITE(6,*) 
+      
       allocate(OVERLAP(NTB,NTB,NTK,NB));OVERLAP=0.0D0   
       allocate(KPT(NTK,NB));KPT=0  
       nvx=nwx2+1;nvy=nwy2+1;nvz=nwz2+1 
@@ -2061,7 +2068,7 @@
 !--
       M_MAT(:,:,:,:)=OVERLAP(:,:,:,:)                      
       DEL_SPREAD=1.0d0!EPS_SPREAD=1.0D-6 default
-      if(ncomp==2) EPS_SPREAD=1.0D6 !skip spread minimization for SO case
+      !(ncomp==2) EPS_SPREAD=1.0D6 !skip spread minimization for SO case
       SPREAD_OLD=0.0D0 
       I_STEP=1        
       SPREAD=OMEGA_I+OMEGA_OD+OMEGA_D               
@@ -2263,7 +2270,7 @@
         enddo!jb
        enddo!ib
        C0_TMP_1(:,:,:)=C0(:,:,:,ik)        
-       C0_TMP_2(:,:,:)=0.0D0     
+       C0_TMP_2(:,:,:)=0.0D0
 !--
 !write BF 
 !       A_TMP(:,:)=0.d0 
@@ -2274,6 +2281,19 @@
        do ic=1,ncomp 
         do ig=1,NG0(ik)  
          do jb=1,n_occ        
+            
+          !ic =1 
+          !if(ncomp==2) then
+          ! if( jb <= n_occ/2 ) then
+          !  ic = 1
+          ! else
+          !  ic = 2
+          ! end if
+          !else
+          ! ic=1
+          !endif
+
+          
           SUM_CMPX=0.0D0             
           do kb=1,N_BAND(ik)       
            SUM_CMPX 
@@ -2296,10 +2316,11 @@
       read(113) NWF 
       allocate(C0WN(NTG,ncomp,NWF,NTK));C0WN(:,:,:,:)=0.0D0 
       do ik=1,NTK 
-       read(113) (((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
+!       read(113) ((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF)
+       read(113)(((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
      +            ic=1,ncomp)
       enddo
-      write(6,*)'FINISH REDING C0_WN'
+      write(6,*)'FINISH READING C0_WN'
       ierr=CHDIR("..") 
       call system('pwd') 
 !--
@@ -2314,12 +2335,15 @@
        do ik=1,NTK 
         do ib=1,N_BAND(ik)
          do jb=1,n_occ 
+
+          !ic=1
+
           SUM_CMPX=0.0d0 
           do ig=1,NG0(ik)  
            SUM_CMPX 
      +    =SUM_CMPX
      +    +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,ic,jb,ik)
-!     +    +conjg(C0(ig,ib+N_BAND_BTM(ik),ik))*C0WN(ig,jb,ik)
+!     +    +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,jb,ik)
           enddo 
           UNT(ib,jb,ik)=SUM_CMPX 
          enddo 
@@ -2611,6 +2635,23 @@
         REVERSE=.TRUE.        
        endif!REVERSE                   
       enddo!ib                      
+      close(114)
+
+
+      OPEN(115,FILE='./dir-wan/dat.iband_compact') 
+      write(115,'(a)')'#Wannier interpolaed band'
+      write(115,'(a)')'#1:k, 2:Energy [eV]' 
+      do ik=1,NSK_BAND_DISP                     
+       write(115,fmt='(F10.5," ")',advance='no') 
+     +           DIST_K(ik)/DIST_K(NSK_BAND_DISP)
+       do ib=1,n_occ             
+        write(115,fmt='(F10.5," ")',advance='no') 
+     +             E_BAND_DISP(ib,ik)*au
+       enddo!ib         
+        write(115,fmt='(a)',advance='yes')                     
+      enddo!ik        
+      close(115)
+
 
       IF(ALL(dense(1:3) /= 0)) THEN
          CALL wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,
@@ -2649,10 +2690,11 @@
        read(113) NWF!20170331(n_occ=NWF) 
        allocate(C0WN(NTG,ncomp,NWF,NTK));C0WN(:,:,:,:)=0.0D0 
        do ik=1,NTK 
-        read(113)(((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
-     +              ic=1,ncomp)
+       read(113)(((C0WN(ig,ic,jb,ik),ig=1,NG0(ik)),jb=1,NWF),
+     +            ic=1,ncomp)
+!        read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF)
        enddo!ik 
-       write(6,*)'FINISH REDING C0_WN'
+       write(6,*)'FINISH READING C0_WN'
 !--
        do ix=1,N_write_wannier!NWF 
         iw=wrt_list(ix)!20170406  
@@ -2666,7 +2708,7 @@
      +              (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
 !$OMP DO 
         do ik=1,NTK
-         C0_I(:)=C0WN(:,1,iw,ik) ! to be change Maxime Charlebois
+         C0_I(:)=C0WN(:,1,iw,ik) !! need to be changed.
          call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),
      +    NTG,
      +    nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
@@ -2705,6 +2747,18 @@
      +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
         CLOSE(116)
+        
+        SUM_REAL = 0.0d0
+        do i1=(xmin)*na_grid,(xmax)*na_grid-1
+         do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
+          do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
+           SUM_REAL = SUM_REAL + 
+     +     dble( WANNIER_REALSPACE(i1,i2,i3)* 
+     +     conjg(WANNIER_REALSPACE(i1,i2,i3)) )
+          enddo!i3
+         enddo!i2
+        enddo!i1
+        write(6,*) ix, SUM_REAL
        enddo!ix 
        ierr=CHDIR("..") 
        call system('pwd') 

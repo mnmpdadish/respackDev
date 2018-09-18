@@ -57,6 +57,16 @@
       call invmat(3,rginv(1,1,iop)) 
       enddo 
       write(6,*)'finish rg'
+      
+      OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
+      rewind(102) 
+      read(102) ncomp!need to know ncomp this soon
+      if(ncomp>2)then 
+       write(6,*)'ncomp should be 1 or 2, nothing else.'
+       stop
+      endif 
+      close(102)
+
 !check 
 !do iop=1,nsymq
 !write(6,*) iop
@@ -329,11 +339,13 @@
       OPEN(113,FILE='./dir-wan/dat.wan',FORM='unformatted') 
       REWIND(113)       
       read(113) NWF 
-      allocate(C0(NTG,NWF,NTK));C0(:,:,:)=0.0D0 
+      allocate(C0(NTG,ncomp,NWF,NTK));C0(:,:,:,:)=0.0D0 
       do ik=1,NTK 
-       read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
+!       read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
+       read(113)(((C0(ig,ic,iw,ik),ig=1,NG0(ik)),iw=1,NWF),
+     +            ic=1,ncomp)
       enddo
-      write(6,*)'FINISH REDING C0'
+      write(6,*)'FINISH READING C0'
       CLOSE(113)  
 !--
 !      do ik=1,Nk_irr 
@@ -649,8 +661,8 @@
            allocate(prho(NG_for_psi,NWF,NWF));prho(:,:,:)=0.0D0 
            allocate(fftwk(Nl123*2));fftwk(:)=0.0d0  
            allocate(wfunc(Nl123*2));wfunc(:)=0.0d0 
-           allocate(C0_K(NTG));C0_K(:)=0.0d0     
-           allocate(C0_KQ(NTG));C0_KQ(:)=0.0d0     
+           allocate(C0_K(NTG,ncomp));C0_K(:,:)=0.0d0     
+           allocate(C0_KQ(NTG,ncomp));C0_KQ(:,:)=0.0d0     
 !$OMP DO 
            do ik=1,NTK 
             do iw=1,NWF 
@@ -660,13 +672,14 @@
      +                       +SK0(3,ik)*dble(ia3))) 
               shift_G(:)=0
               call search_kq(NTK,SK0,q1,q2,q3,ik,ikq,shift_G(1))
-              C0_K(:)=C0(:,jw,ik) 
-              C0_KQ(:)=C0(:,iw,ikq) 
+              C0_K(:,:)=C0(:,:,jw,ik) 
+              C0_KQ(:,:)=C0(:,:,iw,ikq) 
               rho_tmp(:)=0.0D0 
-              call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),
-     +        C0_K(1),C0_KQ(1),ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2, 
-     +        Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),NG_for_psi,
-     +        shift_G(1),rho_tmp(1))
+              call calc_InterStateMatrix(NTK,NTG,ncomp,NG0(1),
+     +               KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
+     +               ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2, 
+     +               Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),NG_for_psi,
+     +               shift_G(1),rho_tmp(1))
               prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf/length_qg(:)   
              enddo!jw 
             enddo!iw 
@@ -756,8 +769,8 @@
            allocate(rho_tmp(NG_for_psi));rho_tmp(:)=0.0d0 
            allocate(fftwk(Nl123*2));fftwk(:)=0.0d0  
            allocate(wfunc(Nl123*2));wfunc(:)=0.0d0 
-           allocate(C0_K(NTG));C0_K(:)=0.0d0     
-           allocate(C0_KQ(NTG));C0_KQ(:)=0.0d0  
+           allocate(C0_K(NTG,ncomp));C0_K(:,:)=0.0d0     
+           allocate(C0_KQ(NTG,ncomp));C0_KQ(:,:)=0.0d0  
 !$OMP DO 
            do ik=1,NTK 
             do iw=1,NWF 
@@ -768,13 +781,14 @@
               ikq=ik 
               shift_G(:)=0 
               rho_tmp(:)=0.0D0 
-              C0_K(:)=C0(:,jw,ik) 
-              C0_KQ(:)=C0(:,iw,ikq) 
+              C0_K(:,:)=C0(:,:,jw,ik) 
+              C0_KQ(:,:)=C0(:,:,iw,ikq) 
               rho_tmp(:)=0.0D0 
-              call calc_InterStateMatrix(NTK,NTG,NG0(1),KG0(1,1,1),
-     +         C0_K(1),C0_KQ(1),ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2,
-     +         Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),
-     +         NG_for_psi,shift_G(1),rho_tmp(1))
+              call calc_InterStateMatrix(NTK,NTG,ncomp,
+     +               NG0(1),KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
+     +               ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2,
+     +               Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),
+     +               NG_for_psi,shift_G(1),rho_tmp(1))
               rho_tmp(NoG0)=0.0D0 
               prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf  
              enddo!jw

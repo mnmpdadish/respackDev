@@ -891,13 +891,23 @@
       ENDIF           
 !     write(6,'(a8,3f15.10)')'SLaft=',SL(1),SL(2),SL(3) 
 !IK_IB
-      do jk=1,NTK          
-       IF(ABS(SK0(1,jk)-SL(1))<=1.d-4.AND.
-     +    ABS(SK0(2,jk)-SL(2))<=1.d-4.AND.
+      ik_ib=0
+      do jk=1,NTK
+       !write(6,*)
+       !write(6,*) b_LAT(1,ibvec), b_LAT(2,ibvec), b_LAT(3,ibvec) 
+       !write(6,*) 'sk0(1)-sl(1)', ABS(SK0(1,jk)-SL(1))
+       !write(6,*) 'sk0(2)-sl(2)', ABS(SK0(2,jk)-SL(2)) 
+       !write(6,*) 'sk0(3)-sl(3)', ABS(SK0(3,jk)-SL(3)) 
+       IF(ABS(SK0(1,jk)-SL(1))<=1.d-4 .AND.
+     +    ABS(SK0(2,jk)-SL(2))<=1.d-4 .AND.
      +    ABS(SK0(3,jk)-SL(3))<=1.d-4)THEN           
         ik_ib=jk           
        ENDIF        
-      enddo!jk               
+      enddo!jk    
+      if(ik_ib .eq. 0) then
+       write(6,*) 'error. ik_ib of SK0 == SL was not found.'
+       stop
+      endif
       return
       end 
 !--

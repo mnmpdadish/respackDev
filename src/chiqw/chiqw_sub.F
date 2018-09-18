@@ -104,12 +104,12 @@
       use fft_3d 
       implicit none 
       type(fft3_struct)::fs 
-      integer::NTK,NTG,ncomp,ncomp1=1
+      integer::NTK,NTG,ncomp
       integer::NG0(NTK),KG0(3,NTG,NTK) 
       complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
       integer::ik,ikq 
       integer::nwx2,nwy2,nwz2,nfft1,nfft2,Nl123 
-      real(8)::wfunc(Nl123*2),fftwk(Nl123*2) 
+      real(8)::wfunc(Nl123*2),fftwk(Nl123*2)
       integer::NG_for_eps 
       integer::LG0(3,NTG) 
       integer::shift_G(3)
@@ -203,19 +203,19 @@
        igL2=MOD(nwy2+igL2,nwy2)+1
        igL3=MOD(nwz2+igL3,nwz2)+1
        ind=igL1+(igL2-1)*nfft1+(igL3-1)*nfft1*nfft2
-       m_tmp(igL)=m_tmp(igL)+cmplx(wfunc(ind),wfunc(ind+Nl123)) !adding
+       m_tmp(igL)=m_tmp(igL)
+     +   +cmplx(wfunc(ind),wfunc(ind+Nl123)) !adding
       enddo
       
       enddo !ic=1,ncomp 
 !--
-      m_tmp(:) = m_tmp(:)/ncomp
       RETURN  
       END 
 !--
       subroutine calc_VMab(NTK,NTG,ncomp,NG0,KG0,C0_K,C0_KQ,
      +                                        ik,b1,b2,b3,vm)  
       implicit none 
-      integer::NTK,NTG,ik, ncomp,ncomp1=1
+      integer::NTK,NTG,ik, ncomp
       integer::NG0(NTK),KG0(3,NTG,NTK) 
       real(8)::b1(3),b2(3),b3(3) 
       complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
@@ -232,24 +232,25 @@
         igb2=KG0(2,ig,ik) 
         igb3=KG0(3,ig,ik) 
         G_VEC(:)=dble(igb1)*b1(:)+dble(igb2)*b2(:)+dble(igb3)*b3(:) 
-        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
+        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*
+     +      CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
        enddo!ig
       enddo!ic
 !"vm" depends on the direction of q approaching the zero limit
 !We employ q=[001],[010],[100] therefore
 !Kazuma Nakamura bugfix 2010 10 12
-      vm(:)=SUM_VEC(:)*ci/ncomp!ci is multiplied
+      vm(:)=SUM_VEC(:)*ci!ci is multiplied
       RETURN  
       END 
 !--
       subroutine calc_VMaa(NTK,NTG,ncomp,NG0,KG0,C0_K,C0_KQ,
      +                                    ik,b1,b2,b3,SKT,vm)  
       implicit none 
-      integer::NTK,NTG,ik, ncomp,ncomp1=1
+      integer::NTK,NTG,ik, ncomp
       integer::NG0(NTK),KG0(3,NTG,NTK) 
       real(8)::b1(3),b2(3),b3(3),SKT(3) 
       complex(8)::C0_K(NTG,ncomp),C0_KQ(NTG,ncomp) 
-      integer::ig,igb1,igb2,igb3, ic
+      integer::ig,igb1,igb2,igb3,ic
       real(8)::G_VEC(3)
       complex(8)::SUM_VEC(3)
       complex(8) :: vm(3) 
@@ -264,15 +265,16 @@
         G_VEC(:)=(SKT(1)+dble(igb1))*b1(:)
      +          +(SKT(2)+dble(igb2))*b2(:)
      +          +(SKT(3)+dble(igb3))*b3(:) 
-        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
+        SUM_VEC(:)=SUM_VEC(:)+G_VEC(:)*
+     +       CONJG(C0_KQ(ig,ic))*C0_K(ig,ic)
        enddo!ig
       enddo!ic
 !"vm" depends on the direction of q approaching the zero limit 
 !We employ q=[001],[010],[100] therefore
 !Kazuma Nakamura bugfix 2010 10 12
-      vm(:)=SUM_VEC(:)*ci/ncomp!ci is multiplied  
-      RETURN  
-      END 
+      vm(:)=SUM_VEC(:)*ci!ci is multiplied  
+      RETURN
+      END
 !--
       subroutine make_C0(NTG,ncomp,rinv_SO,itrs,NG,KGtmp,RWtmp,
      +           rginvtmp,pgtmp,nnp,L1,L2,L3,packtmp,OCCtmp,C0_K) 

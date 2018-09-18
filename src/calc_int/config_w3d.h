@@ -55,8 +55,9 @@
       real(8),allocatable::LKGI(:,:)           
 !wannier  
       real(8),allocatable::coord(:,:)!coord(3,NWF)  
-      complex(8),allocatable::C0(:,:,:)
-      integer::NG_for_psi,shift_G(3)  
+      complex(8),allocatable::C0(:,:,:,:)!C0(NTG,ncomp,NWF,NTK)
+      integer::NG_for_psi,shift_G(3)
+      integer::ncomp,ic
       real(8)::rij(3),rij2,rij1 
 !sq 
       real(8),allocatable::SQI(:,:)  
@@ -89,8 +90,8 @@
       complex(8),allocatable::rho(:,:,:)!rho(NTG,NWF,NTQ)            
       complex(8),allocatable::prho(:,:)!prho(NTG,NWF)            
       complex(8),ALLOCATABLE::rho_tmp(:) 
-      complex(8),allocatable::C0_K(:)!C0_K(NTG)    
-      complex(8),allocatable::C0_KQ(:)!C0_KQ(NTG)    
+      complex(8),allocatable::C0_K(:,:)!C0_K(NTG,ncomp)
+      complex(8),allocatable::C0_KQ(:,:)!C0_KQ(NTG,ncomp)
       complex(4),allocatable::epsmk(:,:,:) 
       complex(8),allocatable::func(:,:,:)!func(NWF,NWF,NTQ)
       complex(8),allocatable::funcw(:,:,:,:)!func(NWF,NWF,ne,NTQ)

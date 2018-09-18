@@ -14,7 +14,7 @@ program convert101
   complex(8):: c1
   real(8), allocatable :: eig(:)
   character(100), allocatable :: data_wfc1(:), data_wfc2(:), data_Gk(:)
-  character(100), allocatable :: data_eig(:)
+  character(100), allocatable :: data_eig1(:), data_eig2(:)
 
   real(8) :: a1(3), a2(3), a3(3)
   real(8) :: b1(3), b2(3), b3(3)
@@ -30,6 +30,7 @@ program convert101
   character(5) :: cwrk
   
   logical :: is_SpinOrbit = .false.
+  logical :: is_LSDA = .false.
 
   i = command_argument_count()
   if( i /= 1 ) then 
@@ -51,14 +52,16 @@ program convert101
   
   call iotk_scan_begin(11,"SPIN",attr=attr)
     call iotk_scan_dat(11,"SPIN-ORBIT_CALCULATION",is_SpinOrbit)
+    call iotk_scan_dat(11,"LSDA",is_LSDA)
   call iotk_scan_end(11,"SPIN")
   
   if(is_SpinOrbit) ncomp=2 ! else default ncomp=1
   write(6,*) 'is_SpinOrbit=', is_SpinOrbit
-  
+  write(6,*) 'is_LSDA=', is_LSDA
       
   allocate(k_vec(3,num_k),k_tmp(3,num_k))
-  allocate(data_wfc1(num_k),data_wfc2(num_k),data_Gk(num_k),data_eig(num_k))
+  allocate(data_wfc1(num_k),data_wfc2(num_k),data_Gk(num_k))
+  allocate(data_eig1(num_k),data_eig2(num_k))
   call iotk_scan_begin(11,"EIGENVALUES",attr=attr)
   do i = 1, num_k
     !
@@ -72,7 +75,7 @@ program convert101
     !
     ! generate wfc filename
     !
-    if(is_SpinOrbit) then
+    if(is_SpinOrbit .or. is_LSDA) then
       data_wfc1(i) = "/K" // cwrk
       data_wfc1(i) = trim(data_wfc1(i)) // "/evc1.dat"
       data_wfc1(i) = trim(data_dir) // trim(data_wfc1(i))
@@ -97,11 +100,24 @@ program convert101
     ! 
     ! generate eigen filename
     !
-    data_eig(i) = "/K" // cwrk
-    data_eig(i) = trim(data_eig(i)) // "/eigenval.xml"
-    data_eig(i) = trim(data_dir) // trim(data_eig(i))
-    write(*,*) data_eig(i)
+    
 
+    if(is_LSDA) then  ! in the case of spin orbit, LSDA=false and only have eigenval.xml, even for magnetic calculation
+      data_eig1(i) = "/K" // cwrk
+      data_eig1(i) = trim(data_eig1(i)) // "/eigenval1.xml"
+      data_eig1(i) = trim(data_dir) // trim(data_eig1(i))
+      data_eig2(i) = "/K" // cwrk
+      data_eig2(i) = trim(data_eig2(i)) // "/eigenval2.xml"
+      data_eig2(i) = trim(data_dir) // trim(data_eig2(i))
+    else
+      data_eig1(i) = "/K" // cwrk
+      data_eig1(i) = trim(data_eig1(i)) // "/eigenval.xml"
+      data_eig1(i) = trim(data_dir) // trim(data_eig1(i))
+    endif
+    
+    write(*,*) data_eig1(i)
+    write(*,*) data_eig2(i)
+    
     call iotk_scan_begin(11,"K-POINT"//iotk_index(i),attr=attr)
       call iotk_scan_dat(11,"K-POINT_COORDS",k_vec(:,i))
     call iotk_scan_end(11,"K-POINT"//iotk_index(i))
@@ -251,12 +267,15 @@ program convert101
   deallocate(num_Gk)
 
 
+
+
+
   open(111,file='./dir-wfn/dat.eigenvalue') 
     rewind(111)
     write(111,*) num_b 
     do i = 1, num_k
       allocate(eig(num_b))
-      call iotk_open_read(14,data_eig(i))
+      call iotk_open_read(14,data_eig1(i))
         call iotk_scan_dat(14,"EIGENVALUES",eig)
         do j = 1, num_b
           write(111,*) eig(j)
@@ -264,11 +283,25 @@ program convert101
       call iotk_close_read(14)
       deallocate(eig)
     end do ! i  
+    
+    if(is_LSDA) then
+      do i = 1, num_k
+        allocate(eig(num_b))
+        call iotk_open_read(14,data_eig2(i))
+          call iotk_scan_dat(14,"EIGENVALUES",eig)
+          do j = 1, num_b
+            write(111,*) eig(j)
+          end do ! j 
+        call iotk_close_read(14)
+        deallocate(eig)
+      end do ! i  
+    endif 
+    
   close(111)
 
   call convert_sym(data_xml)
 
-  deallocate(data_wfc1,data_wfc2,data_Gk,data_eig)
+  deallocate(data_wfc1,data_wfc2,data_Gk,data_eig1,data_eig2)
 
 end program
 
