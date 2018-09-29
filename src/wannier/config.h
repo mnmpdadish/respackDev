@@ -186,14 +186,11 @@
       real(8)::SUM_REAL,tmp(3)
       complex(8)::SUM_CMPX        
 !
-!20180906 
+!20180921 
 !
-!atom_kind
-      integer::nkd
-      real(8),allocatable::zo(:),zn(:)!zo(nkd),zn(nkd)
 !atom_position
       integer::nsi 
-      integer,allocatable::kd(:)!kd(nsi) 
+      character(len=2),allocatable::chemical_species(:)!chemical_species(nsi) 
       real(8),allocatable::asi(:,:)!asi(3,nsi) 
 !
 !end config.h 

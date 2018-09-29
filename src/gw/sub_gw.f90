@@ -197,7 +197,12 @@ subroutine calc_MAT_VXC(NTK,NWF,NTG,NG0,KG0,vhxc,C0_K,ik,nrx2,nry2,nrz2,nfft1,nf
   integer::ik,NTK,NWF,NTG 
   integer::NG0(NTK)
   integer::KG0(3,NTG,NTK) 
-  complex(8)::C0_K(NTG,NWF)
+  !
+  !20180922 
+  !
+  !complex(8)::C0_K(NTG,NWF)
+  complex(4)::C0_K(NTG,NWF)
+  !
   integer::nrx2,nry2,nrz2,nfft1,nfft2,Nl123
   real(8)::wfunc(Nl123*2)
   real(8)::fftwk(Nl123*2) 
@@ -223,7 +228,12 @@ subroutine calc_MAT_VXC(NTK,NWF,NTG,NG0,KG0,vhxc,C0_K,ik,nrx2,nry2,nrz2,nfft1,nf
     igb3=MOD(nrz2+igb3,nrz2)+1
     ind=igb1+(igb2-1)*nfft1+(igb3-1)*nfft1*nfft2 
     wfunc(ind)=dble(C0_K(ig,iw))
-    wfunc(ind+Nl123)=dimag(C0_K(ig,iw))
+    !
+    !20180922
+    !
+    !wfunc(ind+Nl123)=dimag(C0_K(ig,iw))
+    wfunc(ind+Nl123)=imag(C0_K(ig,iw))
+    ! 
    enddo!ig 
    call fft3_bw(fs,wfunc(1),fftwk(1)) 
    u_1D(:)=0.0d0 

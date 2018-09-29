@@ -271,7 +271,7 @@ do iq=1,Nq_irr
   j1=LG0(2,ig,iq)
   k1=LG0(3,ig,iq) 
   packingq(i1,j1,k1,iq)=ig 
-  write(6,'(a,5i10)')'iq,ig,i1,j1,k1',iq,ig,i1,j1,k1
+  !write(6,'(a,5i10)')'iq,ig,i1,j1,k1',iq,ig,i1,j1,k1
  enddo 
 enddo 
 !-- 

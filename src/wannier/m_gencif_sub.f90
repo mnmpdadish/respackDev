@@ -20,12 +20,12 @@ module m_gencif_sub!subr_fmtconv: original name in xtapp
   real(8),parameter::oneau=0.52917721067d0!by 2014 CODATA
   real(8),parameter::pi=3.14159265358979323846d0
 contains
-  subroutine printcif(cbuf,aa,nkd,zo,zn,nsi,kd,asi,na,nb,nc) 
+  subroutine printcif(cbuf,aa,nkd,zn,nsi,kd,asi,na,nb,nc) 
     implicit none
     character(len=*)::cbuf
     real(8),intent(in)::aa(3,3)
     integer,intent(in)::nkd,nsi,kd(nsi)
-    real(8)::zo(nkd),zn(nkd)
+    real(8)::zn(nkd)
     real(8)::asi(3,nsi)
     integer::nsikd(nkd)
     character(len=10240)::chem_abs_conf

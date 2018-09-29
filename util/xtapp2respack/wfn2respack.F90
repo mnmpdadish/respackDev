@@ -173,7 +173,11 @@ program wfn2respack
            write(nfout) (dcmplx(pr(i),0.0d0),i=1,nkmary(ik))
         else
            read(nfin) ((p(i,j),i=1,ncomp),j=1,nkmary(ik)), w(1), ee(1)
-           write(nfout) ((p(i,j),i=1,ncomp),j=1,nkmary(ik))
+           !
+           ! xTAPP uses (sigma, G) order
+           ! RESPACK uses (G, sigma) order
+           !
+           write(nfout) ((p(i,j),j=1,nkmary(ik)),i=1,ncomp)
         end if
         write(nfouteig,*) ee(1)
 

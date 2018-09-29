@@ -434,7 +434,12 @@ integer::RWtmp(3)
 real(8)::rginvtmp(3,3) 
 integer::pgtmp(3) 
 integer::packtmp(-L1:L1,-L2:L2,-L3:L3) 
-complex(8)::OCCtmp(NTG) 
+!
+!20180922
+!
+!complex(8)::OCCtmp(NTG) 
+complex(4)::OCCtmp(NTG) 
+!
 integer::ig,jg,i1,i2,i3,j1,j2,j3,k1,k2,k3 
 real(8),parameter::pi=dacos(-1.0d0)
 real(8),parameter::tpi=2.0d0*pi 

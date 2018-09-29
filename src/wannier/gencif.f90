@@ -1,48 +1,70 @@
 !
 ! Copyright (c) 2013-2018 Yoshihide Yoshimoto and Kazuma Nakamura 
 !
-subroutine gencif(a1,a2,a3,amin,amax,bmin,bmax,cmin,cmax,nkd,nsi,zo,zn,kd,asi)    
+subroutine gencif(a1,a2,a3,amin,amax,bmin,bmax,cmin,cmax,nsi,cs,asi)    
 use m_gencif_sub!subr_fmtconv: original name in xtapp 
 implicit none 
 real(8),intent(in)::a1(3),a2(3),a3(3)
 integer,intent(in)::amin,amax,bmin,bmax,cmin,cmax 
 !
-integer::nkd,nsi 
-integer::kd(nsi) 
-real(8)::zo(nkd),zn(nkd)
+integer::nsi 
+character(len=2)::cs(nsi) 
 real(8)::asi(3,nsi) 
+!
+integer::nkd 
+character(len=2)::csr 
+character(len=2),allocatable::csref(:)!csref(nkd) 
+integer,allocatable::kd(:)!kd(nsi) 
+real(8),allocatable::zn(:)!zn(nkd)
 !
 integer,allocatable::kd_sc(:) 
 real(8),allocatable::asi_sc(:,:) 
 real(8)::aa(3,3),aa_sc(3,3)  
-integer::i,is,js,ks,ip,j  
+integer::i,is,js,ks,ip,j,ia  
 integer::na,nb,nc,nsi_sc 
 character(len=256)::cbuf
 ! 
+allocate(kd(nsi));kd=0 
+csr=cs(1)
+is=1
+kd(1)=is 
+do ia=2,nsi
+ if(csr/=cs(ia))then
+  csr=cs(ia)
+  is=is+1
+  kd(ia)=is 
+ else
+  kd(ia)=is 
+ endif 
+enddo 
+nkd=is 
+!
+allocate(csref(nkd))
+csr=cs(1)
+is=1
+csref(is)=csr 
+do ia=2,nsi
+ if(csr/=cs(ia))then
+  csr=cs(ia)
+  is=is+1
+  csref(is)=csr  
+ endif 
+enddo 
+!
+allocate(zn(nkd));zn=0.0d0  
+do i=1,nkd 
+ do is=0,102
+  if(csref(i).eq.atom_name(is))then
+   js=is 
+  endif 
+ enddo 
+ zn(i)=dble(js) 
+enddo 
+!
 aa(:,1)=a1(:)
 aa(:,2)=a2(:)
 aa(:,3)=a3(:)
 !
-!OPEN(107,FILE='./dat.atom_kind') 
-!rewind(107)
-!read(107,*) nkd 
-!allocate(zo(nkd));zo=0.0d0
-!allocate(zn(nkd));zn=0.0d0
-!do i=1,nkd 
-! read(107,*) zo(i),zn(i)
-!enddo
-!close(107)
-!!
-!OPEN(108,FILE='./dat.atom_position') 
-!rewind(108)
-!read(108,*) nsi 
-!allocate(kd(nsi));kd=0 
-!allocate(asi(3,nsi));asi=0.0d0
-!do i=1,nsi  
-! read(108,*) kd(i),(asi(j,i),j=1,3) 
-!enddo 
-!close(108)
-! 
 na=amax-amin
 nb=bmax-bmin
 nc=cmax-cmin
@@ -82,7 +104,7 @@ aa_sc(:,3)=aa(:,3)*dble(nc)
 !enddo 
 !
 cbuf='cif'
-call printcif(cbuf,aa_sc(1,1),nkd,zo(1),zn(1),nsi_sc,kd_sc(1),asi_sc(1,1),na,nb,nc)
+call printcif(cbuf,aa_sc(1,1),nkd,zn(1),nsi_sc,kd_sc(1),asi_sc(1,1),na,nb,nc)
 !
 return 
 end 

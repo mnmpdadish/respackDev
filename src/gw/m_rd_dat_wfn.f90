@@ -52,7 +52,9 @@ integer,public,allocatable::packing(:,:,:,:)!packing(-L1:L1,-L2:L2,-L3:L3,Nk_irr
 integer,public::nwx2,nwy2,nwz2!,nfft1,nfft2,nfft3,Nl123 
 !wfn(102)
 integer,public::ncomp 
-complex(8),public,allocatable::CIR(:,:,:)!CIR(NTG,NTB,Nk_irr) 
+!complex(8),public,allocatable::CIR(:,:,:)!CIR(NTG,NTB,Nk_irr) 
+complex(4),public,allocatable::CIR(:,:,:)!CIR(NTG,NTB,Nk_irr) 
+complex(8),allocatable::CIRtmp(:)!CIRtmp(NTG)  
 contains
 subroutine rd_dat_symmetry 
 implicit none 
@@ -362,7 +364,17 @@ endif
 allocate(CIR(NTG,NTB,Nk_irr));CIR=0.0d0  
 do ik=1,Nk_irr 
  do ib=1,NTB 
-  read(102)(CIR(ig,ib,ik),ig=1,NGI(ik))
+  !
+  !20180922 
+  !
+  !read(102)(CIR(ig,ib,ik),ig=1,NGI(ik))
+  !
+  allocate(CIRtmp(NTG));CIRtmp=0.0d0  
+  read(102)(CIRtmp(ig),ig=1,NGI(ik))
+  CIR(:,ib,ik)=CIRtmp(:) 
+  deallocate(CIRtmp) 
+  !
+  !
  enddo!ib 
 enddo!ik          
 close(102) 

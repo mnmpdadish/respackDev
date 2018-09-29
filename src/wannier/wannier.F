@@ -87,25 +87,37 @@
 !--
 !20180906
 !OPEN(107,R,FILE='dat.atom_kind')
-      OPEN(107,FILE='./dir-wfn/dat.atom_kind') 
-      rewind(107)
-      read(107,*) nkd 
-      allocate(zo(nkd));zo=0.0d0
-      allocate(zn(nkd));zn=0.0d0
-      do i=1,nkd 
-       read(107,*) zo(i),zn(i)
-      enddo
-      close(107)
+!      OPEN(107,FILE='./dir-wfn/dat.atom_kind') 
+!      rewind(107)
+!      read(107,*) nkd 
+!      allocate(zo(nkd));zo=0.0d0
+!      allocate(zn(nkd));zn=0.0d0
+!      do i=1,nkd 
+!       read(107,*) zo(i),zn(i)
+!      enddo
+!      close(107)
 !--
 !20180906
+!OPEN(108,R,FILE='dat.atom_position')
+!      OPEN(108,FILE='./dir-wfn/dat.atom_position') 
+!      rewind(108)
+!      read(108,*) nsi 
+!      allocate(kd(nsi));kd=0 
+!      allocate(asi(3,nsi));asi=0.0d0
+!      do i=1,nsi  
+!       read(108,*) kd(i),(asi(j,i),j=1,3) 
+!      enddo 
+!      close(108)
+!--
+!20180921 
 !OPEN(108,R,FILE='dat.atom_position')
       OPEN(108,FILE='./dir-wfn/dat.atom_position') 
       rewind(108)
       read(108,*) nsi 
-      allocate(kd(nsi));kd=0 
+      allocate(chemical_species(nsi))
       allocate(asi(3,nsi));asi=0.0d0
       do i=1,nsi  
-       read(108,*) kd(i),(asi(j,i),j=1,3) 
+       read(108,*) chemical_species(i),(asi(j,i),j=1,3) 
       enddo 
       close(108)
 !--
@@ -664,8 +676,8 @@
        deallocate(BF_REALSPACE,fftwk,wfunc)
        !--
        !gencif 20180906  
-       call gencif(a1(1),a2(1),a3(1),amin,amax,bmin,bmax,cmin,cmax, 
-     +  nkd,nsi,zo(1),zn(1),kd(1),asi(1,1))
+       call gencif(a1(1),a2(1),a3(1),amin,amax,bmin,bmax,cmin,cmax,
+     +  nsi,chemical_species(1),asi(1,1))
        !
        write(6,*) 
        write(6,*)'==================================='
@@ -2684,8 +2696,8 @@
        enddo!ix 
        !--
        !gencif 20180906  
-       call gencif(a1(1),a2(1),a3(1),xmin,xmax,ymin,ymax,zmin,zmax, 
-     +  nkd,nsi,zo(1),zn(1),kd(1),asi(1,1))
+       call gencif(a1(1),a2(1),a3(1),xmin,xmax,ymin,ymax,zmin,zmax,
+     +  nsi,chemical_species(1),asi(1,1))
        !--
        ierr=CHDIR("..") 
        call system('pwd') 

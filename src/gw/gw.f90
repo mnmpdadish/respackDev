@@ -139,7 +139,11 @@ if(myrank/=0) allocate(E_EIGI(NTB,Nk_irr))
 if(myrank/=0) allocate(CIR(NTG,NTB,Nk_irr)) 
 call MPI_BARRIER(comm,ierr)
 !
-mem_size=dble(NTG*NTB*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+!20180922
+!
+!mem_size=dble(NTG*NTB*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+ mem_size=dble(NTG*NTB*Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+!
 if(myrank.eq.0)then 
  write(6,'(a35,f20.15)')'mem size CIR (GB)',mem_size
 endif 
@@ -160,7 +164,12 @@ call MPI_Bcast(KGI,3*NTG*Nk_irr,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(KG0,3*NTG*NTK,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(packing(-L1,-L2,-L3,1),(2*L1+1)*(2*L2+1)*(2*L3+1)*Nk_irr,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(E_EIGI,NTB*Nk_irr,MPI_DOUBLE_PRECISION,0,comm,ierr) 
-call MPI_Bcast(CIR,NTG*NTB*Nk_irr,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+!
+!20180922
+!
+!call MPI_Bcast(CIR,NTG*NTB*Nk_irr,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+ call MPI_Bcast(CIR,NTG*NTB*Nk_irr,MPI_COMPLEX,0,comm,ierr) 
+!
 call MPI_BARRIER(comm,ierr)
 !
 !read wan 
@@ -283,24 +292,24 @@ call MPI_Bcast(packingq(-Lq1,-Lq2,-Lq3,1),(2*Lq1+1)*(2*Lq2+1)*(2*Lq3+1)*Nq_irr,M
 call MPI_Bcast(epsirr,NTGQ*NTGQ*ne*Nq_irr,MPI_COMPLEX,0,comm,ierr)
 call MPI_BARRIER(comm,ierr)
 !
-if(myrank.eq.0)then 
- write(6,*) 
- write(6,*)'====================================='
- write(6,*)'dir-eps: FREQUENCY GRID IN EPSQW (eV)'
- write(6,*)'====================================='
- write(6,*) 
- do ie=1,ne 
-  write(6,'(2f15.7)') em(ie)*au 
- enddo 
- !write(6,*) 
- !write(6,*)'==========================='
- !write(6,*)'dir-eps: POLE OF MODEL GRID'
- !write(6,*)'==========================='
- !write(6,*) 
- !do ie=1,ne 
- ! write(6,'(2f15.10)') pole_of_chi(ie)
- !enddo 
-endif!myrank.eq.0  
+!if(myrank.eq.0)then 
+! write(6,*) 
+! write(6,*)'====================================='
+! write(6,*)'dir-eps: FREQUENCY GRID IN EPSQW (eV)'
+! write(6,*)'====================================='
+! write(6,*) 
+! do ie=1,ne 
+!  write(6,'(2f15.7)') em(ie)*au 
+! enddo 
+! !write(6,*) 
+! !write(6,*)'==========================='
+! !write(6,*)'dir-eps: POLE OF MODEL GRID'
+! !write(6,*)'==========================='
+! !write(6,*) 
+! !do ie=1,ne 
+! ! write(6,'(2f15.10)') pole_of_chi(ie)
+! !enddo 
+!endif!myrank.eq.0  
 !
 !Rc, idlt, Ncalc
 !
@@ -356,30 +365,49 @@ if(myrank.eq.0)then
  emin=bandmin-diff_band_energy 
  ecmax=bandmax+diff_band_energy+chiqw_grd_size 
  ecmin=bandmin-diff_band_energy-chiqw_grd_size  
- write(6,*) 
- write(6,'(a40,x,f15.7)')'bandmax (eV)=',bandmax*au
- write(6,'(a40,x,f15.7)')'bandmin (eV)=',bandmin*au
- write(6,'(a40,x,f15.7)')'diff_band_energy (eV)=',diff_band_energy*au  
- write(6,'(a40,x,f15.7)')'chiqw_grd_size (eV)=',chiqw_grd_size*au  
- write(6,'(a40,x,f15.7)')'emax (eV)=',emax*au
- write(6,'(a40,x,f15.7)')'emin (eV)=',emin*au
- write(6,'(a40,x,f15.7)')'ecmax (eV)=',ecmax*au
- write(6,'(a40,x,f15.7)')'ecmin (eV)=',ecmin*au
- write(6,'(a40,x,f15.7)')'gw_grid_separation (eV)=',gw_grid_separation*au
  !
  call estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm)
  allocate(sgmw(nsgm));sgmw=0.0d0 
  call make_sgmw(ecmin,emin,emax,gw_grid_separation,nsgm,sgmw(1))
  !
  write(6,*) 
- write(6,*)'========================='
- write(6,*)'FREQUENCY GRID IN GW (eV)'
- write(6,*)'========================='
+ write(6,'(a40,x,i10)')'number of chiqw_grd =',Num_freq_grid 
+ write(6,'(a40,x,f15.7)')'bandmax (eV)=',bandmax*au
+ write(6,'(a40,x,f15.7)')'bandmin (eV)=',bandmin*au
+ write(6,'(a40,x,f15.7)')'diff_band_energy (eV)=',diff_band_energy*au  
+ write(6,'(a40,x,f15.7)')'chiqw_grd_range (eV)=',chiqw_grd_size*au  
  write(6,*) 
- do ie=1,nsgm  
-  write(6,'(f15.7)') sgmw(ie)*au 
- enddo 
+ write(6,'(a40,x,i10)')'number of gw_grd =',nsgm 
+ write(6,'(a40,x,f15.7)')'emax (eV)=',emax*au
+ write(6,'(a40,x,f15.7)')'emin (eV)=',emin*au
+ write(6,'(a40,x,f15.7)')'ecmax (eV)=',ecmax*au
+ write(6,'(a40,x,f15.7)')'ecmin (eV)=',ecmin*au
+ write(6,'(a40,x,f15.7)')'gw_grid_separation (eV)=',gw_grid_separation*au
  write(6,*) 
+ !write(6,*)'============================'
+ !write(6,*)'FREQUENCY GRID IN EPSQW (eV)'
+ !write(6,*)'============================'
+ !write(6,*) 
+ !do ie=1,ne 
+ ! write(6,'(2f15.7)') em(ie)*au 
+ !enddo 
+ !write(6,*) 
+ !write(6,*)'==========================='
+ !write(6,*)'dir-eps: POLE OF MODEL GRID'
+ !write(6,*)'==========================='
+ !write(6,*) 
+ !do ie=1,ne 
+ ! write(6,'(2f15.10)') pole_of_chi(ie)
+ !enddo 
+ !write(6,*) 
+ !write(6,*)'========================='
+ !write(6,*)'FREQUENCY GRID IN GW (eV)'
+ !write(6,*)'========================='
+ !write(6,*) 
+ !do ie=1,nsgm  
+ ! write(6,'(f15.7)') sgmw(ie)*au 
+ !enddo 
+ !write(6,*) 
 endif!myrank.eq.0
 !
 call MPI_Bcast(nsgm,1,MPI_INTEGER,0,comm,ierr) 
@@ -791,16 +819,20 @@ if(calc_sc)then!.true.=default
  enddo!iq 
  call MPI_BARRIER(comm,ierr)
  !write(file_id,*)'I finished pSC calc' 
- !
  allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
- mem_size=dble(nsgm*Mb*Mb*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+ !
+ !20180922
+ !
+ !mem_size=dble(nsgm*Mb*Mb*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+  mem_size=dble(nsgm*Mb*Mb*Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
  if(myrank.eq.0)then 
   write(6,'(a35,f20.15)')'mem size pSC or SCirr (GB)',mem_size
  endif 
- !
- call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
+ !call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
+ call MPI_REDUCE(pSC,SCirr,nsgm*Mb*Mb*Nk_irr,MPI_COMPLEX,MPI_SUM,0,comm,ierr)
  call MPI_BARRIER(comm,ierr)
- call MPI_Bcast(SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+ !call MPI_Bcast(SCirr,nsgm*Mb*Mb*Nk_irr,MPI_DOUBLE_COMPLEX,0,comm,ierr) 
+ call MPI_Bcast(SCirr,nsgm*Mb*Mb*Nk_irr,MPI_COMPLEX,0,comm,ierr) 
  call MPI_BARRIER(comm,ierr)
  !
  !MPI for nsgm 
@@ -1411,7 +1443,7 @@ if(myrank.eq.0)then
  read(151) header 
  read(151) aa,nsnd 
  if(nsnd>1)then
-  write(6,*)'nspin*ndens>1; the program not suported; then stop'
+  write(6,*)'nspin*ndens>1; the program not supported; then stop'
   stop
  endif 
  read(151) nrx2,nry2,nrz2; write(6,*)'nrx2,nry2,nrz2=',nrx2,nry2,nrz2 
