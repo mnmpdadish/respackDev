@@ -333,20 +333,16 @@ contains
             modulo(asi(3,it),1.0d0)
     end do
     close(nf)
-  
-    !
-    !20180929 KN 
-    !
-    !open(nf, file='dat.bandcalc', status='replace', &
-    !     action='write', iostat=ios)
-    !if (ios.ne.0) then
-    !   write(6,*) 'error in opening '//trim(cbuf)
-    !   stop
-    !end if
-    !write(nf,'(1x,e21.12)') etotal
-    !write(nf,'(1x,e19.10,1x,e19.10)') efermi(1),efermi(2)
-    !close(nf)
-    !
+
+    open(nf, file='dat.bandcalc', status='old', &
+         action='write', position='append', iostat=ios)
+    if (ios.ne.0) then
+       write(6,*) 'error in opening '//trim(cbuf)
+       stop
+    end if
+    write(nf,'(1x,e19.10,1x,e19.10)') efermi(1),efermi(2)
+    write(nf,'(1x,e21.12)') etotal
+    close(nf)
     
     return
   end subroutine printrespack

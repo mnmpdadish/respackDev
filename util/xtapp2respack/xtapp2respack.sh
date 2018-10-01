@@ -65,9 +65,3 @@ if [ $status -ne 0 ]; then
     exit 1
 fi
 
-#
-#20180929 KN
-#
-( cd dir-wfn; grep 'fermi_energy' ../$target.str ) | awk '{print $3}' | sed -e 's/,$//' >> dir-wfn/dat.bandcalc
-( cd dir-wfn; grep 'total_energy' ../$target.str ) | awk '{print $3}' | sed -e 's/,$//' >> dir-wfn/dat.bandcalc
-
