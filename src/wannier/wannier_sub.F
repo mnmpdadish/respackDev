@@ -571,9 +571,9 @@
       integer,intent(out)::KG0(3,NTG),NG 
       integer::igL,igL1,igL2,igL3
       real(8)::qgL(3),qgL2  
-      integer,parameter::NGL1=50
-      integer,parameter::NGL2=50 
-      integer,parameter::NGL3=50
+      integer,parameter::NGL1=100
+      integer,parameter::NGL2=100 
+      integer,parameter::NGL3=100
 
       igL=0
       do igL1=-NGL1,NGL1 
