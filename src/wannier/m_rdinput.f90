@@ -122,14 +122,16 @@ endif
 !--
 !default set_inner_window==F
 !if(set_inner_window.eqv..true..and.E_UPPER_inner==0.0d0.and.E_LOWER_inner==0.0d0)then!20171212 
-if(set_inner_window==.true..and.E_UPPER_inner==0.0d0.and.E_LOWER_inner==0.0d0)then!20180822 
+!if(set_inner_window==.true..and.E_UPPER_inner==0.0d0.and.E_LOWER_inner==0.0d0)then!20180822 
+if(set_inner_window.and.E_UPPER_inner==0.0d0.and.E_LOWER_inner==0.0d0)then!20181009
  write(6,'(a)')'wrong input: inner energy windows; stop'
  write(6,'(a)')'Lower_inner_window = Upper_inner_window = 0.0d0: WRONG'
  write(6,'(a,2f20.9)')'Upper_inner_window,Lower_inner_window',Upper_inner_window,Lower_inner_window
  stop
 endif 
 !if(set_inner_window.eqv..true.)then!20171212 
-if(set_inner_window==.true.)then!20180822 
+!if(set_inner_window==.true.)then!20180822 
+if(set_inner_window)then!20181009 
  if(E_LOWER_inner>=E_UPPER_inner)then 
   write(6,'(a)')'wrong input: inner energy windows; stop'
   write(6,'(a)')'Lower_inner_window >= Upper_inner_window: WRONG'
