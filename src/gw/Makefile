@@ -1,5 +1,5 @@
 ######################################
-# Copyright (c) 2017 Kazuma Nakamura #
+# Copyright (c) 2018 Kazuma Nakamura #
 ###################################### 
 #--------------------------------------------------------------------
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
@@ -11,15 +11,9 @@ FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel
 #######
 #DEBUG#
 #######
-#FFLAGS = -qopenmp -xHost -mcmodel=large -shared-intel -debug full -check all -warn all -traceback -g  
+#FFLAGS = -qopenmp -debug full -check all -CB -warn all -traceback -g  
 
-#############################
-# note by Maxime Charlebois #
-#############################
-#
-# libiomp5 and libpthread are not needed here, conflict with MKL on some system, better not use it.
-#
-#LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
+#lapack 
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group 
 
 #openMPI 
@@ -47,21 +41,38 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 .F90.o:
 	${FC} ${F90FLAGS} ${FFLAGS} -c $<
 #--------------------------------------------------------------------
-TARGET = calc_chiqw 
-OBJECTS = m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o invZGE.o \
-	  wrt_optical_property.o chiqw_sub.o chiqw.o 
+TARGET = calc_gw 
 
-MOD_FILES = m_rdinput.mod fft_3d.mod m_tetrahedron.mod 
+OBJECTS = m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
+	  sub_wfn.o sub_eps.o sub_gw.o util.o sub_band_disp.o make_kpts.o make_sgmw.o calc_gwdos.o calc_gwakw.o \
+	  search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o gw.o 
+
+MOD_FILES = m_rd_input.mod m_rd_dat_wfn.mod m_rd_dat_wan.mod m_rd_dat_eps.mod fft_3d.mod m_tetrahedron.mod 
 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
-chiqw.o: chiqw.F m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o  \
-         invZGE.o chiqw_sub.o wrt_optical_property.o  
+gw.o:   gw.f90 m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
+	sub_wfn.o sub_eps.o sub_gw.o util.o sub_band_disp.o make_kpts.o make_sgmw.o calc_gwdos.o calc_gwakw.o \
+	search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o  
 
-chiqw_sub.o: chiqw_sub.F m_fft3d_20150826.o invZGE.o
+calc_gwakw.o: calc_gwakw.f90 search_Rmin.o sub_eigenvalue.o 
 
-est_NTK.o: est_NTK.f90 chiqw_sub.o
+calc_gwdos.o: calc_gwdos.f90 search_Rmin.o sub_eigenvalue.o sub_ksdos.o sub_det_shift.o sub_gwdos.o 
+
+m_rd_dat_eps.o: m_rd_dat_eps.f90 sub_wfn.o sub_eps.o 
+
+m_rd_dat_wfn.o: m_rd_dat_wfn.f90 util.o sub_wfn.o 
+
+sub_band_disp.o: sub_band_disp.f90 search_Rmin.o util.o  
+
+sub_eigenvalue.o: sub_eigenvalue.f90 util.o 
+
+sub_gw.o: sub_gw.f90 m_fft3d_20150826.o 
+
+sub_gwdos.o: sub_gwdos.f90 sub_mkidx.o m_tetrahedron_20170325.o 
+
+sub_ksdos.o: sub_ksdos.f90 sub_mkidx.o m_tetrahedron_20170325.o
 
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 

@@ -331,11 +331,13 @@
       read(113) NWF 
       allocate(C0(NTG,NWF,NTK));C0(:,:,:)=0.0D0 
       do ik=1,NTK 
-       !read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
+       read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
+       !
        !20180519 
-       do iw=1,NWF
-        read(113)(C0(ig,iw,ik),ig=1,NG0(ik))
-       enddo!iw
+       !do iw=1,NWF
+       ! read(113)(C0(ig,iw,ik),ig=1,NG0(ik))
+       !enddo!iw
+       !
       enddo!ik 
       write(6,*)'FINISH REDING C0'
       CLOSE(113)  

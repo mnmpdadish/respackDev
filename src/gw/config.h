@@ -31,8 +31,14 @@ real(8),allocatable::wfunc(:)!wfunc(Nl123*2)
 complex(8),allocatable::vecf(:)!vecf(ne)
 complex(8),allocatable::veca(:)!veca(ne) 
 complex(8),allocatable::SC(:,:,:,:) 
-complex(8),allocatable::SCirr(:,:,:,:) 
-complex(8),allocatable::pSC(:,:,:,:) 
+!
+!20180924
+!
+!complex(8),allocatable::SCirr(:,:,:,:) 
+!complex(8),allocatable::pSC(:,:,:,:) 
+complex(4),allocatable::SCirr(:,:,:,:) 
+complex(4),allocatable::pSC(:,:,:,:) 
+!
 complex(8),allocatable::pSComp(:,:,:,:) 
 complex(4),allocatable::epsmk(:,:,:) 
 complex(4),allocatable::pSCR(:,:,:,:,:,:) 

@@ -571,9 +571,9 @@
       integer,intent(out)::KG0(3,NTG),NG 
       integer::igL,igL1,igL2,igL3
       real(8)::qgL(3),qgL2  
-      integer,parameter::NGL1=50
-      integer,parameter::NGL2=50 
-      integer,parameter::NGL3=50
+      integer,parameter::NGL1=100
+      integer,parameter::NGL2=100 
+      integer,parameter::NGL3=100
 
       igL=0
       do igL1=-NGL1,NGL1 
@@ -799,7 +799,7 @@
       integer::N_BAND,N_BAND_BTM 
       complex(8)::C0(NTG,NTB)
       complex(8)::A_TMP(NTB,nigs)  
-!--
+      !--
       real(8),parameter::pi=dacos(-1.0d0)
       complex(8),parameter::ci=(0.0D0,1.0D0) 
       integer::j_gauss,ig,i_band,jL,jM 
@@ -810,10 +810,19 @@
       real(8)::PF2(NTG) 
       real(8)::ktmp(3),tmp(3)
       complex(8)::SUM_CMPX        
-!--
+      !
+      !write(6,*) C0 
+      !write(6,*) VOLUME  
+      !write(6,*) ALPHA_GAUSS 
+      !write(6,*) TAU_GAUSS 
+      !write(6,*) NORM_GAUSS 
+      !write(6,*) loc_x 
+      !write(6,*) loc_y 
+      !write(6,*) loc_z 
+      !
       A_TMP=0.0d0 
       do j_gauss=1,nigs
-!--
+       !--
        VEC_KG(:,:)=0.0D0             
        PF1(:)=0.0D0 
        PF2(:)=0.0D0 
@@ -829,6 +838,12 @@
         PF1(ig)=EXP(-ci*PHASE )         
         PF2(ig)=EXP(-KG2(ig)/4.0D0/ALPHA_GAUSS(j_gauss))
        enddo!ig  
+       !
+       !write(6,*)'PF1'
+       !write(6,*)PF1
+       !write(6,*)'PF2'
+       !write(6,*)PF2
+       !
        do ig=1,NG0
         ktmp(:)=VEC_KG(:,ig) 
         tmp(1)=ktmp(1)*loc_x(1,j_gauss)
@@ -842,9 +857,13 @@
      +        +ktmp(3)*loc_z(3,j_gauss) 
         VEC_KG(:,ig)=tmp(:) 
        enddo!ig 
+       !
+       !write(6,*)'VEC_KG'
+       !write(6,*)VEC_KG 
+       !
        jL=LGAUSS(j_gauss) 
        jM=MGAUSS(j_gauss)     
-!--
+       !--
        do i_band=1,N_BAND 
         SUM_CMPX=0.0D0                   
 !<Psi|s>
@@ -982,13 +1001,19 @@
      +   *ZETA1*ZETA2*PF2(ig)     
          enddo!ig          
         ENDIF 
-!--
+        !--
         A_TMP(i_band,j_gauss)=SUM_CMPX/DSQRT(VOLUME)             
        enddo!i_band         
       enddo!j_gauss 
+      ! 
+      !do i_band=1,N_BAND
+      ! write(6,'(100f12.5)')(A_TMP(i_band,j_gauss),j_gauss=1,nigs)
+      !enddo 
+      !write(6,*) 
+      ! 
       return
       end 
-!--
+      !--
       subroutine make_pw(C0_I,wfunc,fftwk,NG0,KG0,NTG,nwx2,nwy2,nwz2,
      + nfft1,nfft2,Nl123,fs,xmin,xmax,ymin,ymax,zmin,zmax,SK0,pw) 
       use fft_3d 
@@ -1013,12 +1038,11 @@
       complex(8),parameter::ci=(0.0D0,1.0D0) 
       complex(8)::u_1D(Nl123) 
       complex(8)::u_3D(0:nwx2-1,0:nwy2-1,0:nwz2-1) 
-!--
+      !--
       u_3D=0.0D0 
       u_1D=0.0D0 
       wfunc=0.0d0 
       fftwk=0.0d0 
-      !write(6,*)'flg A'
       do ig=1,NG0 
        igb1=KG0(1,ig) 
        igb2=KG0(2,ig) 
@@ -1030,13 +1054,11 @@
        wfunc(ind)=dble(C0_I(ig)) 
        wfunc(ind+Nl123)=dimag(C0_I(ig)) 
       enddo!ig 
-      !write(6,*)'flg B'
       call fft3_bw(fs,wfunc(1),fftwk(1)) 
-      !write(6,*)'flg C'
       do ir=1,Nl123
        u_1D(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
       enddo!ir 
-!--
+      !--
       do ir3=1,nwz2
        do ir2=1,nwy2
         do ir1=1,nwx2 
@@ -1045,7 +1067,7 @@
         enddo 
        enddo 
       enddo 
-!--
+      !--
       do ir1=(xmin)*nwx2,(xmax)*nwx2-1         
        do ir2=(ymin)*nwy2,(ymax)*nwy2-1        
         do ir3=(zmin)*nwz2,(zmax)*nwz2-1         
@@ -1053,7 +1075,7 @@
      +             +DBLE(ir2)*SK0(2)/DBLE(nwy2) 
      +             +DBLE(ir3)*SK0(3)/DBLE(nwz2)) 
          pf=EXP(ci*PHASE)          
-!(ir1,ir2,ir3)->(jr1,jr2,jr3)
+         !(ir1,ir2,ir3)->(jr1,jr2,jr3)
          ir1_SHIFT=ir1       
          ir2_SHIFT=ir2       
          ir3_SHIFT=ir3       
@@ -1069,15 +1091,15 @@
          jr1=MOD(ir1_SHIFT,nwx2)       
          jr2=MOD(ir2_SHIFT,nwy2)       
          jr3=MOD(ir3_SHIFT,nwz2)       
-!CALC wannier(ir1,ir2,ir3)
+         !CALC wannier(ir1,ir2,ir3)
          pw(ir1,ir2,ir3)=pw(ir1,ir2,ir3)+u_3D(jr1,jr2,jr3)*pf 
         enddo!ir3         
        enddo!ir2 
       enddo!ir1 
-!-- 
+      !-- 
       return
       end
-!--
+      !--
       subroutine make_bf(C0_I,wfunc,fftwk,NG0,KG0,NTG,nwx2,nwy2,nwz2,
      + nfft1,nfft2,Nl123,fs,pw) 
       use fft_3d 
@@ -1092,7 +1114,7 @@
       integer::ig,igb1,igb2,igb3,ind,ir,ir1,ir2,ir3 
       complex(8)::u_1D(Nl123) 
       real(8)::pw(0:nwx2-1,0:nwy2-1,0:nwz2-1)
-!--
+      !--
       u_1D=0.0d0 
       wfunc=0.0d0 
       fftwk=0.0d0 
@@ -1111,7 +1133,7 @@
       do ir=1,Nl123
        u_1D(ir)=cmplx(wfunc(ir),wfunc(ir+Nl123)) 
       enddo!ir 
-!--
+      !--
       do ir3=1,nwz2
        do ir2=1,nwy2
         do ir1=1,nwx2 
@@ -1120,23 +1142,24 @@
         enddo 
        enddo 
       enddo 
-!--
+      !--
       return
       end
-!--
+      !--
       subroutine search_ik(NTK,SK0,ktmp,ik) 
       implicit none 
       integer::NTK
       real(8)::SK0(3,NTK) 
       real(8)::ktmp(3)
       integer::iik,ik
-!--
+      real(8),parameter::dlt_BZ=1.0d-5 
+      !--
       ik=0 
       do iik=1,NTK 
        !write(6,*)SK0(:,iik) 
-       if( abs(SK0(1,iik)-ktmp(1))<1.0d-4.and. 
-     +     abs(SK0(2,iik)-ktmp(2))<1.0d-4.and. 
-     +     abs(SK0(3,iik)-ktmp(3))<1.0d-4 )then 
+       if( abs(SK0(1,iik)-ktmp(1))<dlt_BZ.and. 
+     +     abs(SK0(2,iik)-ktmp(2))<dlt_BZ.and. 
+     +     abs(SK0(3,iik)-ktmp(3))<dlt_BZ )then 
         ik=iik 
        endif 
       enddo!iik
@@ -1146,6 +1169,74 @@
        write(6,*)'Then, stop'
        stop 
       endif 
-!--
+      !--
       return
       end 
+      !
+      !20180817
+      !
+      subroutine search_vis_range(ktmp,amin,amax,bmin,bmax,cmin,cmax) 
+      implicit none 
+      real(8),intent(in)::ktmp(3)
+      integer,intent(out)::amin,amax,bmin,bmax,cmin,cmax 
+      real(8)::denom
+      real(8),parameter::dlt_BZ=1.0d-5 
+      amin=0; amax=0; bmin=0; bmax=0; cmin=0; cmax=0
+      !
+      if(dabs(ktmp(1))<dlt_BZ)then 
+       denom=1.0d0 
+      else
+       denom=ktmp(1) 
+      endif 
+      amax=nint(1.0d0/denom)
+      !
+      if(dabs(ktmp(2))<dlt_BZ)then 
+       denom=1.0d0 
+      else
+       denom=ktmp(2) 
+      endif 
+      bmax=nint(1.0d0/denom)
+      !
+      if(dabs(ktmp(3))<dlt_BZ)then 
+       denom=1.0d0 
+      else
+       denom=ktmp(3) 
+      endif 
+      cmax=nint(1.0d0/denom)
+      !
+      return 
+      end
+      !
+      !20180820
+      !
+      subroutine phase_fix_bf(nwx2,nwy2,nwz2,xmin,xmax,ymin,ymax,
+     + zmin,zmax,pw) 
+      implicit none
+      integer,intent(in)::nwx2,nwy2,nwz2,xmin,xmax,ymin,ymax,zmin,zmax
+      complex(8),intent(inout)::pw((xmin)*nwx2:(xmax)*nwx2-1,
+     +                             (ymin)*nwy2:(ymax)*nwy2-1, 
+     +                             (zmin)*nwz2:(zmax)*nwz2-1)
+      integer::ir1,ir2,ir3 
+      real(8)::x,y,r,rmax 
+      complex(8)::glb_phase 
+      complex(8),parameter::ci=(0.0d0,1.0d0) 
+      ! 
+      rmax=1.0d-6 
+      do ir1=(xmin)*nwx2,(xmax)*nwx2-1         
+       do ir2=(ymin)*nwy2,(ymax)*nwy2-1        
+        do ir3=(zmin)*nwz2,(zmax)*nwz2-1         
+         x=dble(pw(ir1,ir2,ir3))  
+         y=dimag(pw(ir1,ir2,ir3))  
+         r=dsqrt(x**2+y**2)
+         if(r>rmax)then
+          glb_phase=(x-ci*y)/r 
+          rmax=r 
+         endif 
+        enddo!ir3         
+       enddo!ir2 
+      enddo!ir1 
+      !write(6,*)'rmax=',rmax 
+      pw=pw*glb_phase 
+      !
+      return
+      end
