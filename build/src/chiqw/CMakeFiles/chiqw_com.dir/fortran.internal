@@ -1,0 +1,5 @@
+# The fortran modules provided by this target.
+provides
+ fft_3d
+ m_rdinput
+ m_tetrahedron
