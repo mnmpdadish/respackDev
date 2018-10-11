@@ -1,6 +1,0 @@
-/home/kazuma/RESPACK/build/src/chiqw/CMakeFiles/calc_chiqw.dir
-/home/kazuma/RESPACK/build/src/calc_int/CMakeFiles/calc_j3d.dir
-/home/kazuma/RESPACK/build/src/calc_int/CMakeFiles/calc_w3d.dir
-/home/kazuma/RESPACK/build/src/wannier/CMakeFiles/calc_wannier.dir
-/home/kazuma/RESPACK/build/src/chiqw/CMakeFiles/chiqw_com.dir
-/home/kazuma/RESPACK/build/src/calc_int/CMakeFiles/intcom.dir
