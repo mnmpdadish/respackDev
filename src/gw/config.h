@@ -102,7 +102,7 @@ real(8)::phase,en
 !
 !banddisp
 !
-real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND(3,NSK_BAND_DISP)
+real(8),allocatable::SK_BAND_DISP(:,:)!SK_BAND_DISP(3,NSK_BAND_DISP)
 integer::NSK_BAND_DISP 
 !
 !DOS 

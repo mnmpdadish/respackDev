@@ -44,7 +44,7 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 TARGET = calc_gw 
 
 OBJECTS = m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
-	  sub_wfn.o sub_eps.o sub_gw.o util.o sub_band_disp.o make_kpts.o make_sgmw.o calc_gwdos.o calc_gwakw.o \
+	  sub_wfn.o sub_eps.o sub_gw.o util.o calc_band_disp.o make_kpts.o make_sgmw.o calc_ksdos.o calc_gwdos.o calc_gwakw.o \
 	  search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o gw.o 
 
 MOD_FILES = m_rd_input.mod m_rd_dat_wfn.mod m_rd_dat_wan.mod m_rd_dat_eps.mod fft_3d.mod m_tetrahedron.mod 
@@ -53,18 +53,20 @@ ${TARGET} : ${OBJECTS}
 	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
 gw.o:   gw.f90 m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
-	sub_wfn.o sub_eps.o sub_gw.o util.o sub_band_disp.o make_kpts.o make_sgmw.o calc_gwdos.o calc_gwakw.o \
+	sub_wfn.o sub_eps.o sub_gw.o util.o calc_band_disp.o make_kpts.o make_sgmw.o calc_ksdos.o calc_gwdos.o calc_gwakw.o \
 	search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o  
+
+calc_band_disp.o: calc_band_disp.f90 search_Rmin.o util.o  
 
 calc_gwakw.o: calc_gwakw.f90 search_Rmin.o sub_eigenvalue.o 
 
-calc_gwdos.o: calc_gwdos.f90 search_Rmin.o sub_eigenvalue.o sub_ksdos.o sub_det_shift.o sub_gwdos.o 
+calc_ksdos.o: calc_ksdos.f90 search_Rmin.o sub_eigenvalue.o sub_ksdos.o
+
+calc_gwdos.o: calc_gwdos.f90 search_Rmin.o sub_eigenvalue.o sub_det_shift.o sub_gwdos.o 
 
 m_rd_dat_eps.o: m_rd_dat_eps.f90 sub_wfn.o sub_eps.o 
 
 m_rd_dat_wfn.o: m_rd_dat_wfn.f90 util.o sub_wfn.o 
-
-sub_band_disp.o: sub_band_disp.f90 search_Rmin.o util.o  
 
 sub_eigenvalue.o: sub_eigenvalue.f90 util.o 
 
