@@ -62,7 +62,7 @@ subroutine make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1,a2,a3,SK0,K
   !
   EKS=0.0d0 
   VKS=0.0d0 
-  call make_eks(NTK,NWF,Na1,Na2,Na3,KS_R(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1),VKS(1,1,1))  
+  call eigenvalue(NTK,NWF,Na1,Na2,Na3,KS_R(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1),VKS(1,1,1))  
   !
   deallocate(WEIGHT_R,pf) 
   !

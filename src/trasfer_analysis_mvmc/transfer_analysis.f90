@@ -1,3 +1,9 @@
+!
+!
+!USAGE: ./transfer_analysis arg1 arg2 
+!      arg1: Threshold for transfer (eV) 
+!      arg2: Total number of electrons in unitcell 
+!
 PROGRAM main 
   use m_rd_dat_mvmc 
   include "config.h" 
