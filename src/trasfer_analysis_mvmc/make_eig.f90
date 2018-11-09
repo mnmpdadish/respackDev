@@ -1,7 +1,7 @@
 subroutine make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1,a2,a3,SK0,KS_R,EKS,VKS) 
   implicit none 
   integer,intent(in)::NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3 
-  logical,intent(in)::flg_weight 
+  integer,intent(in)::flg_weight 
   real(8),intent(in)::a1(3),a2(3),a3(3)
   real(8),intent(in)::SK0(3,NTK) 
   complex(8),intent(in)::KS_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)   
@@ -20,7 +20,7 @@ subroutine make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1,a2,a3,SK0,K
   !1. WEIGHT_R BY Y.Nomura NOMURA 
   !
   allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
-  if(flg_weight)then
+  if(flg_weight.eq.1)then
    write(6,'(a20)')'WEIGHT CALCULATED' 
    SUM_REAL=0.0d0 
    do ia1=-Na1,Na1

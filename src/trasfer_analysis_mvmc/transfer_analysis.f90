@@ -1,46 +1,83 @@
-!
-!
-!USAGE: ./transfer_analysis arg1 arg2 
-!      arg1: Threshold for transfer (eV) 
-!      arg2: Total number of electrons in unitcell 
-!
 PROGRAM main 
   use m_rd_dat_mvmc 
   include "config.h" 
   !
-  !default 
-  !
-  delt=0.01d0 !ttrhdrn Green's function delt (eV)
-  dmna=0.001d0 !ttrhdrn (eV)
-  dmnr=0.001d0 !ttrhdrn (eV)
-  deltw=2.0d0*delt !grid_spacing (eV)
-  flg_weight=.false. !flg to calculate weights (eV)
-  threshold_transfer=0.0d0 !threshold for transfer (eV)
-  electron_number=0.0d0 !total number of electrons in unitcell
-  !
   !read input from command line 
+  !
+  !(default) 
+  !delt=0.01d0     !Greens function delt in eV
+  !dmna=0.001d0    !Ttrhdrn parameter dmna in eV
+  !dmnr=0.001d0    !Ttrhdrn parameter dmnr in eV
+  !delw=2.0d0*delt !Grid width in eV
+  !flwe=0          !Flg whether calculate weighted transfers (0:not calc, 1:calc)
+  !thtr=0.0d0      !Threshold for transfer integral
+  !elnm=0.0d0      !Total number of electrons in unitcell
   !
   ncount=iargc() 
   allocate(real_arg(ncount)); real_arg=0.0d0 
-  do i=1,ncount 
+  do i=1,ncount-2 
    call getarg(i,arg) 
-   read(arg,*) real_arg(ncount)  
+   read(arg,*) real_arg(i)  
   enddo 
-  threshold_transfer=real_arg(1)
-  electron_number=real_arg(2)  
+  !zvo
+  call getarg(ncount-1,arg)
+  read(arg,*) zvo 
+  !ztr
+  call getarg(ncount,arg)
+  read(arg,*) ztr 
   !
-  delt =delt/au !au <- eV
-  dmna =dmna/au !au <- eV
-  dmnr =dmnr/au !au <- eV
-  deltw=deltw/au!au <- eV
-  threshold_transfer=threshold_transfer/au!au <- eV
-  write(6,'(a33,x,f10.5)')'Greens function delt (eV)=',delt*au
-  write(6,'(a33,x,f10.5)')'terahedon parameter dmna (eV)=',dmna*au
-  write(6,'(a33,x,f10.5)')'terahedon parameter dmnr (eV)=',dmnr*au
-  write(6,'(a33,x,f10.5)')'Grid spacing deltw (eV)=',deltw*au
-  write(6,'(a33,x,f10.5)')'threshold transfer (eV)=',threshold_transfer*au 
-  write(6,'(a33,x,f10.5)')'electron numbers in unit cell=',electron_number  
-  write(6,*) 
+  !
+  !write(6,*) ncount
+  !write(6,*) real_arg(1)
+  !write(6,*) real_arg(2)
+  !write(6,*) real_arg(3)
+  !write(6,*) real_arg(4)
+  !write(6,*) real_arg(5)
+  !write(6,*) real_arg(6)
+  !write(6,*) real_arg(7)
+  !
+  delt=real_arg(1)
+  dmna=real_arg(2)  
+  dmnr=real_arg(3)  
+  delw=real_arg(4)  
+  flwe=real_arg(5)  
+  thtr=real_arg(6)  
+  elnm=real_arg(7)  
+  !
+  delt=delt/au !au <- eV
+  dmna=dmna/au !au <- eV
+  dmnr=dmnr/au !au <- eV
+  delw=delw/au !au <- eV
+  flg_weight=nint(flwe)  
+  if(flg_weight/=0) flg_weight=1
+  threshold_transfer=thtr/au !au <- eV
+  electron_number=elnm 
+  !
+  if(zvo)then 
+    write(6,*) 
+    write(6,'(a33)')'##### TRANSFER ANALYSIS (ZVO) #####'
+    write(6,*) 
+    write(6,'(a33,x,f10.5)')'Greens function delt (eV)=',delt*au
+    write(6,'(a33,x,f10.5)')'Terahedon parameter dmna (eV)=',dmna*au
+    write(6,'(a33,x,f10.5)')'Terahedon parameter dmnr (eV)=',dmnr*au
+    write(6,'(a33,x,f10.5)')'Grid spacing delw (eV)=',delw*au
+    write(6,'(a33,x,i10)')'Use weigted transfer (0:not)=',flg_weight 
+    write(6,'(a33,x,f10.5)')'Threshold for transfer (eV)=',threshold_transfer*au 
+    write(6,'(a33,x,f10.5)')'Electron numbers in unit cell=',electron_number  
+    write(6,*) 
+  endif 
+  !
+  if(ztr)then
+    write(6,*) 
+    write(6,'(a40)')'##### TRANSFER ANALYSIS (Ztrans.def) #####'
+    write(6,'(a40)')'#####    STILL NOT SUPORTED; STOP    #####'
+    write(6,*) 
+    stop 
+  endif 
+  !stop
+  !  
+  !
+if(zvo)then
   !
   !read zvo(mvmc files) 
   !
@@ -74,9 +111,9 @@ PROGRAM main
   !
   !make dos-grid
   !
-  call est_ndosgrd(NWF,NTK,EKS(1,1),deltw,emin,emax,ndosgrd)  
+  call est_ndosgrd(NWF,NTK,EKS(1,1),delw,emin,emax,ndosgrd)  
   allocate(dosgrd(ndosgrd));dosgrd=0.0d0 
-  call make_dosgrd(emin,deltw,ndosgrd,dosgrd(1))  
+  call make_dosgrd(emin,delw,ndosgrd,dosgrd(1))  
   !
   !calc dos 
   !
@@ -85,9 +122,9 @@ PROGRAM main
   !
   !estimate ef 
   !
-  call est_ef(ndosgrd,deltw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
+  call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
   allocate(efline(ndosgrd));efline=0.0d0 
-  call make_efline(ndosgrd,FermiEnergy,deltw,dosgrd(1),dos(1),efline(1)) 
+  call make_efline(ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
   !
   !wrt dat.dos 
   !
@@ -117,5 +154,6 @@ PROGRAM main
   !
   deallocate(EKS,VKS) 
   !
+endif!zvo 
   stop
 end     
