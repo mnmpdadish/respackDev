@@ -110,6 +110,9 @@
       real(8)::chead 
       real(8),allocatable::cheadw(:)!cheadw(ne)  
       complex(8)::pf,SUM_CMPX 
+!mvmc 
+      real(8)::SUM_REAL 
+      real(8),allocatable::WEIGHT_R(:,:,:) 
 !local
       integer::ik,ikq,jk,iik,iqir,iop,i,j
       integer::i1,j1,k1,iw,jw,ix 

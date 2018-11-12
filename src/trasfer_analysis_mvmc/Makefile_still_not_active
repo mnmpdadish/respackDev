@@ -1,0 +1,68 @@
+######################################
+# Copyright (c) 2018 Kazuma Nakamura #
+###################################### 
+#--------------------------------------------------------------------
+# for Intel Linux and Intel Fortran Compiler 11.0 and above 
+#--------------------------------------------------------------------
+#intel
+FC = ifort  
+FFLAGS = -O2 -qopenmp -xHost -g -traceback
+
+#######
+#DEBUG#
+#######
+#FFLAGS = -qopenmp -debug full -check all -CB -warn all -traceback -g  
+
+#lapack 
+LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group 
+
+#GNU 
+#FC = mpif90 
+#FFLAGS = -O2 -fopenmp -g -fbacktrace 
+#LIBBLAS = -llapack -lblas -fopenmp 
+#--------------------------------------------------------------------
+.SUFFIXES:
+.SUFFIXES: .o .F90 .F .f90 .c
+# default suffix rules. Do not edit this area.
+.F.o:
+	${FC} ${F90FLAGS} ${FFLAGS} -c $<
+.f90.o:
+	${FC} ${F90FLAGS} ${FFLAGS} -c $<
+.F90.o:
+	${FC} ${F90FLAGS} ${FFLAGS} -c $<
+#--------------------------------------------------------------------
+TARGET = transfer_analysis 
+
+OBJECTS = m_rd_dat_mvmc.o m_tetrahedron_20170325.o \
+          calc_dos_global.o make_grd.o \
+	  sub_wfn.o util.o sub_mkidx.o truncation.o \
+          calc_ksdos.o search_Rmin.o sub_eigenvalue.o sub_ksdos.o \
+	  calc_band_disp.o make_kpts.o \
+          transfer_analysis.o 
+
+MOD_FILES = m_rd_input.mod m_rd_dat_wfn.mod m_rd_dat_wan.mod m_tetrahedron.mod 
+
+${TARGET} : ${OBJECTS} 
+	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
+
+transfer_analysis.o: transfer_analysis.f90 m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_tetrahedron_20170325.o \
+	calc_dos_global.o make_grd.o \
+	sub_wfn.o util.o sub_mkidx.o truncation.o \
+	calc_ksdos.o search_Rmin.o sub_eigenvalue.o sub_ksdos.o \
+	calc_band_disp.o make_kpts.o 
+
+m_rd_dat_wfn.o: m_rd_dat_wfn.f90 sub_wfn.o util.o 
+
+calc_dos_global.o: calc_dos_global.f90 sub_mkidx.o m_tetrahedron_20170325.o
+
+calc_ksdos.o: calc_ksdos.f90 search_Rmin.o sub_eigenvalue.o sub_ksdos.o 
+
+calc_band_disp.o: calc_band_disp.f90 search_Rmin.o util.o 
+
+sub_eigenvalue.o: sub_eigenvalue.f90 util.o 
+
+sub_ksdos.o: sub_ksdos.f90 sub_mkidx.o m_tetrahedron_20170325.o
+
+clean: 
+	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 
+#--------------------------------------------------------------------

@@ -11,7 +11,7 @@ FFLAGS = -O2 -qopenmp -xHost -g -traceback
 #######
 #DEBUG#
 #######
-#FFLAGS = -openmp -debug full -check all -warn all -traceback -g 
+#FFLAGS = -qopenmp -debug full -check all -warn all -traceback -g 
 
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 

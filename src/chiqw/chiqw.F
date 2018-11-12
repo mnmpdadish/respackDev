@@ -1262,6 +1262,12 @@
        OPEN(300,FILE='./dat.chi_cutoff')!20170402 
        write(300,*) Ecut_for_eps!20170402  
 !--
+!OPEN(302,W,FILE='dat.ttrhdrn')!20180507 
+       OPEN(302,FILE='./dat.ttrhdrn')!20180507 
+       write(302,*) delt!au 
+       write(302,*) ttrhdrn_dmna!au 
+       write(302,*) ttrhdrn_dmnr!au 
+!--
 !OPEN(135,R,FILE='dat.wgrid') 
        OPEN(135,FILE='./dat.wgrid') 
        write(135,*) nen!20170331 nen=Num_freq_grid 
@@ -2157,8 +2163,18 @@
        write(file_num_log,*)'#' 
        close(file_num_log)
 !--
+!20180907 
+!optical properties
+       ierr=CHDIR("..")
+       allocate(eps00w(1:nen,1:3));eps00w=0.0d0  
+       eps00w(:,:)=epsqwgm(No_G_0,No_G_0,:,:) 
+       call wrt_optical_property(nen,em(1),eps00w(1,1)) 
+       deallocate(eps00w) 
+       ierr=CHDIR("..")
        deallocate(epsqwgm,eps_rpa,chi0)
-       ierr=CHDIR("../..")!20170413 
+       !--
+       !ierr=CHDIR("../..")!20170413 
+       !--
        call system('pwd') 
       endif!myrank==0  
       deallocate(chiqwgm,pchiqwgm,i_for_pair,j_for_pair)

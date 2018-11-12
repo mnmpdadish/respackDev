@@ -70,7 +70,13 @@ endif
 allocate(C0_WN(NTG,NWF,NTK));C0_WN(:,:,:)=0.0D0 
 do ik=1,NTK
  read(113)((C0_WN(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
-enddo
+ !
+ !20180519 
+ !do iw=1,NWF
+ ! read(113)(C0_WN(ig,iw,ik),ig=1,NG0(ik))
+ !enddo!iw
+ !
+enddo!ik 
 CLOSE(113)  
 !write(6,*)'FINISH REDING C0_WN'
 !--

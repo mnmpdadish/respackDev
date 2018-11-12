@@ -29,8 +29,13 @@ else
  do i=1,N
  em(i)=dcmplx(a*exp(b*dble(i-1))-a,0.0d0) 
  enddo 
- c=E*exp(-log(2.0d0)*dble(N)/dble(M)) 
- d=log(2.0d0)/dble(M) 
+ !--
+ !20180906 
+ !c=E*exp(-log(2.0d0)*dble(N)/dble(M)) 
+ !d=log(2.0d0)/dble(M) 
+ c=E*exp(-log(3.0d0)*dble(N)/dble(M)) 
+ d=log(3.0d0)/dble(M) 
+ !--
  do i=N+1,N+M 
  em(i)=dcmplx(c*exp(d*dble(i)),0.0d0)  
  enddo 

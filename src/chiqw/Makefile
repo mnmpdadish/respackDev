@@ -6,7 +6,7 @@
 #--------------------------------------------------------------------
 #intel
 FC = mpiifort 
-FFLAGS = -O1 -qopenmp -xHost -mcmodel=large -shared-intel 
+FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel 
 
 #######
 #DEBUG#
@@ -24,12 +24,12 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 
 #openMPI 
 #FC = mpif90 
-#FFLAGS = -O2 -openmp -xHost -mcmodel=large -shared-intel
+#FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #sekirei 
 #FC = mpif90 
-#FFLAGS = -O2 -openmp -g -traceback
+#FFLAGS = -O2 -qopenmp -g -traceback
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #GNU 
@@ -48,13 +48,16 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 	${FC} ${F90FLAGS} ${FFLAGS} -c $<
 #--------------------------------------------------------------------
 TARGET = calc_chiqw 
-OBJECTS = m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o invZGE.o chiqw_sub.o SO3_to_SU2_rotation.o chiqw.o 
+OBJECTS = m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o invZGE.o \
+	  wrt_optical_property.o chiqw_sub.o SO3_to_SU2_rotation.o chiqw.o 
+
 MOD_FILES = m_rdinput.mod fft_3d.mod m_tetrahedron.mod 
 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
-chiqw.o: chiqw.F m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o invZGE.o SO3_to_SU2_rotation.o chiqw_sub.o 
+chiqw.o: chiqw.F m_rdinput.o m_tetrahedron_20170325.o m_fft3d_20150826.o gen_grid.o est_NTK.o est_nwx2.o inv.o  \
+         invZGE.o SO3_to_SU2_rotation.o chiqw_sub.o wrt_optical_property.o  
 
 chiqw_sub.o: chiqw_sub.F m_fft3d_20150826.o invZGE.o
 

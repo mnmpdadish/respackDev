@@ -2,11 +2,16 @@ module m_rd_dat_eps
 use m_rd_dat_wfn
 implicit none
 public::rd_dat_chi_cutoff
+public::rd_dat_ttrhdrn 
 public::rd_dat_wgrid 
 public::rd_dat_sq 
 public::rd_dat_eps 
 !chi_cutoff(300)  
 real(8),public::Ecut_for_eps
+!ttrhdrn(302)  
+real(8),public::idlt!Green's function delt (au)!ttrhdrn
+real(8),public::dmna!dmna (au)!ttrhdrn
+real(8),public::dmnr!dmnr (au)!ttrhdrn
 !wgrid(135)  
 integer,public::Num_freq_grid
 integer,public::ne 
@@ -38,6 +43,16 @@ subroutine rd_dat_chi_cutoff
 implicit none 
 OPEN(300,FILE='./dir-eps/dat.chi_cutoff')
 read(300,*) Ecut_for_eps
+end subroutine
+!--
+!20180423 
+!--
+subroutine rd_dat_ttrhdrn
+implicit none 
+OPEN(302,FILE='./dir-eps/dat.ttrhdrn')
+read(302,*) idlt!ttrhdrn Green's function delt (au)
+read(302,*) dmna!(au) 
+read(302,*) dmnr!(au) 
 end subroutine
 !--
 subroutine rd_dat_wgrid 
@@ -256,7 +271,7 @@ do iq=1,Nq_irr
   j1=LG0(2,ig,iq)
   k1=LG0(3,ig,iq) 
   packingq(i1,j1,k1,iq)=ig 
-  write(6,'(a,5i10)')'iq,ig,i1,j1,k1',iq,ig,i1,j1,k1
+  !write(6,'(a,5i10)')'iq,ig,i1,j1,k1',iq,ig,i1,j1,k1
  enddo 
 enddo 
 !-- 
