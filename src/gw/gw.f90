@@ -1611,9 +1611,12 @@ if(myrank.eq.0)then
   allocate(gwdos(nsgm)); gwdos=0.0d0  
   allocate(gw_sigma_dos(nsgm)); gw_sigma_dos=0.0d0  
   ! 
+  call calc_ksdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1(1),a2(1),a3(1),&
+  b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),ksdos(1))
+  !
   call calc_gwdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,FermiEnergy,a1(1),a2(1),a3(1),&
   b1(1),b2(1),b3(1),sgmw(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),MAT_VXC_R(1,1,-Na1,-Na2,-Na3),&
-  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),shift_value,ksdos(1),gwdos(1),gw_sigma_dos(1))
+  MAT_SX_R(1,1,-Na1,-Na2,-Na3),MAT_SC_R(1,1,-Na1,-Na2,-Na3,1),shift_value,gwdos(1),gw_sigma_dos(1))
   !
   write(6,'(a)')'finish gw-dos calc' 
 endif!myrank.eq.0 

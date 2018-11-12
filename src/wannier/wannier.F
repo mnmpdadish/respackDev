@@ -417,12 +417,17 @@
         E_EIG(:,jk)=E_EIGI(:,ik) 
        endif 
       enddo 
-      write(6,*) 
-      write(6,*)'write Fermi surface'
       call system('rm -rf dir-wan') 
       call system('mkdir dir-wan') 
-      call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
-     +     FermiENergy,b1(1),b2(1),b3(1)) 
+      !
+      !20181030 temporal 
+      !
+      if(.false.)then
+       write(6,*) 
+       write(6,*)'write Fermi surface'
+       call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
+     +      FermiENergy,b1(1),b2(1),b3(1)) 
+      endif 
       deallocate(E_EIG)
 !--
 !     stop
@@ -2509,6 +2514,12 @@
      + WEIGHT_R(-Na1,-Na2,-Na3)) 
       !
       call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))
+      !
+      !20181030  
+      !
+      call wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,
+     +     SK_BAND_DISP(1,1)) 
+      call wrt_mvmc_SK0(NTK,SK0(1,1)) 
       !
 !--
 !(4) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 

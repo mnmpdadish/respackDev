@@ -13,7 +13,7 @@ subroutine wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,HR,WR)
   OPEN(300,FILE='./dir-mvmc/zvo_hr.dat') 
   write(300,'(a)')'wannier90 format for mvmcdry'
   write(300,'(i10)') n_occ
-  write(300,'(i10)') NTK 
+  write(300,'(i10)') NTK,Na1,Na2,Na3  
   unit_vec=1
   write(300,'(15i5)')(unit_vec(i),i=1,NTK) 
   do ia1=-Na1,Na1
@@ -64,6 +64,40 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
     wcenter_lat(i)=SUM_REAL
    enddo!i
    write(303,*)(wcenter_lat(i),i=1,3) 
+  enddo 
+  !
+return
+end
+!
+subroutine wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,SK_BAND_DISP) 
+  implicit none 
+  integer,intent(in)::Ndiv,N_sym_points,NSK_BAND_DISP
+  real(8),intent(in)::SK_BAND_DISP(3,NSK_BAND_DISP) 
+  integer::ik,i 
+  !
+  !OPEN(304,W,FILE='zvo_bandkpts.dat') 
+  !
+  OPEN(304,FILE='./dir-mvmc/zvo_bandkpts.dat') 
+  write(304,'(3i10)') NSK_BAND_DISP,Ndiv,N_sym_points 
+  do ik=1,NSK_BAND_DISP
+   write(304,*)(SK_BAND_DISP(i,ik),i=1,3) 
+  enddo 
+  !
+return
+end
+!
+subroutine wrt_mvmc_SK0(NTK,SK0)
+  implicit none 
+  integer,intent(in)::NTK 
+  real(8),intent(in)::SK0(3,NTK) 
+  integer::ik,i 
+  !
+  !OPEN(305,W,FILE='zvo_mkkpts.dat') 
+  !
+  OPEN(305,FILE='./dir-mvmc/zvo_mkkpts.dat') 
+  write(305,'(i10)') NTK 
+  do ik=1,NTK 
+   write(305,*)(SK0(i,ik),i=1,3) 
   enddo 
   !
 return
