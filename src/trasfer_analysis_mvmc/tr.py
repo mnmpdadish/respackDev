@@ -34,7 +34,12 @@ ztr=str(args.ztr)
 delt=str(args.gd)
 ttra=str(args.ta)
 ttrr=str(args.tr)
-delw=str(args.gs)
+#
+if(args.zvo): 
+    delw=str(args.gs)
+if(args.ztr):
+    delw=str(10.0*args.gs) 
+#
 flwe=str(args.we)
 thtr=str(args.th)
 elnm=str(args.el)

@@ -13,7 +13,8 @@ subroutine wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,HR,WR)
   OPEN(300,FILE='./dir-mvmc/zvo_hr.dat') 
   write(300,'(a)')'wannier90 format for mvmcdry'
   write(300,'(i10)') n_occ
-  write(300,'(i10)') NTK,Na1,Na2,Na3  
+  write(300,'(i10)') NTK 
+  !
   unit_vec=1
   write(300,'(15i5)')(unit_vec(i),i=1,NTK) 
   do ia1=-Na1,Na1
@@ -27,7 +28,7 @@ subroutine wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,HR,WR)
     enddo!ia3
    enddo!ia2
   enddo!ia1 
-return
+  return
 end 
 !
 subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
@@ -45,7 +46,6 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
   ainv(:,3)=a3(:)
   !
   call invmat(3,ainv(1,1)) 
-  !
   !
   !OPEN(303,W,FILE='zvo_geom.dat') 
   !
@@ -65,8 +65,7 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
    enddo!i
    write(303,*)(wcenter_lat(i),i=1,3) 
   enddo 
-  !
-return
+  return
 end
 !
 subroutine wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,SK_BAND_DISP) 
@@ -82,8 +81,7 @@ subroutine wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,SK_BAND_DISP)
   do ik=1,NSK_BAND_DISP
    write(304,*)(SK_BAND_DISP(i,ik),i=1,3) 
   enddo 
-  !
-return
+  return
 end
 !
 subroutine wrt_mvmc_SK0(NTK,SK0)
@@ -99,6 +97,5 @@ subroutine wrt_mvmc_SK0(NTK,SK0)
   do ik=1,NTK 
    write(305,*)(SK0(i,ik),i=1,3) 
   enddo 
-  !
-return
+  return
 end
