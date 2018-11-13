@@ -4,7 +4,7 @@ if(${CMAKE_PROJECT_NAME} STREQUAL "Project")
 endif(${CMAKE_PROJECT_NAME} STREQUAL "Project")
 
 set(SOURCES_COMMON inv.F90 est_NTK.f90 est_nwx2.f90 calc_int_sub.F m_rdinput.f90 m_fft3d_20150826.f90)
-add_library(intcom ${SOURCES_COMMON})
+add_library(intcom STATIC ${SOURCES_COMMON})
 target_link_libraries(intcom ${LAPACK_LIBRARIES} m)
 
 add_executable(calc_w3d calc_intW.F wrt_mvmc_w3d.f90)
