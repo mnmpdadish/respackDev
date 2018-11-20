@@ -40,4 +40,4 @@ add_executable(calc_gw ${SOURCES_GW})
 target_link_libraries(calc_gw ${MPI_Fortran_LIBRARIES})
 target_link_libraries(calc_gw ${LAPACK_LIBRARIES} m)
 
-install(TARGETS calc_gw ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS calc_gw RUNTIME DESTINATION bin)

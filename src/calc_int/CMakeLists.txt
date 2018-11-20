@@ -12,5 +12,5 @@ target_link_libraries(calc_w3d  intcom )
 add_executable(calc_j3d calc_intJ.F wrt_mvmc_j3d.f90)
 target_link_libraries(calc_j3d intcom )
 
-install(TARGETS calc_w3d ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
-install(TARGETS calc_j3d ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS calc_w3d RUNTIME DESTINATION bin)
+install(TARGETS calc_j3d RUNTIME DESTINATION bin)

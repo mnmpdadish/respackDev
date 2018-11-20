@@ -12,4 +12,4 @@ frmsf_wan.F90 wrt_frmsf.f90 wrt_mvmc.f90)
 add_executable(calc_wannier wannier.F wannier_sub.F ${SOURCES_COMMON})
 target_link_libraries(calc_wannier ${LAPACK_LIBRARIES} m)
 
-install(TARGETS calc_wannier ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS calc_wannier RUNTIME DESTINATION bin)

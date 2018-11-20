@@ -19,4 +19,4 @@ add_executable(calc_chiqw chiqw.F)
 target_link_libraries(calc_chiqw chiqw_com)
 target_link_libraries(calc_chiqw ${MPI_Fortran_LIBRARIES})
 
-install(TARGETS calc_chiqw ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS calc_chiqw RUNTIME DESTINATION bin)
