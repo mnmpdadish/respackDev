@@ -33,7 +33,6 @@ real(8)::electron_number    !Total number of electron in unitcell
 !
 !eigenvalue and eigenstates
 !
-integer::nkb1,nkb2,nkb3 
 real(8),allocatable::EKS(:,:) !EKS(NWF,NTK) 
 complex(8),allocatable::VKS(:,:,:) !VKS(NWF,NWF,NTK)   
 !
@@ -50,6 +49,12 @@ real(8),allocatable::efline(:) !efline(ndosgrd)
 !interpolated band disp
 !
 real(8),allocatable::kdata(:) !kdata(NSK_BAND_DISP) 
+!
+!ztrans.def
+!
+real(8),allocatable::EIG_TR(:) !EIG_TR(Ndim_TR) 
+integer::emin_grd,emax_grd 
+real(8),allocatable::hist(:) !hist(ndosgrd) 
 !
 !local
 !

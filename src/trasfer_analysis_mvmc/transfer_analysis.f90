@@ -1,10 +1,11 @@
 PROGRAM main 
-  use m_rd_dat_mvmc 
+  use m_rd_dat_zvo 
+  use m_rd_transdef  
   include "config.h" 
   !
   !read input from command line 
   !
-  !(default) 
+  !(default for zvo) 
   !delt=0.01d0     !Greens function delt in eV
   !dmna=0.001d0    !Ttrhdrn parameter dmna in eV
   !dmnr=0.001d0    !Ttrhdrn parameter dmnr in eV
@@ -12,6 +13,9 @@ PROGRAM main
   !flwe=0          !Flg whether calculate weighted transfers (0:not calc, 1:calc)
   !thtr=0.0d0      !Threshold for transfer integral
   !elnm=0.0d0      !Total number of electrons in unitcell
+  !
+  !(default for ztr) 
+  !delw=10.0d0*delt !Grid width in eV
   !
   ncount=iargc() 
   allocate(real_arg(ncount)); real_arg=0.0d0 
@@ -25,7 +29,6 @@ PROGRAM main
   !ztr
   call getarg(ncount,arg)
   read(arg,*) ztr 
-  !
   !
   !write(6,*) ncount
   !write(6,*) real_arg(1)
@@ -53,107 +56,115 @@ PROGRAM main
   threshold_transfer=thtr/au !au <- eV
   electron_number=elnm 
   !
-  if(zvo)then 
-    write(6,*) 
-    write(6,'(a33)')'##### TRANSFER ANALYSIS (ZVO) #####'
-    write(6,*) 
-    write(6,'(a33,x,f10.5)')'Greens function delt (eV)=',delt*au
-    write(6,'(a33,x,f10.5)')'Terahedon parameter dmna (eV)=',dmna*au
-    write(6,'(a33,x,f10.5)')'Terahedon parameter dmnr (eV)=',dmnr*au
-    write(6,'(a33,x,f10.5)')'Grid spacing delw (eV)=',delw*au
-    write(6,'(a33,x,i10)')'Use weigted transfer (0:not)=',flg_weight 
-    write(6,'(a33,x,f10.5)')'Threshold for transfer (eV)=',threshold_transfer*au 
-    write(6,'(a33,x,f10.5)')'Electron numbers in unit cell=',electron_number  
-    write(6,*) 
-  endif 
-  !
   if(ztr)then
     write(6,*) 
-    write(6,'(a40)')'##### TRANSFER ANALYSIS (Ztrans.def) #####'
-    write(6,'(a40)')'#####    STILL NOT SUPORTED; STOP    #####'
+    write(6,'(a50)')'##### TRANSFER ANALYSIS (trans.def) #####'
     write(6,*) 
-    stop 
+    !
+    !read trans.def 
+    !
+    call rd_transdef  
+    !
+    !diagonalize TR 
+    !
+    allocate(EIG_TR(Ndim_TR)); EIG_TR=0.0d0 
+    call diagN(Ndim_TR,TR(1,1),EIG_TR(1)) 
+    !
+    !make dos-grid
+    !
+    call est_ndosgrd(Ndim_TR,1,EIG_TR(1),delw,emin,emax,ndosgrd)  
+    !
+    !calc histgram
+    !
+    emin_grd=nint(emin/delw) 
+    emax_grd=nint(emax/delw)
+    allocate(hist(emin_grd:emax_grd)); hist=0.0d0 
+    call calc_hist(Ndim_TR,emin_grd,emax_grd,delw,EIG_TR(1),hist(emin_grd)) 
+    !
+    !wrt histgram
+    ! 
+    call wrt_hist(emin_grd,emax_grd,delw,hist(emin_grd)) 
+    !
+    write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (trans.def) #####'
+    !
   endif 
-  !stop
-  !  
-  !
-if(zvo)then
-  !
-  !read zvo(mvmc files) 
-  !
-  call rd_dat_hr 
-  call rd_dat_geom 
-  call rd_dat_bandkpts 
-  call rd_dat_mkkpts 
-  !
-  !###########################
-  !  WANNIER-DOS CALCULATION
-  !###########################
-  !
-  !create dir-tr
-  !
-  call system('rm -rf dir-tr') 
-  call system('mkdir dir-tr') 
-  !
-  !truncate HMATR
-  !
-  call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
-  !
-  !estimate nbb1,nkb2,nkb3 
-  !
-  call est_nkbi(NTK,SK0,nkb1,nkb2,nkb3)  
-  !
-  !make EKS
-  !
-  allocate(EKS(NWF,NTK)); EKS=0.0d0 
-  allocate(VKS(NWF,NWF,NTK)); VKS=0.0d0 
-  call make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
-  !
-  !make dos-grid
-  !
-  call est_ndosgrd(NWF,NTK,EKS(1,1),delw,emin,emax,ndosgrd)  
-  allocate(dosgrd(ndosgrd));dosgrd=0.0d0 
-  call make_dosgrd(emin,delw,ndosgrd,dosgrd(1))  
-  !
-  !calc dos 
-  !
-  allocate(dos(ndosgrd));dos=0.0d0 
-  call calc_dos(NWF,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EKS(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
-  !
-  !estimate ef 
-  !
-  call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
-  allocate(efline(ndosgrd));efline=0.0d0 
-  call make_efline(ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
-  !
-  !wrt dat.dos 
-  !
-  call wrt_dos(ndosgrd,dosgrd(1),dos(1),efline(1)) 
-  !
-  deallocate(EKS,VKS) 
-  !
-  !###############################
-  !  BAND DISPERSION CALCULATION
-  !###############################
-  !
-  !make EKS
-  !
-  allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0 
-  allocate(VKS(NWF,NWF,NSK_BAND_DISP)); VKS=0.0d0 
-  call make_eig(NWF,NSK_BAND_DISP,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK_BAND_DISP(1,1),HR(1,1,-Na1,-Na2,-Na3),&
-  EKS(1,1),VKS(1,1,1)) 
-  !
-  !make kdata 
-  !
-  allocate(kdata(NSK_BAND_DISP)); kdata=0.0d0 
-  call make_kdata(Ndiv,N_sym_points,NSK_BAND_DISP,SK_BAND_DISP(1,1),b1(1),b2(1),b3(1),kdata(1)) 
-  !
-  !wrt dat.iband 
-  !
-  call wrt_iband(NWF,NSK_BAND_DISP,kdata(1),EKS(1,1)) 
-  !
-  deallocate(EKS,VKS) 
-  !
-endif!zvo 
+  if(zvo)then 
+    write(6,*) 
+    write(6,'(a50)')'##### TRANSFER ANALYSIS (ZVO) #####'
+    write(6,*) 
+    write(6,'(a50,x,f10.5)')'Greens function delt (eV)=',delt*au
+    write(6,'(a50,x,f10.5)')'Terahedon parameter dmna (eV)=',dmna*au
+    write(6,'(a50,x,f10.5)')'Terahedon parameter dmnr (eV)=',dmnr*au
+    write(6,'(a50,x,f10.5)')'Grid spacing delw (eV)=',delw*au
+    write(6,'(a50,x,i10)')'Use weigted transfer (0:not)=',flg_weight 
+    write(6,'(a50,x,f10.5)')'Threshold for transfer (eV)=',threshold_transfer*au
+    write(6,'(a50,x,f10.5)')'Electron numbers in unit cell=',electron_number  
+    write(6,*) 
+    !
+    !read zvo(mvmc files) 
+    !
+    call rd_dat_mkkpts 
+    call rd_dat_hr 
+    call rd_dat_geom 
+    call rd_dat_bandkpts 
+    !
+    !create dir-tr
+    !
+    call system('rm -rf dir-tr') 
+    call system('mkdir dir-tr') 
+    !
+    !truncate HR
+    !
+    call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    !
+    !make EKS
+    !
+    allocate(EKS(NWF,NTK)); EKS=0.0d0 
+    allocate(VKS(NWF,NWF,NTK)); VKS=0.0d0 
+    call make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
+    !
+    !make dos-grid
+    !
+    call est_ndosgrd(NWF,NTK,EKS(1,1),delw,emin,emax,ndosgrd)  
+    allocate(dosgrd(ndosgrd));dosgrd=0.0d0 
+    call make_dosgrd(emin,delw,ndosgrd,dosgrd(1))  
+    !
+    !calc dos 
+    !
+    allocate(dos(ndosgrd));dos=0.0d0 
+    call calc_dos(NWF,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EKS(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
+    !
+    !estimate ef 
+    !
+    call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
+    allocate(efline(ndosgrd));efline=0.0d0 
+    call make_efline(ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
+    !
+    !wrt dat.dos 
+    !
+    call wrt_dos(ndosgrd,dosgrd(1),dos(1),efline(1)) 
+    !
+    deallocate(EKS,VKS) 
+    !
+    !make EKS
+    !
+    allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0 
+    allocate(VKS(NWF,NWF,NSK_BAND_DISP)); VKS=0.0d0 
+    call make_eig(NWF,NSK_BAND_DISP,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK_BAND_DISP(1,1),HR(1,1,-Na1,-Na2,-Na3),&
+    EKS(1,1),VKS(1,1,1)) 
+    !
+    !make kdata 
+    !
+    allocate(kdata(NSK_BAND_DISP)); kdata=0.0d0 
+    call make_kdata(Ndiv,N_sym_points,NSK_BAND_DISP,SK_BAND_DISP(1,1),b1(1),b2(1),b3(1),kdata(1)) 
+    !
+    !wrt dat.iband 
+    !
+    call wrt_iband(NWF,NSK_BAND_DISP,kdata(1),EKS(1,1)) 
+    !
+    deallocate(EKS,VKS) 
+    !
+    write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (ZVO) #####'
+  endif!zvo 
   stop
 end     

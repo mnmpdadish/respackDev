@@ -54,3 +54,23 @@ subroutine wrt_iband(NWF,NSK_BAND_DISP,kdata,EKS)
   !
   return 
 end subroutine   
+  
+subroutine wrt_hist(emin_grd,emax_grd,delw,hist) 
+  implicit none 
+  integer,intent(in)::emin_grd,emax_grd
+  real(8),intent(in)::delw 
+  real(8),intent(in)::hist(emin_grd:emax_grd) 
+  integer::ix 
+  real(8),parameter::au=27.21151d0 
+  !
+  !OPEN(302,W,file='./dir-tr/dat.hist')
+  !
+  OPEN(302,file='./dir-tr/dat.hist') 
+  rewind(302) 
+  do ix=emin_grd,emax_grd 
+   write(302,'(2f15.10)') dble(ix)*delw*au,hist(ix)/au  
+  enddo 
+  close(302) 
+  !
+  return 
+end subroutine 
