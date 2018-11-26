@@ -7,6 +7,7 @@ import os.path
 import sys
 import shutil
 import struct
+import argparse
 import xml.etree.ElementTree as ET
 import numpy as np
 
@@ -89,8 +90,127 @@ class Iotk_dat():
                         ret[r,c] = x
             return ret
 
+def band_structure_info(root, oldxml=False):
+    if oldxml:
+        child = root.find('BAND_STRUCTURE_INFO')
+        num_k = int(child.find('NUMBER_OF_K-POINTS').text)
+        num_b = int(child.find('NUMBER_OF_BANDS').text)
+        eFermi = float(child.find('FERMI_ENERGY').text)
+    else:
+        child = root.find('output').find('band_structure')
+        num_k = int(child.find('nks').text)
+        num_b = int(child.find('nbnd').text)
+        eFermi = float(child.find('fermi_energy').text)
+    return num_k, num_b, eFermi
 
-def qe2respack(dirname, endian=sys.byteorder):
+def kpoint_coords(root, num_k, oldxml=False):
+    k_vec = np.zeros((3,num_k))
+    if oldxml:
+        child = root.find('EIGENVALUES')
+        for i in range(num_k):
+            ev = child.find('K-POINT.{0}'.format(i+1))
+            k_vec[:,i] = [float(x) for x in ev.find('K-POINT_COORDS').text.strip().split()]
+    else:
+        for i,kse in enumerate(root.find('output').iter('ks_energies')):
+            k_vec[:,i] = [float(x) for x in kse.find('k_point').text.strip().split()]
+    return k_vec
+
+def number_of_GK_vectors(root, num_k, oldxml=False):
+    if oldxml:
+        child = root.find('EIGENVECTORS')
+        num_Gk = [int(child.find('K-POINT.{0}'.format(i+1))
+                           .find('NUMBER_OF_GK-VECTORS').text) for i in range(num_k)]
+    else:
+        num_Gk = [int(kse.find('npw').text) for kse in root.find('output').iter('ks_energies')]
+    return num_Gk
+
+def latvectors(root, oldxml=False):
+    A = np.zeros((3,3))
+    if oldxml:
+        child = root.find('CELL')
+        celldm = float(child.find('LATTICE_PARAMETER').text)
+        cc = child.find('DIRECT_LATTICE_VECTORS')
+        for i in range(3):
+            A[i,:] = [float(x) for x in cc.find('a{0}'.format(i+1)).text.split()]
+    else:
+        child = root.find('input').find('atomic_structure')
+        celldm = float(child.attrib['alat'])
+        cell = child.find('cell')
+        for i in range(3):
+            A[i,:] = [float(x) for x in cell.find('a{0}'.format(i+1)).text.split()]
+    return A, celldm
+
+def atoms_information(root, oldxml=False):
+    if oldxml:
+        child = root.find('IONS')
+        n_atoms = int(child.find('NUMBER_OF_ATOMS').text)
+        atom_symbs = ['' for i in range(n_atoms)]
+        atom_positions = np.zeros((3,n_atoms))
+        for i in range(n_atoms):
+            atom = child.find('ATOM.{0}'.format(i+1)).attrib
+            atom_symbs[i] = atom['SPECIES'].strip()
+            atom_positions[:,i] = [float(x) for x in atom['tau'].split()]
+    else:
+        child = root.find('output').find('atomic_structure')
+        n_atoms = int(child.attrib['nat'])
+        atom_symbs = ['' for i in range(n_atoms)]
+        atom_positions = np.zeros((3,n_atoms))
+        for i,atom in enumerate(child.find('atomic_positions').iter('atom')):
+            atom_symbs[i] = atom.attrib['name']
+            atom_positions[:,i] = [float(x) for x in atom.text.split()]
+    return atom_positions, atom_symbs
+
+def wfc_cutoff(root, oldxml=False):
+    if oldxml:
+        child = root.find('PLANE_WAVES')
+        Ecut_for_psi = float(child.find('WFC_CUTOFF').text)
+    else:
+        child = root.find('input').find('basis')
+        Ecut_for_psi = float(child.find('ecutwfc').text)
+    return Ecut_for_psi
+
+def symmetry(root, oldxml=False):
+    if oldxml:
+        child = root.find('SYMMETRIES')
+        n_sym = int(child.find('NUMBER_OF_SYMMETRIES').text)
+        ftau = np.zeros((3,n_sym))
+        mat_sym = np.zeros((3, 3, n_sym), np.int)
+        for i in range(n_sym):
+            sym = child.find('SYMM.{0}'.format(i+1))
+            rot = sym.find('ROTATION').text.strip().split('\n')
+            for j in range(3):
+                mat_sym[j,:,i] = [int(x) for x in rot[j].split()]
+            ftau[:,i] = [float(x) for x in sym.find('FRACTIONAL_TRANSLATION').text.split()]
+        pass
+    else:
+        child = root.find('output').find('symmetries')
+        n_sym = int(child.find('nsym').text)
+        ftau = np.zeros((3,n_sym))
+        mat_sym = np.zeros((3, 3, n_sym), np.int)
+        for i,sym in enumerate(child.iter('symmetry')):
+            ftau[:,i] = [float(x) for x in sym.find('fractional_translation').text.split()]
+            rot = sym.find('rotation').text.strip().split('\n')
+            for j in range(3):
+                mat_sym[j,:,i] = [int(round(float(x))) for x in rot[j].split()]
+    return mat_sym, ftau
+
+def eigenvalues(dirname, num_k, num_b, oldxml=False):
+    evs = np.zeros((num_k,num_b))
+    if oldxml:
+        for k in range(num_k):
+            tree = ET.parse(os.path.join(dirname, 'K{0:0>5}/eigenval.xml'.format(k+1)))
+            root = tree.getroot()
+            child = root.find('EIGENVALUES')
+            evs[k,:] = [float(x) for x in child.text.strip().split()]
+    else:
+        tree = ET.parse(os.path.join(dirname, 'data-file-schema.xml'))
+        root = tree.getroot()
+        child = root.find('output').find('band_structure')
+        for k,kse in enumerate(child.iter('ks_energies')):
+            evs[k,:] = [float(x) for x in kse.find('eigenvalues').text.strip().split()]
+    return evs
+
+def qe2respack(dirname, oldxml=False, endian=sys.byteorder):
     if endian == 'little':
         endian_fmt = '<'
     elif endian == 'big':
@@ -101,62 +221,31 @@ def qe2respack(dirname, endian=sys.byteorder):
     if not os.path.exists('dir-wfn'):
         os.mkdir('dir-wfn')
 
-    xmlfile = os.path.join(dirname, 'data-file.xml')
+    xmlfile = 'data-file.xml' if oldxml else 'data-file-schema.xml'
+    xmlfile = os.path.join(dirname, xmlfile)
     print('loading {0}'.format(xmlfile))
     tree = ET.parse(xmlfile)
     root = tree.getroot()
 
-    child = root.find('BAND_STRUCTURE_INFO')
-    num_k = int(child.find('NUMBER_OF_K-POINTS').text)
+    num_k, num_b, eFermi = band_structure_info(root, oldxml=oldxml)
     print('num_k = {0}'.format(num_k))
-    num_b = int(child.find('NUMBER_OF_BANDS').text)
     print('num_b = {0}'.format(num_b))
-    eFermi = float(child.find('FERMI_ENERGY').text)
     print('eFermi = {0}'.format(eFermi))
 
-    k_vec = np.zeros((3,num_k))
+    k_vec = kpoint_coords(root, num_k, oldxml=oldxml)
+    num_Gk = number_of_GK_vectors(root, num_k, oldxml=oldxml)
 
-    child = root.find('EIGENVALUES')
-    for i in range(num_k):
-        ev = child.find('K-POINT.{0}'.format(i+1))
-        k_vec[:,i] = [float(x) for x in ev.find('K-POINT_COORDS').text.strip().split()]
-
-    child = root.find('EIGENVECTORS')
-    num_Gk = [int(child.find('K-POINT.{0}'.format(i+1))
-                       .find('NUMBER_OF_GK-VECTORS').text) for i in range(num_k)]
-
-    A = np.zeros((3,3))
-    child = root.find('CELL')
-    celldm = float(child.find('LATTICE_PARAMETER').text)
-    cc = child.find('DIRECT_LATTICE_VECTORS')
-    for i in range(3):
-        A[i,:] = [float(x) for x in cc.find('a{0}'.format(i+1)).text.split()]
+    A, celldm = latvectors(root, oldxml=oldxml)
     Ainv = np.linalg.inv(A.transpose())
 
-    child = root.find('IONS')
-    n_atoms = int(child.find('NUMBER_OF_ATOMS').text)
-    atom_symbs = ['' for i in range(n_atoms)]
-    atom_positions = np.zeros((3,n_atoms))
-    
-    for i in range(n_atoms):
-        atom = child.find('ATOM.{0}'.format(i+1)).attrib
-        atom_symbs[i] = atom['SPECIES'].strip()
-        atom_positions[:,i] = [float(x) for x in atom['tau'].split()]
+    atom_positions, atom_symbs = atoms_information(root, oldxml=oldxml)
+    n_atoms = len(atom_symbs)
 
-    child = root.find('PLANE_WAVES')
-    Ecut_for_psi = float(child.find('WFC_CUTOFF').text)
+    Ecut_for_psi = wfc_cutoff(root, oldxml=oldxml)
 
-    child = root.find('SYMMETRIES')
-    n_sym = int(child.find('NUMBER_OF_SYMMETRIES').text)
+    mat_sym, ftau = symmetry(root, oldxml=oldxml)
+    n_sym = ftau.shape[1]
     print('n_sym = {0}'.format(n_sym))
-    ftau = np.zeros((3,n_sym))
-    mat_sym = np.zeros((3, 3, n_sym), np.int)
-    for i in range(n_sym):
-        sym = child.find('SYMM.{0}'.format(i+1))
-        rot = sym.find('ROTATION').text.strip().split('\n')
-        for j in range(3):
-            mat_sym[j,:,i] = [int(x) for x in rot[j].split()]
-        ftau[:,i] = [float(x) for x in sym.find('FRACTIONAL_TRANSLATION').text.split()]
 
     ## end of read XML file
 
@@ -184,40 +273,13 @@ def qe2respack(dirname, endian=sys.byteorder):
         for i in range(num_k):
             f.write('{0}\n'.format(num_Gk[i]))
 
-    print('generating dir-wfn/dat.kg')
-    with open('./dir-wfn/dat.kg', 'w') as f:
-        for k in range(num_k):
-            f.write('{0}\n'.format(num_Gk[k]))
-            with Iotk_dat(os.path.join(dirname, 'K{0:0>5}/gkvectors.dat'.format(k+1)), endian=endian) as inp:
-                dat = inp.load('GRID')
-                nr,nc = dat.shape
-                for r in range(nr):
-                    for c in range(nc):
-                        f.write('{0} '.format(dat[r,c]))
-                    f.write('\n')
-
-    print('generating dir-wfn/dat.wfn')
-    with open('./dir-wfn/dat.wfn', 'wb') as f:
-        f.write(struct.pack(endian_fmt+'i',4))
-        f.write(struct.pack(endian_fmt+'i',1))
-        f.write(struct.pack(endian_fmt+'i',4))
-        for k in range(num_k):
-            with Iotk_dat(os.path.join(dirname, 'K{0:0>5}/evc.dat'.format(k+1)), endian=endian) as inp:
-                for ib in range(num_b):
-                    size,dat = inp.load('evc.{0}'.format(ib+1), raw=True)
-                    f.write(struct.pack(endian_fmt+'i', size))
-                    f.write(dat)
-                    f.write(struct.pack(endian_fmt+'i', size))
-
     print('generating dir-wfn/dat.eigenvalue')
+    eigvals = eigenvalues(dirname, num_k, num_b, oldxml=oldxml)
     with open('./dir-wfn/dat.eigenvalue', 'w') as f:
         f.write('{0}\n'.format(num_b))
         for k in range(num_k):
-            tree = ET.parse(os.path.join(dirname, 'K{0:0>5}/eigenval.xml'.format(k+1)))
-            root = tree.getroot()
-            child = root.find('EIGENVALUES')
-            for eigval in child.text.split():
-                f.write(eigval)
+            for i in range(num_b):
+                f.write(str(eigvals[k,i]))
                 f.write('\n')
 
     print('generating dir-wfn/dat.atom_position')
@@ -247,18 +309,82 @@ def qe2respack(dirname, endian=sys.byteorder):
             f.write('\n')
             f.write('{0} {1} {2}\n'.format(int(tau[0,i]), int(tau[1,i]), int(tau[2,i])))
 
+    print('generating dir-wfn/dat.kg')
+    with open('./dir-wfn/dat.kg', 'w') as f:
+        if oldxml:
+            for k in range(num_k):
+                f.write('{0}\n'.format(num_Gk[k]))
+                with Iotk_dat(os.path.join(dirname, 'K{0:0>5}/gkvectors.dat'.format(k+1)), endian=endian) as inp:
+                    dat = inp.load('GRID')
+                    nr,nc = dat.shape
+                    for r in range(nr):
+                        f.write('{0} {1} {2}\n'.format(dat[r,0], dat[r,1], dat[r,2]))
+        else:
+            for k in range(num_k):
+                f.write('{0}\n'.format(num_Gk[k]))
+                with open(os.path.join(dirname, 'wfc{0}.dat'.format(k+1)), 'rb') as inp:
+                    fmt = endian_fmt+'i'
+                    fmt2 = endian_fmt+'iii'
+                    # skip three blocks
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    nr = n//12 # three integers
+                    for r in range(nr):
+                        kg = struct.unpack(fmt2, inp.read(12))
+                        f.write('{0} {1} {2}\n'.format(kg[0], kg[1], kg[2]))
+
+    print('generating dir-wfn/dat.wfn')
+    with open('./dir-wfn/dat.wfn', 'wb') as f:
+        f.write(struct.pack(endian_fmt+'i',4))
+        f.write(struct.pack(endian_fmt+'i',1))
+        f.write(struct.pack(endian_fmt+'i',4))
+        if oldxml:
+            for k in range(num_k):
+                with Iotk_dat(os.path.join(dirname, 'K{0:0>5}/evc.dat'.format(k+1)), endian=endian) as inp:
+                    for ib in range(num_b):
+                        size,dat = inp.load('evc.{0}'.format(ib+1), raw=True)
+                        f.write(struct.pack(endian_fmt+'i', size))
+                        f.write(dat)
+                        f.write(struct.pack(endian_fmt+'i', size))
+        else:
+            for k in range(num_k):
+                with open(os.path.join(dirname, 'wfc{0}.dat'.format(k+1)), 'rb') as inp:
+                    # skip four blocks
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+                    n = struct.unpack(fmt, inp.read(4))[0]
+                    inp.read(n+4)
+
+                    for ib in range(num_b):
+                        n = struct.unpack(fmt, inp.read(4))[0]
+                        dat = inp.read(n)
+                        inp.read(4)
+                        f.write(struct.pack(endian_fmt+'i', n))
+                        f.write(dat)
+                        f.write(struct.pack(endian_fmt+'i', n))
+
+
 if __name__ == '__main__':
 
-    if len(sys.argv) < 2:
-        print('Please specify the output directory where data-file.xml exists')
-        print('Usage: {0} {1} output_directory_of_QE'.format(sys.executable, sys.argv[0]))
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='convert Quangum Espresso output into RESPACK input.')
+    parser.add_argument('QE_output_dir', help='output directory of Quantum Espresso (where data-file-schema.xml exists).')
+    parser.add_argument('--oldxml', action='store_true', help='deal with the old QE (if you have data-file.xml instead of data-file-schema.xml).')
+    parser.add_argument('--backup', action='store_true', help='backup the old directory, dir-wfn, to dir-wfn_original (the old dir-wfn_original will be removed if exists).')
+    args = parser.parse_args()
 
-    datadir = sys.argv[1]
-
-    if os.path.exists('dir-wfn'):
-        print('dir-wfn exists. Original directory is saved as dir-wfn_original.')
-        print('If it is not necessary, please remove it (rm -r dir-wfn_original).')
+    if args.backup and os.path.exists('dir-wfn'):
+        if os.path.exists('dir-wfn_original'):
+            shutil.rmtree('dir-wfn_original')
         shutil.move('dir-wfn', 'dir-wfn_original')
 
-    qe2respack(datadir)
+    qe2respack(args.QE_output_dir, oldxml=args.oldxml)
