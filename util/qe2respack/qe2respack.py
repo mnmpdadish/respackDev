@@ -378,13 +378,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='convert Quangum Espresso output into RESPACK input.')
     parser.add_argument('QE_output_dir', help='output directory of Quantum Espresso (where data-file-schema.xml exists).')
-    parser.add_argument('--oldxml', action='store_true', help='deal with the old QE (if you have data-file.xml instead of data-file-schema.xml).')
-    parser.add_argument('--backup', action='store_true', help='backup the old directory, dir-wfn, to dir-wfn_original (the old dir-wfn_original will be removed if exists).')
+    parser.add_argument('--oldxml', action='store_true', help='deal with the old QE (use it if you have a data-file.xml instead of the data-file-schema.xml).')
     args = parser.parse_args()
 
-    if args.backup and os.path.exists('dir-wfn'):
-        if os.path.exists('dir-wfn_original'):
-            shutil.rmtree('dir-wfn_original')
-        shutil.move('dir-wfn', 'dir-wfn_original')
+    if os.path.exists('dir-wfn'):
+        if os.path.exists('dir-wfn.backup'):
+            shutil.rmtree('dir-wfn.backup')
+        shutil.move('dir-wfn', 'dir-wfn.backup')
 
     qe2respack(args.QE_output_dir, oldxml=args.oldxml)
