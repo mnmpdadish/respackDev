@@ -1177,7 +1177,7 @@
       ! call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,wcut_mvmc,
       !+     W_MAT(1,1,-Na1,-Na2,-Na3,ie)) 
       !
-      !new: 20180604
+      !new: 20181127 
       !
       !WEIGHT_R 20170317 by Y.Nomura 
       !
@@ -1201,7 +1201,7 @@
        stop 'SUM_WEIGHT/=NTK'
       endif 
       !
-      call wrt_mvmc(NTK,Na1,Na2,Na3,NWF,W_MAT(1,1,-Na1,-Na2,-Na3,ie),
+      call wrt_mvmc(Na1,Na2,Na3,NWF,W_MAT(1,1,-Na1,-Na2,-Na3,ie),
      +     WEIGHT_R(-Na1,-Na2,-Na3)) 
       !
       ierr=CHDIR("..") 

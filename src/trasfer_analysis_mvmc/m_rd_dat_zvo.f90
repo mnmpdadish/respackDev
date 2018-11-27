@@ -6,7 +6,7 @@ module m_rd_dat_zvo
   public::rd_dat_bandkpts
   public::rd_dat_mkkpts 
   !h_mat_r(300) 
-  integer,public::NWF,NTK 
+  integer,public::NWF 
   complex(8),public,allocatable::HR(:,:,:,:,:)!HR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   !geom(303)
   integer,public::N_wannier_center 
@@ -18,17 +18,18 @@ module m_rd_dat_zvo
   integer,public::Ndiv,N_sym_points,NSK_BAND_DISP
   real(8),public,allocatable::SK_BAND_DISP(:,:)!SK_BAND_DISP(3,NSK_BAND_DISP) 
   !mkkpts(305)  
-  integer,public::N_mkmesh 
+  integer,public::NTK 
   integer,public::nkb1,nkb2,nkb3 
   integer,public::Na1,Na2,Na3 
-  real(8),public,allocatable::SK0(:,:)!SK0(3,N_mkmesh) 
+  real(8),public,allocatable::SK0(:,:)!SK0(3,NTK) 
   contains
 !--
   subroutine rd_dat_hr 
     implicit none 
-    integer::dum1,dum2,dum3,dumi,dumj 
+    integer::dum1,dum2,dum3,dumi,dumj
+    integer::N_element 
     character(len=80)::dum_ch
-    integer,allocatable::unit_vec(:)!unit_vec(NTK) 
+    integer,allocatable::unit_vec(:)!unit_vec(N_element) 
     integer::i,ia1,ia2,ia3,ib,jb 
     real(8),parameter::au=27.21151d0
     !
@@ -38,9 +39,10 @@ module m_rd_dat_zvo
     rewind(300) 
     read(300,'(a)') dum_ch 
     read(300,'(i10)') NWF 
-    read(300,'(i10)') NTK 
-    allocate(unit_vec(NTK)); unit_vec=1
-    read(300,'(15i5)')(unit_vec(i),i=1,NTK) 
+    read(300,'(i10)') N_element 
+    allocate(unit_vec(N_element)); unit_vec=1
+    read(300,'(15i5)')(unit_vec(i),i=1,N_element) 
+    deallocate(unit_vec) 
     allocate(HR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3));HR(:,:,:,:,:)=0.0d0  
     do ia1=-Na1,Na1
      do ia2=-Na2,Na2
@@ -103,12 +105,12 @@ module m_rd_dat_zvo
     !OPEN(305,R,FILE='zvo_mkkpts.dat') 
     !
     OPEN(305,FILE='./dir-mvmc/zvo_mkkpts.dat') 
-    read(305,'(i10)') N_mkmesh 
-    allocate(SK0(3,N_mkmesh));SK0=0.0d0 
-    do ik=1,N_mkmesh 
+    read(305,'(i10)') NTK 
+    allocate(SK0(3,NTK));SK0=0.0d0 
+    do ik=1,NTK 
      read(305,*)(SK0(i,ik),i=1,3) 
     enddo 
-    call est_nkbi(N_mkmesh,SK0,nkb1,nkb2,nkb3)  
+    call est_nkbi(NTK,SK0,nkb1,nkb2,nkb3)  
     Na1=nkb1/2; Na2=nkb2/2; Na3=nkb3/2
   end subroutine
 !--

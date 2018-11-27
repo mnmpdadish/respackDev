@@ -1,22 +1,26 @@
-subroutine wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,HR,WR) 
+subroutine wrt_mvmc(Na1,Na2,Na3,n_occ,HR,WR) 
   implicit none 
-  integer::NTK,Na1,Na2,Na3,n_occ 
-  integer::L1,L2,L3,Nsite 
+  integer::Na1,Na2,Na3,n_occ 
+  integer::N_element 
   integer::ia1,ia2,ia3,ib,jb,i 
-  integer::unit_vec(NTK) 
+  integer,allocatable::unit_vec(:)!unit_vec(N_element) 
   complex(8)::HR(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3)
   real(8)::WR(-Na1:Na1,-Na2:Na2,-Na3:Na3)
   real(8),parameter::au=27.21151d0
+  !
+  N_element=(2*Na1+1)*(2*Na2+1)*(2*Na3+1)  
   !
   !OPEN(300,W,FILE='zvo_hr.dat') 
   !
   OPEN(300,FILE='./dir-mvmc/zvo_hr.dat') 
   write(300,'(a)')'wannier90 format for mvmcdry'
   write(300,'(i10)') n_occ
-  write(300,'(i10)') NTK 
+  write(300,'(i10)') N_element
   !
-  unit_vec=1
-  write(300,'(15i5)')(unit_vec(i),i=1,NTK) 
+  allocate(unit_vec(N_element)); unit_vec=1
+  write(300,'(15i5)')(unit_vec(i),i=1,N_element) 
+  deallocate(unit_vec) 
+  !
   do ia1=-Na1,Na1
    do ia2=-Na2,Na2
     do ia3=-Na3,Na3 

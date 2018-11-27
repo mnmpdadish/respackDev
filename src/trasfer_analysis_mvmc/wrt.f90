@@ -1,9 +1,10 @@
-subroutine wrt_dos(ndosgrd,dosgrd,dos,efline) 
+subroutine wrt_dos(threshold_transfer,ndosgrd,dosgrd,dos,efline) 
   implicit none
   integer,intent(in)::ndosgrd
   real(8),intent(in)::dosgrd(ndosgrd)
   real(8),intent(in)::dos(ndosgrd)
   real(8),intent(in)::efline(ndosgrd)
+  real(8),intent(in)::threshold_transfer 
   integer::ie 
   real(8),parameter::au=27.21151d0 
   !
@@ -13,6 +14,7 @@ subroutine wrt_dos(ndosgrd,dosgrd,dos,efline)
   OPEN(300,file='./dir-tr/dat.dos') 
   OPEN(301,file='./dir-tr/dat.efline') 
   rewind(300);rewind(301) 
+  write(300,'(a,x,f10.5)')'#Threshold for transfer (eV)=',threshold_transfer*au
   do ie=1,ndosgrd
    write(300,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au 
    write(301,'(2f15.10)') dosgrd(ie)*au,efline(ie)  
@@ -22,11 +24,12 @@ subroutine wrt_dos(ndosgrd,dosgrd,dos,efline)
   return
 end subroutine 
 
-subroutine wrt_iband(NWF,NSK_BAND_DISP,kdata,EKS) 
+subroutine wrt_iband(threshold_transfer,NWF,NSK_BAND_DISP,kdata,EKS) 
   implicit none
   integer,intent(in)::NWF,NSK_BAND_DISP
   real(8),intent(in)::kdata(NSK_BAND_DISP)
   real(8),intent(in)::EKS(NWF,NSK_BAND_DISP) 
+  real(8),intent(in)::threshold_transfer 
   integer::ib,ik 
   LOGICAL::REVERSE 
   real(8),parameter::au=27.21151d0 
@@ -35,6 +38,7 @@ subroutine wrt_iband(NWF,NSK_BAND_DISP,kdata,EKS)
   !
   OPEN(114,FILE='./dir-tr/dat.iband') 
   write(114,'(a)')'#Wannier interpolaed band'
+  write(114,'(a,x,f10.5)')'#Threshold for transfer (eV)=',threshold_transfer*au
   write(114,'(a)')'#1:k, 2:Energy [eV]' 
   REVERSE=.TRUE.        
   do ib=1,NWF 

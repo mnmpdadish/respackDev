@@ -638,6 +638,11 @@
        call search_ik(NTK,SK0(1,1),calc_k(1),ik) 
        write(6,'(a,i10)')'ik=',ik 
        call search_vis_range(calc_k(1),amin,amax,bmin,bmax,cmin,cmax) 
+       !
+       !20181124 Kazuma Nakamura
+       !
+       amax=1; bmax=1; cmax=1 
+       !
        write(6,'(a,3i10)')'supercell=',amax,bmax,cmax 
        allocate(BF_REALSPACE((amin)*nwx2:(amax)*nwx2-1,
      +                       (bmin)*nwy2:(bmax)*nwy2-1, 
@@ -2508,9 +2513,9 @@
       !+     H_MAT_R(1,1,-Na1,-Na2,-Na3)) 
       !--
       !
-      !NEW: 20180604 
+      !NEW: 20181127 
       !
-      call wrt_mvmc(NTK,Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
+      call wrt_mvmc(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
      + WEIGHT_R(-Na1,-Na2,-Na3)) 
       !
       call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))

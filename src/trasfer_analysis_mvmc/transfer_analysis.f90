@@ -142,7 +142,7 @@ PROGRAM main
     !
     !wrt dat.dos 
     !
-    call wrt_dos(ndosgrd,dosgrd(1),dos(1),efline(1)) 
+    call wrt_dos(threshold_transfer,ndosgrd,dosgrd(1),dos(1),efline(1)) 
     !
     deallocate(EKS,VKS) 
     !
@@ -160,7 +160,7 @@ PROGRAM main
     !
     !wrt dat.iband 
     !
-    call wrt_iband(NWF,NSK_BAND_DISP,kdata(1),EKS(1,1)) 
+    call wrt_iband(threshold_transfer,NWF,NSK_BAND_DISP,kdata(1),EKS(1,1)) 
     !
     deallocate(EKS,VKS) 
     !
