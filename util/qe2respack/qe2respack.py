@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 #Copyright (c) 2018 Yuichi Motoyama
 
+'''
+qe2respack.py -- convert Quantum ESPRESSO output into RESPACK input.
+See `qe2respack.py --help`
+'''
+
 from __future__ import print_function
 import os
 import os.path
