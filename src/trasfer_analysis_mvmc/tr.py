@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #coding: utf-8
 #(c) Kazuma Nakamura
 import sys
