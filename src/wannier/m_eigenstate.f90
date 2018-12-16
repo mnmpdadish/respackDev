@@ -2,16 +2,17 @@ module m_eigenstate
   implicit none
 contains
   !
-  !call make_eig(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
-  subroutine calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1,a2,a3,SK0,HKS,EKS,VKS) 
+  subroutine calculate_eigenstate(NWF,Na1,Na2,Na3,HKS,NTK,nkb1,nkb2,nkb3,a1,a2,a3,flg_weight,Ncalck,SK0,EKS,VKS) 
     implicit none 
-    integer,intent(in)::NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3 
-    integer,intent(in)::flg_weight 
-    real(8),intent(in)::a1(3),a2(3),a3(3)
-    real(8),intent(in)::SK0(3,NTK) 
+    integer,intent(in)::NWF,Na1,Na2,Na3
     complex(8),intent(in)::HKS(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)   
-    real(8),intent(out)::EKS(NWF,NTK)           
-    complex(8),intent(out)::VKS(NWF,NWF,NTK)   
+    integer,intent(in)::NTK,nkb1,nkb2,nkb3 
+    real(8),intent(in)::a1(3),a2(3),a3(3)
+    integer,intent(in)::flg_weight 
+    integer,intent(in)::Ncalck
+    real(8),intent(in)::SK0(3,Ncalck) 
+    real(8),intent(out)::EKS(NWF,Ncalck)           
+    complex(8),intent(out)::VKS(NWF,NWF,Ncalck)   
     real(8),allocatable::WEIGHT_R(:,:,:)!WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
     complex(8),allocatable::pf(:,:,:,:)!pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK)   
     integer::ia1min,ia2min,ia3min 
@@ -46,8 +47,8 @@ contains
      write(6,'(a20)')'WEIGHT NOT CALCULATED' 
     endif 
     !
-    allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,NTK)); pf=0.0d0 
-    do ik=1,NTK 
+    allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,Ncalck)); pf=0.0d0 
+    do ik=1,Ncalck 
      do ia3=-Na3,Na3 
       do ia2=-Na2,Na2 
        do ia1=-Na1,Na1 
@@ -66,7 +67,7 @@ contains
     !
     EKS=0.0d0 
     VKS=0.0d0 
-    call eigenvalue(NTK,NWF,Na1,Na2,Na3,HKS(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1),VKS(1,1,1))  
+    call eigenvalue(Ncalck,NWF,Na1,Na2,Na3,HKS(1,1,-Na1,-Na2,-Na3),pf(-Na1,-Na2,-Na3,1),EKS(1,1),VKS(1,1,1))  
     !
     deallocate(WEIGHT_R,pf) 
     !

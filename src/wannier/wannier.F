@@ -2503,7 +2503,8 @@
       enddo 
       write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
       if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
-       stop 'SUM_WEIGHT/=NTK'
+       write(6,'(a20)')'SUM_WEIGHT/=NTK'
+       stop 
       endif 
 !--
 !write mvmc 
@@ -2629,9 +2630,10 @@
       write(6,*) 
       allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
       allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
-      call calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,1,
-     +     a1(1),a2(1),a3(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),
-     +     E_EIG(1,1),V_EIG(1,1,1))  
+      call calculate_eigenstate(NWF,Na1,Na2,Na3,
+     +                          H_MAT_R(1,1,-Na1,-Na2,-Na3),
+     +                          NTK,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),1,
+     +                          NTK,SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))  
       filename='./dir-wan/dat.dos.wannier'
       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
      +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
