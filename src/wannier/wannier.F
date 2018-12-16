@@ -3,6 +3,8 @@
       use m_rdinput       
       use fft_3d
       use frmsf_wan, only: wrt_frmsf_wan
+      use m_dos, only: calculate_dos 
+      use m_eigenstate, only: calculate_eigenstate
       include "config.h"
 !--
       call read_input
@@ -406,7 +408,7 @@
       Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
       write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
-!write Fermi surface
+!write Fermi surface & global DOS
       allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
       do jk=1,NTK 
        if(trs(jk)==1) then 
@@ -419,15 +421,17 @@
       enddo 
       call system('rm -rf dir-wan') 
       call system('mkdir dir-wan') 
+      write(6,*) 
+      write(6,*)'write Fermi surface'
+      write(6,*) 
+      call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
+     +     FermiEnergy,b1(1),b2(1),b3(1)) 
       !
-      !20181030 temporal 
-      !
-      if(.false.)then
-       write(6,*) 
-       write(6,*)'write Fermi surface'
-       call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
-     +      FermiENergy,b1(1),b2(1),b3(1)) 
-      endif 
+      write(6,*)'write global DOS'
+      write(6,*) 
+      filename='./dir-wan/dat.dos.global'
+      call calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
+     +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
       deallocate(E_EIG)
 !--
 !     stop
@@ -687,7 +691,7 @@
        !--
        !gencif 20180906  
        call gencif(a1(1),a2(1),a3(1),amin,amax,bmin,bmax,cmin,cmax,
-     +  nsi,chemical_species(1),asi(1,1))
+     +      nsi,chemical_species(1),asi(1,1))
        !
        write(6,*) 
        write(6,*)'==================================='
@@ -1839,6 +1843,7 @@
        PSEUDO_MAT(:,:,ik)=P_MAT_OUT(:,:)          
        PSEUDO_EIG(:,ik)=P_EIG(:)          
       enddo!ik                    
+      deallocate(E_EIG) 
 !--
 !     do ik=1,NTK                  
 !      write(6,'(30F15.10)')PSEUDO_EIG(:,ik)*au 
@@ -2503,6 +2508,7 @@
 !--
 !write mvmc 
       write(6,'(a30)')'write transfers in dir-mvmc'
+      write(6,*) 
       call system('rm -rf dir-mvmc') 
       call system('mkdir dir-mvmc') 
       tcut_mvmc=tcut_mvmc/au 
@@ -2616,6 +2622,20 @@
      +                      a1,a2,a3,b1,b2,b3,FermiEnergy,
      +                      WEIGHT_R,H_MAT_R)
       END IF
+!--
+!wannier DOS
+!--
+      write(6,'(a30)') 'write wannier DOS'
+      write(6,*) 
+      allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
+      allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
+      call calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,1,
+     +     a1(1),a2(1),a3(1),SK0(1,1),H_MAT_R(1,1,-Na1,-Na2,-Na3),
+     +     E_EIG(1,1),V_EIG(1,1,1))  
+      filename='./dir-wan/dat.dos.wannier'
+      call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
+     +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+      deallocate(E_EIG,V_EIG)
 
 !==================================
 !=== VISUALIZE WANNIER FUNCTION ===
