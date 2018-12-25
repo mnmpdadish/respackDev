@@ -105,7 +105,10 @@ def band_structure_info(root, oldxml=False):
         child = root.find('output').find('band_structure')
         num_k = int(child.find('nks').text)
         num_b = int(child.find('nbnd').text)
-        eFermi = float(child.find('fermi_energy').text)
+        if child.find('fermi_energy')==None:
+            eFermi = float(child.find('highestOccupiedLevel').text)
+        else:
+            eFermi = float(child.find('fermi_energy').text)
     return num_k, num_b, eFermi
 
 def kpoint_coords(root, num_k, oldxml=False):
