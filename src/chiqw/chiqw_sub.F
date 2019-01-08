@@ -779,9 +779,9 @@
       real(8)::qgL(3),qgL2  
       integer,intent(out)::KG0(3,NTG)    
       integer,intent(out)::NG 
-      integer,parameter::NGL1=100!300
-      integer,parameter::NGL2=100!300 
-      integer,parameter::NGL3=100!300
+      integer,parameter::NGL1=150!100!300
+      integer,parameter::NGL2=150!100!300 
+      integer,parameter::NGL3=150!100!300
       igL=0
       do igL1=-NGL1,NGL1 
        do igL2=-NGL2,NGL2 

@@ -6,7 +6,7 @@
       use m_dos, only: calculate_dos 
       use m_eigenstate, only: calculate_eigenstate
       include "config.h"
-!--
+      !--
       call read_input
       NGAUSS=n_occ!TOTAL NUMBER OF WANNIER ORBITAL  
       E_LOWER=E_LOWER/au 
@@ -49,7 +49,7 @@
       READ(105,*) a2(1),a2(2),a2(3)!a2 vector
       READ(105,*) a3(1),a3(2),a3(3)!a3 vector
       CLOSE(105)
-!--
+      !--
       call OUTER_PRODUCT(a2(1),a3(1),b1(1))
       VOLUME=a1(1)*b1(1)+a1(2)*b1(2)+a1(3)*b1(3)
       b1(:)=b1(:)*tpi/VOLUME 
@@ -57,7 +57,7 @@
       b2(:)=b2(:)*tpi/VOLUME 
       call OUTER_PRODUCT(a1(1),a2(1),b3(1))
       b3(:)=b3(:)*tpi/VOLUME 
-!--
+      !--
       write(6,*) 
       write(6,*)'=============='
       write(6,*)'LATTICE VECTOR'
@@ -138,7 +138,7 @@
        read(100,*)(pg(i,iop),i=1,3)   
       enddo 
       close(100) 
-!--
+      !--
       write(6,*) 
       write(6,*)'========'
       write(6,*)'SYMMETRY'
@@ -152,12 +152,12 @@
        enddo
        write(6,*) 
       enddo
-!--
+      !--
       rginv=rg 
       do iop=1,nsymq
        call invmat(3,rginv(1,1,iop)) 
       enddo 
-!--
+      !--
       do iop=1,nsymq  
        write(6,'(a5,i4)')'sym=',iop
        write(6,'(a10)')'rginv' 
@@ -209,7 +209,7 @@
        enddo!ig 
       enddo!ik  
       close(104)
-!--
+      !--
       L1=maxval(abs(KGI(1,:,:)))+1; write(6,*)'L1=',L1 
       L2=maxval(abs(KGI(2,:,:)))+1; write(6,*)'L2=',L2 
       L3=maxval(abs(KGI(3,:,:)))+1; write(6,*)'L3=',L3 
@@ -221,7 +221,7 @@
         packing(i1,j1,k1,ik)=ig 
        enddo 
       enddo 
-!--
+      !--
       allocate(LKGI(NTG,Nk_irr));LKGI=0.0d0 
       do ik=1,Nk_irr 
        do ig=1,NGI(ik) 
@@ -253,7 +253,7 @@
       !nwx2=algn235(2*m1) 
       !nwy2=algn235(2*m2) 
       !nwz2=algn235(2*m3) 
-      !
+      !--
       htmp=dsqrt(dot_product(a1,a1))
       h1(:)=a1(:)/htmp 
       htmp=dsqrt(dot_product(a2,a2))
@@ -264,15 +264,15 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      !
+      !--
       !nwx2=algn235(int(qwf/d1)+1,1)!wrong 
       !nwy2=algn235(int(qwf/d2)+1,1)!wrong 
       !nwz2=algn235(int(qwf/d3)+1,1)!wrong 
-      !
+      !--
       nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
       nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
       nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
-      !
+      !--
       nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
       Nl123=nfft1*nfft2*nfft3 
       write(6,*)'nwx2=',nwx2 
@@ -295,10 +295,10 @@
         read(111,*) E_EIGI(ib,ik)
        enddo!ib
       enddo!ik          
-!--
+      !--
       call calc_NB_start_end(NK_irr,NBAND,E_EIGI(1,1),E_LOWER,E_UPPER,
      +     NB_start,NB_end) 
-!--
+      !--
       NTB_glb=NBAND 
       NTB=NB_end-NB_start+1!TOTAL NUMBER OF CONSIDERED BAND in wannier  
       write(6,'(a10,i10)')'NTB_glb=',NTB_glb  
@@ -341,9 +341,9 @@
 !--
       jk=0
       do ik=1,Nk_irr
-!       write(6,*)'--' 
-!       write(6,'(a8,i8,3f15.10)')'ik=',ik,SKI(:,ik)  
-!       write(6,*)'--' 
+       !write(6,*)'--' 
+       !write(6,'(a8,i8,3f15.10)')'ik=',ik,SKI(:,ik)  
+       !write(6,*)'--' 
       do iop=1,Nsymq
 !sym
        ktmp(:)=0.0d0;RWtmp(:)=0  
@@ -360,10 +360,10 @@
      +     abs(SK0(3,iik)-ktmp(3))<1.0d-4)goto 1000
        enddo!iik
        jk=jk+1
-!      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
+       !write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=ktmp(:)
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
-!      if(.true.)goto 2000
+       !if(.true.)goto 2000
 !time-reversal
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
        ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
@@ -379,17 +379,17 @@
      +     abs(SK0(3,iik)-(-ktmp(3)))<1.0d-4)goto 2000
        enddo!iik
        jk=jk+1
-!      write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
+       !write(6,'(a8,i8,3f15.10)')'jk=',jk,ktmp(:)  
        SK0(:,jk)=-ktmp(:) 
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=-1;RW(:,jk)=RWtmp(:) 
 2000  enddo 
       enddo 
-!--
+      !--
       if(NTK/=jk) then 
        write(6,*)'ERROR;STOP;NTK should be jk'   
        write(6,*)'NTK=',NTK,'jk=',jk;STOP
       endif 
-!--
+      !--
       write(6,*) 
       write(6,*)'====================='
       write(6,*)'WRITE SAMPLE K-POINTS'
@@ -408,7 +408,7 @@
       Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
       write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
-!write Fermi surface & global DOS
+!write Fermi surface 
       allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
       do jk=1,NTK 
        if(trs(jk)==1) then 
@@ -426,7 +426,9 @@
       write(6,*) 
       call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
      +     FermiEnergy,b1(1),b2(1),b3(1)) 
-      !
+!-- 
+!write global DOS
+      write(6,*) 
       write(6,*)'write global DOS'
       write(6,*) 
       filename='./dir-wan/dat.dos.global'
@@ -486,7 +488,7 @@
 !       KG0(:,:,jk)=KGI(:,:,jk)
 !      enddo 
 !      do jk=Nk_irr+1,NTK 
-!---
+!--
        do jk=1,NTK 
        if(trs(jk)==1) then 
         ik=numirr(jk);iop=numrot(jk) 
@@ -533,7 +535,7 @@
         call make_C0(NTG,NTB,trs(jk),NG0(jk),KG0(1,1,jk),RW(1,jk),
      +  rginv(1,1,iop),pg(1,iop),nnp,L1,L2,L3,packing(-L1,-L2,-L3,ik),
      +  CIR(1,1,ik),C0(1,1,jk)) 
-!--
+       !--
        elseif(trs(jk)==-1)then  
         ik=numirr(jk);iop=numrot(jk) 
         ktmp(1)=rg(1,1,iop)*SKI(1,ik)+rg(1,2,iop)*SKI(2,ik)
@@ -542,7 +544,7 @@
      +         +rg(2,3,iop)*SKI(3,ik)+dble(RW(2,jk))  
         ktmp(3)=rg(3,1,iop)*SKI(1,ik)+rg(3,2,iop)*SKI(2,ik)
      +         +rg(3,3,iop)*SKI(3,ik)+dble(RW(3,jk))  
-!       write(6,'(i5,3f15.10,i5)') jk,ktmp(:),trs(jk)  
+        !write(6,'(i5,3f15.10,i5)') jk,ktmp(:),trs(jk)  
         E_EIG(:,jk)=E_EIGI(:,ik) 
         NB0(jk)=NBAND!NBI(ik)
         KGtmp(:,:)=0 
@@ -559,7 +561,7 @@
      +  CIR(1,1,ik),C0(1,1,jk))!modified 20170316 KG0->KGtmp 
        endif 
       enddo 
-!--
+      !--
       WRITE(6,*) 
       write(6,*)'==================='
       write(6,*)'CALCULATED K-POINTS'
@@ -595,7 +597,7 @@
        enddo!ib 
        N_BAND(ik)=SUM_INT 
       enddo!ik       
-!--
+      !--
       write(6,*) 
       write(6,*)'===================================='
       write(6,*)'BAND INFO INSIDE OUTER ENERGY WINDOW'
@@ -692,7 +694,7 @@
        !gencif 20180906  
        call gencif(a1(1),a2(1),a3(1),amin,amax,bmin,bmax,cmin,cmax,
      +      nsi,chemical_species(1),asi(1,1))
-       !
+       !--
        write(6,*) 
        write(6,*)'==================================='
        write(6,*)'FINIDH VISUALIZE BLOCH FUNCTION ==='
@@ -701,7 +703,7 @@
        write(6,*) 
        stop
       endif!CALC_REAL_SPACE_BLOCH 
-!--
+      !--
       WRITE(6,*) 
       WRITE(6,*)'========================================='
       WRITE(6,*)'=== WE NOW CALCULATE WANNIER FUNCTION ==='
@@ -722,8 +724,8 @@
        allocate(WEIGHT_b(NBMAX));WEIGHT_b(:)=0.0D0             
        call generate_bvectors(b1(1),b2(1),b3(1),nkb1,nkb2,nkb3, 
      + NBMAX,maxshell,verbosity,NB,b_LAT(1,1),VEC_b(1,1),WEIGHT_b(1))
-!
-       case(1)!=== CASE(1) SIMPLE CUBIC CELL ===      
+      !--
+      case(1)!=== CASE(1) SIMPLE CUBIC CELL ===      
        NB=6
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
        allocate(VEC_b(3,NB));VEC_b(:,:)=0.0d0                 
@@ -744,8 +746,8 @@
        VEC_b(:,6) = -(1.0D0/DBLE(nkb1)) * b3(:) 
        VEC_b2=VEC_b(1,1)**2+VEC_b(2,1)**2+VEC_b(3,1)**2 
        WEIGHT_b(:) = 3.0d0/dble(NB)/VEC_b2              
-!      WEIGHT_b(:) = (3.0D0/6.0D0)*(alat*nkb1/tpi)**2 
-!
+       !WEIGHT_b(:) = (3.0D0/6.0D0)*(alat*nkb1/tpi)**2 
+      !--
       case(2)!=== CASE(2) FCC PRIMITIVE CELL ===      
        NB=8
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -775,8 +777,8 @@
        VEC_b(:,8) = -(1.0D0/DBLE(nkb1)) *(b1(:)+b2(:)+b3(:))  
        VEC_b2=VEC_b(1,1)**2+VEC_b(2,1)**2+VEC_b(3,1)**2 
        WEIGHT_b(:) = 3.0d0/dble(NB)/VEC_b2              
-!      WEIGHT_b(:) = (1.0D0/8.0D0)*(alat*nkb1/tpi)**2 
-!
+       !WEIGHT_b(:) = (1.0D0/8.0D0)*(alat*nkb1/tpi)**2 
+      !--
       case(3)!=== CASE(3) BCC PRIMITIVE CELL ===      
        NB=12 
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -816,8 +818,8 @@
        VEC_b(:,12) = -(1.0D0/DBLE(nkb1)) *(b3(:)-b1(:))   
        VEC_b2=VEC_b(1,1)**2+VEC_b(2,1)**2+VEC_b(3,1)**2 
        WEIGHT_b(:) = 3.0d0/dble(NB)/VEC_b2              
-!      WEIGHT_b(:) = (1.0D0/8.0D0)*(alat*nkb1/tpi)**2 
-!
+       !WEIGHT_b(:) = (1.0D0/8.0D0)*(alat*nkb1/tpi)**2 
+      !--
       case(4)!=== CASE(4) HCP PRIMITIVE CELL ===      
        NB=8 
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -828,12 +830,12 @@
        b_LAT(2,2) =  (1.0D0/DBLE(nkb2))
        b_LAT(1,3) =  (1.0D0/DBLE(nkb1))
        b_LAT(2,3) = -(1.0D0/DBLE(nkb2))!SiO2(hcp)
-!      b_LAT(2,3) =  (1.0D0/DBLE(nkb2))!Re(hcp)
+       !b_LAT(2,3) =  (1.0D0/DBLE(nkb2))!Re(hcp)
        b_LAT(1,4) = -(1.0D0/DBLE(nkb1))
        b_LAT(2,5) = -(1.0D0/DBLE(nkb2))
        b_LAT(1,6) = -(1.0D0/DBLE(nkb1))
        b_LAT(2,6) =  (1.0D0/DBLE(nkb2))!SiO2(hcp) 
-!      b_LAT(2,6) = -(1.0D0/DBLE(nkb2))!Re(hcp)
+       !b_LAT(2,6) = -(1.0D0/DBLE(nkb2))!Re(hcp)
        b_LAT(3,7) =  (1.0D0/DBLE(nkb3))
        b_LAT(3,8) = -(1.0D0/DBLE(nkb3))
        VEC_b(:,:) = 0.0D0                            
@@ -841,12 +843,12 @@
        VEC_b(:,2) =  (1.0D0/DBLE(nkb2)) * b2(:) 
        VEC_b(:,3) =  (1.0D0/DBLE(nkb1)) * b1(:) 
      +            -  (1.0D0/DBLE(nkb2)) * b2(:)!SiO2(hcp) 
-!     +            +  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp) 
+     !+            +  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp) 
        VEC_b(:,4) = -(1.0D0/DBLE(nkb1)) * b1(:) 
        VEC_b(:,5) = -(1.0D0/DBLE(nkb2)) * b2(:) 
        VEC_b(:,6) = -(1.0D0/DBLE(nkb1)) * b1(:) 
      +            +  (1.0D0/DBLE(nkb2)) * b2(:)!SiO2(hcp)  
-!     +            -  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp)
+     !+            -  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp)
        VEC_b(:,7) =  (1.0D0/DBLE(nkb3)) * b3(:) 
        VEC_b(:,8) = -(1.0D0/DBLE(nkb3)) * b3(:)            
        La = DSQRT( a1(1)**2 + a1(2)**2 + a1(3)**2 )     
@@ -860,7 +862,7 @@
        WEIGHT_b(6) = (1.0D0/4.0D0)*(La*nkb1/tpi)**2 
        WEIGHT_b(7) = (1.0D0/2.0D0)*(Lc*nkb3/tpi)**2 
        WEIGHT_b(8) = (1.0D0/2.0D0)*(Lc*nkb3/tpi)**2 
-!
+      !--
       case(5)!=== CASE(5) ORTHORHOMBIC OR TETRAGONAL CELL ===
        NB=6 
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -890,7 +892,7 @@
        WEIGHT_b(4) = (1.0D0/2.0D0)*(La*nkb1/tpi)**2 
        WEIGHT_b(5) = (1.0D0/2.0D0)*(Lb*nkb2/tpi)**2 
        WEIGHT_b(6) = (1.0D0/2.0D0)*(Lc*nkb3/tpi)**2 
-!
+      !--
       case(6)!=== CASE(6) MONOCLINIC CELL === 
        NB=8
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -929,7 +931,7 @@
        WEIGHT_b(6) = WEIGHT_b(3)
        WEIGHT_b(7) = 1.0d0/(2.0d0*(v**2)) 
        WEIGHT_b(8) = WEIGHT_b(7) 
-!
+      !--
       case(8)!=== CASE(8) BCT CELL === 2011/1/4 by Y.Nomura ===
        write(6,*) 
        write(6,*)'==============================='
@@ -1019,8 +1021,8 @@
          enddo 
         enddo 
        enddo 
-!--
-!bb<-aa 
+       !--
+       !bb<-aa 
        do i=1,6
         do j=1,6
          bb(j,i)=aa(i,j) 
@@ -1057,7 +1059,7 @@
        VEC_d(4)=0.5d0!yy 
        VEC_d(5)=0.0d0!yz 
        VEC_d(6)=0.5d0!zz
-!--
+       !--
        WEIGHT_b(:)=0.0D0             
        do ib=1,Nbh
         ab=0
@@ -1065,7 +1067,7 @@
         do ix=1,3
          do jx=ix,3
           ab=ab+1
-!         SUM_REAL=SUM_REAL+VEC_d(ab)*aa(ib,ab)!NUMPACK
+          !SUM_REAL=SUM_REAL+VEC_d(ab)*aa(ib,ab)!NUMPACK
           SUM_REAL=SUM_REAL+VEC_d(ab)*bb(ib,ab)!LAPACK 
          enddo 
         enddo 
@@ -1076,7 +1078,7 @@
        WEIGHT_b(8)=WEIGHT_b(3) 
        WEIGHT_b(9)=WEIGHT_b(4) 
        WEIGHT_b(10)=WEIGHT_b(5) 
-!
+      !--
       case(7)!=== CASE(7) TRICLINIC CELL ===* 
        NB=12 
        allocate(b_LAT(3,NB));b_LAT(:,:)=0.0D0 
@@ -1149,17 +1151,17 @@
        WEIGHT_b(11)= WEIGHT_b(5) 
        WEIGHT_b(12)= WEIGHT_b(6) 
       end select 
-!---
-      Do ibvec=1,NB 
+      !--
+      do ibvec=1,NB 
        write(6,*) b_LAT(:,ibvec)       
-      ENDDO    
+      enddo 
       write(6,*) 
       SUM_REAL=0.0D0          
       Do ibvec=1,NB 
        SUM_REAL=SUM_REAL+WEIGHT_b(ibvec) 
       ENDDO           
       WEIGHT=SUM_REAL          
-
+      !--
       write(6,*)'WEIGHT_b=',WEIGHT_b(:) 
       write(6,*)'WEIGHT  =',WEIGHT              
  
@@ -1222,14 +1224,14 @@
      +  KG0(1,1,1),N_BAND(1),SHIFT_b(1),C0_BRA(0,1),C0_KET(0,1),
      +  OVERLAP_TMP(1,1),N_BAND_BTM(1))  
         OVERLAP(:,:,ik,ibvec)=OVERLAP_TMP(:,:)          
-!--
+       !--
        enddo!ibvec                
       enddo!ik                           
 !$OMP END DO 
       deallocate(C0_BRA,C0_KET,SHIFT_b,OVERLAP_TMP) 
 !$OMP END PARALLEL 
       write(6,*)'finish calc ISM' 
-!--
+      !--
       WRITE(6,*) 
       write(6,*)'================================================='
       write(6,*)' LOG{det[M(k,k+b)]} only when M is square matrix '
@@ -1261,7 +1263,7 @@
       allocate(loc_x(3,nigs));loc_x=0.0d0
       allocate(loc_y(3,nigs));loc_y=0.0d0
       allocate(loc_z(3,nigs));loc_z=0.0d0
-!--
+      !--
       do ig=1,nigs 
        orbtype(ig)=vec_ini(ig)%orb
        ALPHA_GAUSS(ig)=vec_ini(ig)%a 
@@ -1328,7 +1330,7 @@
      +  *(4.0D0*ALPHA_GAUSS(ig)/5.0D0)**0.50D0    
        ENDIF 
       ENDDO!ig 
-!--
+      !--
       write(6,*) 
       write(6,*)'=================='
       write(6,*)'INITIAL GUESS DATA'
@@ -1455,14 +1457,14 @@
        ENDDO!ib
       ENDDO!ik 
       write(6,*)'finish calc A_MAT' 
-!--
+      !--
       allocate(S_MAT(NGAUSS,NGAUSS));S_MAT(:,:)=0.0D0
       allocate(S_TMP(NGAUSS,NGAUSS));S_TMP(:,:)=0.0d0
       allocate(S_EIG(NGAUSS));S_EIG(:)=0.0D0
       allocate(X_MAT(NGAUSS,NGAUSS));X_MAT(:,:)=0.0D0
       allocate(S_HALF_MAT(NGAUSS,NGAUSS));S_HALF_MAT(:,:)=0.0D0
       allocate(C_MAT(NTB,NGAUSS,NTK));C_MAT(:,:,:)=0.0D0          
-!--
+      !--
       do ik=1,NTK        
 !S_MAT
        S_MAT(:,:)=0.0d0 
@@ -1571,14 +1573,13 @@
         N_BAND_inner(ik)=SUM_INT
 !--
 !check N_BAND_inner(ik) <= N_wannier 
-       if(N_BAND_inner(ik)>N_wannier)then 
-        write(6,'(a)')'inner energy window setting: WRONG'
-        write(6,'(a)')'NBAND_inner(ik) SHOULD BE SMALLER THAN N_wannier'
-        write(6,'(a,3i8)')'ik, N_BAND_inner(ik), N_wannier',
-     +                     ik, N_BAND_inner(ik), N_wannier 
-        stop 
-       endif  
-!--
+        if(N_BAND_inner(ik)>N_wannier)then 
+         write(6,'(a)')'inner energy window setting: WRONG'
+         write(6,'(a)')'NBAND_inner SHOULD BE SMALLER THAN N_wannier'
+         write(6,'(a,3i8)')'ik, N_BAND_inner(ik), N_wannier',
+     +                      ik, N_BAND_inner(ik), N_wannier 
+         stop 
+        endif  
         write(6,*) ik,N_BAND_BTM_inner(ik),N_BAND_inner(ik) 
        enddo!ik  
        write(6,*) 
@@ -1601,6 +1602,7 @@
          if(inner(ib,ik)==1)cycle 
          Qin(ib,ib)=1.0d0 
         enddo 
+!--
 !        do ib=1,N_BAND_inner(ik)
 !         do jb=1,N_BAND_inner(ik) 
 !          Qin(ib+N_BAND_BTM_inner(ik),jb+N_BAND_BTM_inner(ik)) 
@@ -1608,6 +1610,7 @@
 !     +   -P_MAT(ib+N_BAND_BTM_inner(ik),jb+N_BAND_BTM_inner(ik)) 
 !         enddo 
 !        enddo 
+!--
         allocate(X_MAT(NTB,NTB));X_MAT=0.0d0  
         do ib=1,N_BAND(ik)
          do jb=1,N_BAND(ik) 
@@ -1662,7 +1665,7 @@
       WRITE(6,*)'=== MINIMIZATION OF SPILLAGE FUNCTIONAL ==='
       WRITE(6,*)'==========================================='        
       WRITE(6,*) 
-!--
+      !--
       allocate(Z_EIG(NTB));Z_EIG(:)=0.0D0            
       allocate(Z_MAT(NTB,NTB,NTK));Z_MAT(:,:,:)=0.0D0        
       allocate(Z_TMP(NTB,NTB));Z_TMP(:,:)=0.0D0               
@@ -1694,7 +1697,7 @@
          enddo!ib     
         enddo!ibvec  
        enddo!ik         
-!--
+       !--
        SUM_REAL=0.0D0           
        OMEGA_I_NEW=0.0D0           
        C_MAT(:,:,:)=0.0D0 
@@ -1738,13 +1741,13 @@
         enddo   
 !diag X: XC'=C'x 
         eig_tmp(:)=0.0d0 
-        !
+        !--
         !20180412 by Y.Nomura 
-        !
+        !--
         if(nm>0)then
          call diagV(nm,mat_tmp(1,1),eig_tmp(1)) 
         endif 
-        !
+        !--
 !descending order
         Z_EIG(:)=0.0D0            
         C_TMP(:,:)=0.0d0 
@@ -1800,7 +1803,7 @@
        write(6,'(A8,I5,A15,F20.10,A10,F20.10)')'I_SCF=',I_SCF, 
      +         'DEL_OMEGA_I=',DEL_OMEGA_I,'OMEGA_I',OMEGA_I_NEW        
       enddo!do-while##### OMEGA_I MINIMIZATION ##### 
-!---
+!--
 !      do ik=1,NTK 
 !       if(N_BAND_inner(ik)/=0)then 
 !        write(6,*)'CMAT(fns) ik=',ik  
@@ -1819,7 +1822,7 @@
       allocate(P_EIG(NGAUSS));P_EIG(:)=0.0d0 
       allocate(P_MAT_IN(NGAUSS,NGAUSS));P_MAT_IN(:,:)=0.0D0 
       allocate(P_MAT_OUT(NGAUSS,NGAUSS));P_MAT_OUT(:,:)=0.0D0 
-!---
+      !--
       do ik=1,NTK               
 !PSEUDO-KS 
        P_MAT_IN(:,:)=0.0D0          
@@ -2001,13 +2004,14 @@
           OVERLAP(i_band,j_band,ik,ibvec)=SUM_CMPX          
          ENDDO!j_band        
         ENDDO!i_band        
-!DET
+        !--
+        !DET
          nm=n_occ 
          allocate(mat_tmp(nm,nm));mat_tmp(:,:)=0.0d0 
          mat_tmp(1:nm,1:nm)=OVERLAP(1:nm,1:nm,ik,ibvec) 
          call calcdet(nm,mat_tmp(1,1),DET) 
          deallocate(mat_tmp) 
-!--
+        !--
         write(6,'(a8,i5,a8,i5,a8,2f15.10)')
      +  'IK=',ik,'IK_IB=',ik_ib,'LOG=',LOG(DET) 
        ENDDO!ibvec                
@@ -2027,11 +2031,11 @@
       allocate(UNITARY(n_occ,n_occ,NTK));UNITARY(:,:,:)=0.0d0        
       allocate(U_ORG(n_occ,n_occ,NTK));U_ORG(:,:,:)=0.0d0               
       allocate(U_OLD(n_occ,n_occ,NTK));U_OLD(:,:,:)=0.0d0               
-!--
+      !--
       ILS=1           
       CALL CALC_OMEGA(NTK,NTB,n_occ,NB,VEC_b,ILS,WEIGHT_b,OVERLAP,
      +     WF_CHARGE,OMEGA_I,OMEGA_OD,OMEGA_D)                   
-
+      !--
       write(6,*)'OMEGA_I =',OMEGA_I 
       write(6,*)'OMEGA_OD=',OMEGA_OD      
       write(6,*)'OMEGA_D =',OMEGA_D 
@@ -2041,7 +2045,7 @@
       WRITE(6,*)'=== MINIMIZATION OF SPREAD FUNCTIONAL ==='
       WRITE(6,*)'========================================='        
       WRITE(6,*) 
-!--
+      !--
       M_MAT(:,:,:,:)=OVERLAP(:,:,:,:)                      
       DEL_SPREAD=1.0d0!EPS_SPREAD=1.0D-6 default
       SPREAD_OLD=0.0D0 
@@ -2059,6 +2063,7 @@
       CALL CALC_GRADIENT(NTK,NTB,n_occ,NB,WF_CHARGE,WEIGHT_b,OVERLAP,
      +                   tci,GRADIENT,TR_GRAD) 
       DIRECTION(:,:,:)=GRADIENT(:,:,:) 
+!--
 !CONJUGATE GRADIENT
 !      IF(I_STEP==1) THEN 
 !       DIRECTION(:,:,:)=GRADIENT(:,:,:) 
@@ -2071,6 +2076,7 @@
 !       ENDDO          
 !      ENDIF              
 !      TR_GRAD_OLD(:)=TR_GRAD(:) 
+!--
 !DIRECTION^2
       DIRECTION2(:,:,:)=0.0D0        
       Do ik=1,NTK        
@@ -2142,7 +2148,7 @@
         DELTA(2)=DELTA(3) 
         OMEGA(2)=OMEGA(3) 
        enddo!do while 
-!===
+       !--
        DELTA(4)=0.5D0*(OMEGA(1)*(DELTA(2)**2-DELTA(3)**2) 
      +                +OMEGA(2)*(DELTA(3)**2-DELTA(1)**2)
      +                +OMEGA(3)*(DELTA(1)**2-DELTA(2)**2))
@@ -2176,7 +2182,7 @@
        write(6,*)  
        I_STEP=I_STEP+1
       endif
-!--           
+      !--           
       ENDDO!##### SPREAD-MINIMIZATION ROOP #####         
 !--
 !      WRITE(6,*) 
@@ -2265,12 +2271,12 @@
         enddo!jb 
        enddo!ig             
        write(113)((C0_TMP_2(ig,ib),ig=1,NG0(ik)),ib=1,n_occ) 
-       !
+       !--
        !20180519
        !do ib=1,n_occ
        ! write(113) (C0_TMP_2(ig,ib),ig=1,NG0(ik))
        !enddo!ib 
-       !
+       !--
       enddo!ik              
 !-- 
 !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
@@ -2281,12 +2287,12 @@
       allocate(C0WN(NTG,NWF,NTK));C0WN(:,:,:)=0.0D0 
       do ik=1,NTK 
        read(113)((C0WN(ig,jb,ik),ig=1,NG0(ik)),jb=1,NWF) 
-       !
+       !--
        !20180519
        !do jb=1,NWF 
        ! read(113)(C0WN(ig,jb,ik),ig=1,NG0(ik))
        !enddo!jb 
-       !
+       !--
       enddo!ik
       write(6,*)'FINISH REDING C0_WN'
       ierr=CHDIR("..") 
@@ -2360,7 +2366,7 @@
          mat_tmp(ib,jb)=SUM_CMPX 
         enddo!jb  
        enddo!ib   
-!--
+       !--
        SUM_CMPX=0.0d0 
        do ib=1,nm 
         SUM_CMPX=SUM_CMPX+mat_tmp(ib,ib) 
@@ -2368,14 +2374,14 @@
        write(6,'(a8,x,i8,2f15.10)')'ik=',ik,SUM_CMPX 
        write(6,'(300f10.5)')(mat_tmp(ib,ib),ib=1,nm)  
        write(6,*)       
-!--
+       !--
        if(N_BAND_inner(ik)/=0)then  
         do ib=1,nm 
          write(6,'(300f10.5)')(mat_tmp(ib,jb),jb=1,nm)  
         enddo 
         write(6,*)       
        endif 
-!--
+       !--
        deallocate(mat_tmp) 
       enddo!ik        
 
@@ -2467,7 +2473,7 @@
        enddo 
       enddo 
       CLOSE(122) 
-!--
+      !--
       write(6,*) 
       write(6,*)'============='
       write(6,*)'H_MAT_R in eV'
@@ -2519,20 +2525,18 @@
       !call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,n_occ,tcut_mvmc,
       !+     H_MAT_R(1,1,-Na1,-Na2,-Na3)) 
       !--
-      !
       !NEW: 20181127 
-      !
       call wrt_mvmc(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
      + WEIGHT_R(-Na1,-Na2,-Na3)) 
-      !
+      !--
       call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))
-      !
+      !--
       !20181030  
-      !
+      !--
       call wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,
      +     SK_BAND_DISP(1,1)) 
       call wrt_mvmc_SK0(NTK,SK0(1,1)) 
-      !
+      !--
 !--
 !(4) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 
       do ik=1,NSK_BAND_DISP          
@@ -2554,7 +2558,7 @@
             PHASE=tpi*(SK_BAND_DISP(1,ik)*DBLE(ia1min) 
      +                +SK_BAND_DISP(2,ik)*DBLE(ia2min) 
      +                +SK_BAND_DISP(3,ik)*DBLE(ia3min))                
-!--
+            !--
             PHASE_FACTOR=EXP(ci*PHASE)*WEIGHT_R(ia1,ia2,ia3)!20170317 
             SUM_CMPX=SUM_CMPX+H_MAT_R(ib,jb,ia1,ia2,ia3)*PHASE_FACTOR 
            enddo!ia3            
@@ -2580,7 +2584,7 @@
 !(5) WRITE BAND DISPERSION ---*        
       allocate(DIST_K(NSK_BAND_DISP));DIST_K(:)=0.0d0 
       allocate(dist(0:N_sym_points-1));dist(:)=0.0d0 
-!--
+      !--
       dist(0)=0.0d0 
       do ix=1,N_sym_points-1 
        ks=(ix-1)*Ndiv+1
@@ -2740,6 +2744,6 @@
        ierr=CHDIR("..") 
        call system('pwd') 
 9999  endif!CALC_REAL_SPACE_WANNIER 
-!--
+      !--
       STOP 
       END        

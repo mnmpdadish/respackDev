@@ -124,9 +124,9 @@ real(8),intent(in)::Gcut,q1,q2,q3
 integer,intent(out)::KG0(3,NTG),NG 
 integer::igL,igL1,igL2,igL3
 real(8)::qgL(3),qgL2  
-integer,parameter::NGL1=100
-integer,parameter::NGL2=100 
-integer,parameter::NGL3=100
+integer,parameter::NGL1=150!100
+integer,parameter::NGL2=150!100 
+integer,parameter::NGL3=150!100
 !
 igL=0
 do igL1=-NGL1,NGL1 
