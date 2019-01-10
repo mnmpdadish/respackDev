@@ -34,31 +34,21 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 TARGET = transfer_analysis 
 
 OBJECTS = m_rd_dat_zvo.o m_rd_transdef.o m_tetrahedron_20170325.o \
-	  calc_dos.o calc_hist.o make_grd.o sub_search_Rmin.o  \
-	  est_nkbi.o truncation.o make_eig.o \
-	  make_kdata.o sub_eigenvalue.o sub_mkidx.o \
-	  util.o est_ef.o wrt.o \
+	  m_dos.o m_band.o m_eigenstate.o m_hist.o m_truncation.o \
+          m_frmsf.o \
 	  transfer_analysis.o  
 
-MOD_FILES = m_rd_dat_zvo.mod m_rd_transdef.mod m_tetrahedron.mod 
+MOD_FILES = m_rd_dat_zvo.mod m_rd_transdef.mod m_tetrahedron.mod \
+            m_dos.mod m_band.mod m_eigenstate.mod m_hist.mod m_truncation.mod \
+            m_frmsf.mod 
 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
 transfer_analysis.o: transfer_analysis.f90 \
                      m_rd_dat_zvo.o m_rd_transdef.o m_tetrahedron_20170325.o \
-	             calc_dos.o calc_hist.o make_grd.o sub_search_Rmin.o  \
-	             est_nkbi.o truncation.o make_eig.o \
-	             make_kdata.o sub_eigenvalue.o sub_mkidx.o \
-	             util.o est_ef.o wrt.o 
-
-m_rd_dat_zvo.o: m_rd_dat_zvo.f90 util.o est_nkbi.o 
-
-calc_dos.o: calc_dos.f90 sub_mkidx.o m_tetrahedron_20170325.o
-
-make_eig.o: make_eig.f90 sub_search_Rmin.o sub_eigenvalue.o 
-
-sub_eigenvalue.o: sub_eigenvalue.f90 util.o 
+	             m_dos.o m_band.o m_eigenstate.o m_hist.o m_truncation.o \
+                     m_frmsf.o 
 
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 

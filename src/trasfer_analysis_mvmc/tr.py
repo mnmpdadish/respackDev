@@ -7,42 +7,33 @@ import numpy as np
 import argparse
 #
 parser=argparse.ArgumentParser() 
-parser.add_argument('--zvo',action='store_true',help='transfer analysis for ZVO data') 
-parser.add_argument('--ztr',action='store_true',help='transfer analysis for ZTRans.def') 
+parser.add_argument('--dos',action='store_true',help='DOS calc for zvo data') 
+parser.add_argument('--bnd',action='store_true',help='BaND dispersion calc for zvo data') 
+parser.add_argument('--frm',action='store_true',help='FeRMi surface calc for fine k-mesh') 
+parser.add_argument('--his',action='store_true',help='HIStgram analysis for ztrans.def') 
 parser.add_argument('--gd',type=float,default=0.01,help='Greens function Delt in eV')
-parser.add_argument('--ta',type=float,default=0.001,help='Ttrhdrn parameter dmnA in eV')
-parser.add_argument('--tr',type=float,default=0.001,help='Ttrhdrn parameter dmnR in eV')
-parser.add_argument('--gs',type=float,default=0.02,help='Grid Spacing in eV')
 parser.add_argument('--we',type=int,default=0,help='Flg whether calculate Weighted transfers (0:not calc, 1:calc)') 
 parser.add_argument('--th',type=float,default=0.0,help='THreshold for transfer integral')
 parser.add_argument('--el',type=float,default=0.0,help='total number of ELectrons in unitcell') 
+parser.add_argument('--kdim',default='0 0 0',help='k grid') 
 #
 args = parser.parse_args()
 #
-#print args.zvo  
-#print args.ztr  
+#print args.dos  
+#print args.bnd
+#print args.frm 
+#print args.his  
 #print args.gd
-#print args.ta
-#print args.tr
-#print args.gs
 #print args.we
 #print args.th
 #print args.el 
+#print args.kdim 
 #
-zvo=str(args.zvo)
-ztr=str(args.ztr)
-delt=str(args.gd)
-ttra=str(args.ta)
-ttrr=str(args.tr)
+kdim=args.kdim 
+kdim=kdim.split() 
+kdim=[int(i) for i in kdim] 
 #
-if(args.zvo): 
-    delw=str(args.gs)
-if(args.ztr):
-    delw=str(10.0*args.gs) 
-#
-flwe=str(args.we)
-thtr=str(args.th)
-elnm=str(args.el)
-#
-cmd=["./transfer_analysis",delt,ttra,ttrr,delw,flwe,thtr,elnm,zvo,ztr]
+cmd=["./transfer_analysis", str(args.gd), str(args.we), str(args.th), str(args.el) \
+                          , str(kdim[0]), str(kdim[1]), str(kdim[2]) \
+                          , str(args.dos), str(args.bnd), str(args.frm), str(args.his)]
 subprocess.Popen(cmd)

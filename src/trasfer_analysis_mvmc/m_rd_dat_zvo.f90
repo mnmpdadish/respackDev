@@ -23,7 +23,7 @@ module m_rd_dat_zvo
   integer,public::Na1,Na2,Na3 
   real(8),public,allocatable::SK0(:,:)!SK0(3,NTK) 
   contains
-!--
+  !--
   subroutine rd_dat_hr 
     implicit none 
     integer::dum1,dum2,dum3,dumi,dumj
@@ -57,7 +57,7 @@ module m_rd_dat_zvo
     enddo!ia1 
     HR=HR/au !au<-eV
   end subroutine
-  
+  ! 
   subroutine rd_dat_geom 
     implicit none 
     real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
@@ -83,7 +83,7 @@ module m_rd_dat_zvo
     call OUTER_PRODUCT(a1(1),a2(1),b3(1))
     b3(:)=b3(:)*tpi/VOLUME 
   end subroutine
-
+  !
   subroutine rd_dat_bandkpts 
     implicit none 
     integer::ik,i 
@@ -97,7 +97,7 @@ module m_rd_dat_zvo
      read(304,*)(SK_BAND_DISP(i,ik),i=1,3) 
     enddo 
   end subroutine
-
+  !
   subroutine rd_dat_mkkpts 
     implicit none 
     integer::ik,i 
@@ -113,5 +113,54 @@ module m_rd_dat_zvo
     call est_nkbi(NTK,SK0,nkb1,nkb2,nkb3)  
     Na1=nkb1/2; Na2=nkb2/2; Na3=nkb3/2
   end subroutine
-!--
+  !
+  subroutine OUTER_PRODUCT(vec_x,vec_y,vec_z)
+    implicit none 
+    real(8)::vec_x(3),vec_y(3),vec_z(3) 
+    !
+    vec_z(1)=vec_x(2)*vec_y(3)-vec_x(3)*vec_y(2)
+    vec_z(2)=vec_x(3)*vec_y(1)-vec_x(1)*vec_y(3) 
+    vec_z(3)=vec_x(1)*vec_y(2)-vec_x(2)*vec_y(1)
+    !
+    return
+  end subroutine 
+  !
+  subroutine est_nkbi(N,SK,nkb1,nkb2,nkb3)  
+    implicit none 
+    integer,intent(in)::N
+    real(8),intent(in)::SK(3,N) 
+    integer,intent(out)::nkb1,nkb2,nkb3
+    integer::NTK  
+    integer::i 
+    real(8)::x 
+    real(8),parameter::dlt_BZ=1.0d-6 
+    x=1.0d0 
+    do i=1,N
+     if(abs(SK(1,i))<dlt_BZ) cycle 
+     if(abs(SK(1,i))<x) then 
+      x=abs(SK(1,i))  
+     endif 
+    enddo    
+    nkb1=nint(1.0d0/x)  
+    x=1.0d0 
+    do i=1,N
+     if(abs(SK(2,i))<dlt_BZ) cycle 
+     if(abs(SK(2,i))<x) then 
+      x=abs(SK(2,i))  
+     endif 
+    enddo    
+    nkb2=nint(1.0d0/x)  
+    x=1.0d0 
+    do i=1,N
+     if(abs(SK(3,i))<dlt_BZ) cycle 
+     if(abs(SK(3,i))<x) then 
+      x=abs(SK(3,i))  
+     endif 
+    enddo    
+    nkb3=nint(1.0d0/x)  
+    NTK=nkb1*nkb2*nkb3 
+    write(6,'(a24,4i10)') 'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+    return 
+  end subroutine 
+  !
 end module 

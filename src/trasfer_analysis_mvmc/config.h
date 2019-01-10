@@ -1,6 +1,6 @@
-!
+!---
 !config.h 
-!
+!---
 implicit none 
 real(8),parameter::au=27.21151d0
 real(8),parameter::pi=dacos(-1.0d0)
@@ -14,52 +14,29 @@ integer::iargc
 integer::ncount  
 character(len=8)::arg
 real(8),allocatable::real_arg(:)!real_arg(ncount)  
+integer::i 
 !
-!&param_transfer_analysis 
+!transfer_analysis 
 !
-logical::zvo  !transfer analysis for ZVO data 
-logical::ztr  !transfer analysis for ZTRans.def 
+logical::dos !DOS calc for zvo data 
+logical::bnd !BaND dispersion calc for zvo data 
+logical::frm !FeRMi surface calc for fine k-mesh 
+logical::his !HIStgram analysis for ztrans.def 
 real(8)::delt !Greens function delt in eV
-real(8)::dmna !Ttrhdrn parameter dmna in eV
-real(8)::dmnr !Ttrhdrn parameter dmnr in eV
-real(8)::delw !Grid width in eV
 real(8)::flwe !Flg whether calculate weighted transfers  
 real(8)::thtr !Threshold for transfer integral in eV
 real(8)::elnm !Total number of electrons in unitcell
-!
-integer::flg_weight         !Flg whether calculate weighted transfers (0:not calc, 1:calc)
+integer::flg_weight !Flg whether calculate weighted transfers (0:not calc, 1:calc)
 real(8)::threshold_transfer !Threshold for tranfer integral (eV)
-real(8)::electron_number    !Total number of electron in unitcell 
+real(8)::electron_number !Total number of electron in unitcell 
+real(8)::delw !Grid width in eV
+integer::kdim(3)!k grid  
 !
 !eigenvalue and eigenstates
 !
 real(8),allocatable::EKS(:,:) !EKS(NWF,NTK) 
 complex(8),allocatable::VKS(:,:,:) !VKS(NWF,NWF,NTK)   
 !
-!dos 
-!
-real(8)::emax !=maxval(E_EIG)
-real(8)::emin !=minval(E_EIG)
-real(8)::FermiEnergy 
-integer::ndosgrd !=int(2.0d0*diff/dlt)+1
-real(8),allocatable::dosgrd(:) !dosgrd(ndosgrd) 
-real(8),allocatable::dos(:) !dos(ndosgrd) 
-real(8),allocatable::efline(:) !efline(ndosgrd)   
-!
-!interpolated band disp
-!
-real(8),allocatable::kdata(:) !kdata(NSK_BAND_DISP) 
-!
-!ztrans.def
-!
-real(8),allocatable::EIG_TR(:) !EIG_TR(Ndim_TR) 
-integer::emin_grd,emax_grd 
-real(8),allocatable::hist(:) !hist(ndosgrd) 
-!
-!local
-!
-integer::i !ie,je,ik,ikir,ib,i    
-!real(8)::SUM_REAL
-!
+!--
 !end config.h 
-!
+!--
