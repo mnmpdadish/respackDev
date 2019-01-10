@@ -15,8 +15,11 @@ wrt_optical_property.f90)
 add_library(chiqw_com STATIC ${SOURCES_CHIQW} )
 target_link_libraries(chiqw_com ${LAPACK_LIBRARIES} m)
 
+add_custom_target(chiqw ALL)
 add_executable(calc_chiqw chiqw.F)
+add_dependencies(chiqw calc_chiqw)
 target_link_libraries(calc_chiqw chiqw_com)
 target_link_libraries(calc_chiqw ${MPI_Fortran_LIBRARIES})
 
 install(TARGETS calc_chiqw RUNTIME DESTINATION bin)
+

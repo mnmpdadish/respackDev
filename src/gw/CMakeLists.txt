@@ -35,9 +35,10 @@ util.f90
 m_tetrahedron_20170325.F
 )
 
-
+add_custom_target(gw ALL)
 add_executable(calc_gw ${SOURCES_GW})
 target_link_libraries(calc_gw ${MPI_Fortran_LIBRARIES})
 target_link_libraries(calc_gw ${LAPACK_LIBRARIES} m)
+add_dependencies(gw calc_gw)
 
 install(TARGETS calc_gw RUNTIME DESTINATION bin)
