@@ -1,10 +1,13 @@
       PROGRAM WANNIER          
-      use m_bvector, only: generate_bvectors
       use m_rdinput       
       use fft_3d
-      use frmsf_wan, only: wrt_frmsf_wan
+      use m_bvector, only: generate_bvectors
+      use m_frmsf_wan, only: wrt_frmsf_wan
       use m_dos, only: calculate_dos 
       use m_eigenstate, only: calculate_eigenstate
+      use m_wrt_frmsf, only: wrt_frmsf 
+      use m_wrt_mvmc  
+      use m_dmx, only: calculate_dmx 
       include "config.h"
       !--
       call read_input
@@ -597,12 +600,17 @@
        enddo!ib 
        N_BAND(ik)=SUM_INT 
       enddo!ik       
-      !--
+      !
       write(6,*) 
       write(6,*)'===================================='
       write(6,*)'BAND INFO INSIDE OUTER ENERGY WINDOW'
       write(6,*)'===================================='
       write(6,*) 
+      !
+      if(maxval(N_BAND)/=NTB)then
+       write(6,'(a)')'maxval(N_BAND) SHOULD BE THE SAME AS NTB; STOP'
+      endif 
+      !
       do ik=1,NTK
 !check N_BAND(ik) >= N_wannier 
        if(N_BAND(ik)<N_wannier)then 
@@ -1846,7 +1854,7 @@
        PSEUDO_MAT(:,:,ik)=P_MAT_OUT(:,:)          
        PSEUDO_EIG(:,ik)=P_EIG(:)          
       enddo!ik                    
-      deallocate(E_EIG) 
+      !deallocate(E_EIG) 
 !--
 !     do ik=1,NTK                  
 !      write(6,'(30F15.10)')PSEUDO_EIG(:,ik)*au 
@@ -2519,24 +2527,19 @@
       call system('rm -rf dir-mvmc') 
       call system('mkdir dir-mvmc') 
       tcut_mvmc=tcut_mvmc/au 
-      !--
-      !OLD: 20180604 
       !
-      !call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,n_occ,tcut_mvmc,
-      !+     H_MAT_R(1,1,-Na1,-Na2,-Na3)) 
-      !--
-      !NEW: 20181127 
-      call wrt_mvmc(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
-     + WEIGHT_R(-Na1,-Na2,-Na3)) 
-      !--
+      call wrt_mvmc_hr(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
+     +     WEIGHT_R(-Na1,-Na2,-Na3)) 
       call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))
-      !--
-      !20181030  
-      !--
       call wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,
      +     SK_BAND_DISP(1,1)) 
       call wrt_mvmc_SK0(NTK,SK0(1,1)) 
-      !--
+      call wrt_mvmc_ef(FermiEnergy) 
+      call calculate_dmx(NTB,NTK,n_occ,nkb1,nkb2,nkb3,Na1,Na2,Na3, !n_occ=NWF
+     +     FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
+     +     E_EIG(1,1),UNT(1,1,1)) 
+      deallocate(E_EIG) 
+      !
 !--
 !(4) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 
       do ik=1,NSK_BAND_DISP          
@@ -2641,6 +2644,9 @@
       filename='./dir-wan/dat.dos.wannier'
       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
      +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+      !
+      ! '0.0' --- not calculate FermiEnergy 
+      !
       deallocate(E_EIG,V_EIG)
 
 !==================================
