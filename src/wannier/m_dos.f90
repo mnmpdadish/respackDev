@@ -19,12 +19,13 @@ contains
     real(8),allocatable::dos(:)!dos(ndosgrd) 
     real(8),allocatable::efline(:)!efline(ndosgrd)   
     !
-    real(8),parameter::delt=1.0d-3!Greens function delt in au 
+    real(8),parameter::au=27.21151d0
+    real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
     real(8),parameter::delw=2.0d0*delt!Grid width in au 
     ! 
-    !make dos-grid
+    !dos-grid
     !
     call est_ndosgrd(NTB,NTK,EIG(1,1),delw,emin,emax,ndosgrd)  
     allocate(dosgrd(ndosgrd));dosgrd=0.0d0 
@@ -69,13 +70,14 @@ contains
     ndosgrd=int(2.0d0*diff/deltw)+1
     emax=emax+0.5d0*diff
     emin=emin-0.5d0*diff
-      !
+    !
     write(6,*)
-    write(6,'(a)')'GRID DATA FOR DOS'
-    write(6,'(a10,f12.7)')'emin(eV)',emin*au 
-    write(6,'(a10,f12.7)')'emax(eV)',emax*au 
-    write(6,'(a10,f12.7)')'deltw(eV)',deltw*au 
-    write(6,'(a10,i12)')'ndosgrd',ndosgrd 
+    write(6,'(a40)')'+++ m_dos: est_ndosgrd +++'
+    write(6,'(a40)')'GRID DATA FOR DOS'
+    write(6,'(a40,f15.8)')'emin(eV)',emin*au 
+    write(6,'(a40,f15.8)')'emax(eV)',emax*au 
+    write(6,'(a40,f15.8)')'deltw(eV)',deltw*au 
+    write(6,'(a40,i15)')'ndosgrd',ndosgrd 
     write(6,*)
     return
   end subroutine
@@ -108,15 +110,16 @@ contains
     do ie=1,ndosgrd
      SUM_REAL=SUM_REAL+deltw*dos(ie) 
     enddo 
-    write(6,*)'SUM of DOS',SUM_REAL
+    write(6,'(a40)')'+++ m_dos: est_ef +++'
+    write(6,'(a40,f15.8)')'SUM of DOS',SUM_REAL
     SUM_REAL=0.0d0 
     do ie=1,ndosgrd
      if(SUM_REAL>=electron_number)goto 3000 
      SUM_REAL=SUM_REAL+deltw*dos(ie) 
     enddo 
   3000 FermiEnergy=dosgrd(ie) 
-    write(6,*)'electron_number',SUM_REAL
-    write(6,*)'FermiEnergy=',dosgrd(ie)*au  
+    write(6,'(a40,f15.8)')'electron_number',SUM_REAL
+    write(6,'(a40,f15.8)')'FermiEnergy=',dosgrd(ie)*au  
     return
   end subroutine 
 
@@ -159,11 +162,12 @@ contains
      SUM_REAL=SUM_REAL+dos(ie)*deltw 
      !write(6,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au  
     enddo 
-    write(6,*)
-    write(6,'(a40,f15.7)')'Integral dos(w) dw',SUM_REAL 
     N0ttr=dos(ief)/2.0d0 !2 is spin
-    write(6,'(a40,f15.7)')'N(0) in au per calc cell',N0ttr 
-    write(6,'(a40,f15.7)')'N(0) in eV per calc cell',N0ttr/au   
+    write(6,*)
+    write(6,'(a40)')'+++ m_dos: est_efline +++'
+    write(6,'(a40,f15.8)')'Integral dos(w) dw',SUM_REAL 
+    write(6,'(a40,f15.8)')'N(0) in au per calc cell',N0ttr 
+    write(6,'(a40,f15.8)')'N(0) in eV per calc cell',N0ttr/au   
     write(6,*)
     return
   end subroutine 

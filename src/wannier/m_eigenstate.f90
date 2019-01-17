@@ -27,7 +27,7 @@ contains
     !
     allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
     if(flg_weight.eq.1)then
-     write(6,'(a20)')'WEIGHT CALCULATED' 
+     write(6,'(a40)')'WEIGHT CALCULATED' 
      SUM_REAL=0.0d0 
      do ia1=-Na1,Na1
       do ia2=-Na2,Na2
@@ -39,12 +39,12 @@ contains
        enddo!ia3
       enddo!ia2
      enddo!ia1
-     write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+     write(6,'(a40,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
      if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
       stop 'SUM_WEIGHT/=NTK'
      endif 
     else
-     write(6,'(a20)')'WEIGHT NOT CALCULATED' 
+     write(6,'(a40)')'WEIGHT NOT CALCULATED' 
     endif 
     !
     allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,Ncalck)); pf=0.0d0 
@@ -171,7 +171,7 @@ contains
     call zheevd("V","U",nm,mat,nm,eig,work_zheevd,LWORK,rwork_zheevd,LRWORK,iwork_zheevd,LIWORK,ind)
     !
     if(ind/=0)then 
-     write(6,*)'ind=',ind 
+     write(6,'(a40,i15)')'ind=',ind 
      stop
     endif 
     !
@@ -203,7 +203,7 @@ contains
     call zheevd("N","U",nm,mat,nm,eig,work_zheevd,LWORK,rwork_zheevd,LRWORK,iwork_zheevd,LIWORK,ind)
     !
     if(ind/=0)then 
-     write(6,*)'ind=',ind 
+     write(6,'(a40,i15)')'ind=',ind 
      stop
     endif 
     !

@@ -47,7 +47,7 @@ contains
     !
     allocate(dmx(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)); dmx=0.0d0   
     call make_dmx(Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3,lat_num_a1(1),lat_num_a2(1),lat_num_a3(1),&
-         SK0(1,1),UNT(1,1,1),xow(1,1,1,1),pf(-Na1,-Na2,-Na3,1),WEIGHT_R(-Na1,-Na2,-Na3),dmx(1,1,-Na1,-Na2,-Na3)) 
+    SK0(1,1),UNT(1,1,1),xow(1,1,1,1),pf(-Na1,-Na2,-Na3,1),WEIGHT_R(-Na1,-Na2,-Na3),dmx(1,1,-Na1,-Na2,-Na3)) 
     !
     !6. write density matrix
     call wrt_mvmc_dr(NWF,Na1,Na2,Na3,dmx(1,1,-Na1,-Na2,-Na3))
@@ -90,7 +90,6 @@ contains
     !
     integer::index_kpt(nkb1,nkb2,nkb3) 
     integer::imt1(4*nkb1*nkb2*nkb3*6)  
-    complex(8)::fk_1D(NTK)
     complex(8)::fk_3D(nkb1,nkb2,nkb3) 
     complex(8)::gk_1D(NTK)
     complex(8)::gk_3D(nkb1,nkb2,nkb3)
@@ -98,7 +97,9 @@ contains
     complex(8)::ca1(4)
     complex(8)::omega(1)  
     integer::ib,ikb1,ikb2,ikb3,ik 
-    real(8),parameter::delt=1.0d-3!Greens function delt in au 
+    real(8)::SUM_REAL 
+    real(8),parameter::au=27.21151d0
+    real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
     real(8),parameter::pi=dacos(-1.0d0)
@@ -117,7 +118,6 @@ contains
      do ik=1,NTK 
       gk_1D(ik)=cmplx(-E_EIG(ib,ik),-delt) 
      enddo 
-     fk_3D=1.0d0 
      gk_3D=0.0d0 
      do ikb3=1,nkb3
       do ikb2=1,nkb2
@@ -127,6 +127,7 @@ contains
        enddo
       enddo
      enddo 
+     fk_3D=1.0d0 
      xo=0.0d0 
      ca1=0.0d0 
      call ttritg_sum(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),fk_3D(1,1,1),gk_3D(1,1,1),1,omega(1),ca1(1),xo(1,1,1)) 
@@ -135,6 +136,19 @@ contains
     !    !$OMP END DO 
     !    !$OMP END PARALLEL 
     !
+    SUM_REAL=0.0d0 
+    do ikb3=1,nkb3
+     do ikb2=1,nkb2
+      do ikb1=1,nkb1
+       do ib=1,NTB 
+        SUM_REAL=SUM_REAL+xow(ib,ikb1,ikb2,ikb3)  
+       enddo 
+      enddo 
+     enddo 
+    enddo 
+    write(6,'(a40)')'+++ m_dmx: make_xow +++' 
+    write(6,'(a40,f15.8)')'(2/N)sum_{a,k}f(a,k)',2.0d0*SUM_REAL/dble(NTK) !2 is spin   
+    write(6,*) 
     return 
   end subroutine make_xow 
 
@@ -188,7 +202,7 @@ contains
     real(8),parameter::dlt_eps=1.0d-6 
     !
     if(flg_weight.eq.1)then
-     write(6,'(a20)')'WEIGHT CALCULATED' 
+     write(6,'(a40)')'WEIGHT CALCULATED' 
      SUM_REAL=0.0d0 
      do ia1=-Na1,Na1
       do ia2=-Na2,Na2
@@ -200,12 +214,12 @@ contains
        enddo!ia3
       enddo!ia2
      enddo!ia1
-     write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+     write(6,'(a40,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
      if(abs(SUM_REAL-dble(NTK))>dlt_eps)then 
       stop 'SUM_WEIGHT/=NTK'
      endif 
     else
-     write(6,'(a20)')'WEIGHT NOT CALCULATED' 
+     write(6,'(a40)')'WEIGHT NOT CALCULATED' 
     endif 
     !
     return 

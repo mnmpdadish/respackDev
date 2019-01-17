@@ -2414,7 +2414,8 @@
       write(6,*)'CALCULATED kpts FOR BAND DISPERSION'
       write(6,*)'==================================='
       write(6,*) 
-      write(6,'(a20,i8)')'NSK_BAND_DISP=',NSK_BAND_DISP
+      write(6,'(a20,i15)')'NSK_BAND_DISP=',NSK_BAND_DISP
+      write(6,*) 
       do ik=1,NSK_BAND_DISP 
        write(6,*) SK_BAND_DISP(:,ik)
       enddo 
@@ -2501,6 +2502,7 @@
       enddo      
 !--
 !(3') WEIGHT_R 20170317 by Y.Nomura 
+      write(6,'(a40)')'WEIGHT CALCULATED' 
       WEIGHT_R=1.0d0; SUM_REAL=0.0d0 
       do ia1=-Na1,Na1!-1         
        do ia2=-Na2,Na2!-1         
@@ -2515,14 +2517,15 @@
         enddo
        enddo
       enddo 
-      write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+      write(6,'(a40,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
       if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
-       write(6,'(a20)')'SUM_WEIGHT/=NTK'
+       write(6,'(a40)')'SUM_WEIGHT/=NTK'
        stop 
       endif 
 !--
 !write mvmc 
-      write(6,'(a30)')'write transfers in dir-mvmc'
+      write(6,*) 
+      write(6,'(a40)')'+++ write transfers in dir-mvmc +++'
       write(6,*) 
       call system('rm -rf dir-mvmc') 
       call system('mkdir dir-mvmc') 
@@ -2633,7 +2636,8 @@
 !--
 !wannier DOS
 !--
-      write(6,'(a30)') 'write wannier DOS'
+      write(6,*) 
+      write(6,'(a40)')'+++ write wannier DOS +++'
       write(6,*) 
       allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
       allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
@@ -2655,18 +2659,21 @@
 
       if(CALC_REAL_SPACE_WANNIER)then 
        !--
+       write(6,*) 
+       write(6,'(a40)')'+++ calc realspace wannier +++' 
+       write(6,*) 
        nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 
-       write(6,'(a15,i5,i5,i5)')'nwx2,nwy2,nwz2',nwx2,nwy2,nwz2 
-       write(6,'(a15,i5,i5,i5)')'nfft1,nfft2,nfft2',nfft1,nfft2,nfft3 
-       write(6,'(a15,i10)')'Nl123',Nl123 
+       write(6,'(a40,i5,i5,i5)')'nwx2,nwy2,nwz2',nwx2,nwy2,nwz2 
+       write(6,'(a40,i5,i5,i5)')'nfft1,nfft2,nfft2',nfft1,nfft2,nfft3 
+       write(6,'(a40,i10)')'Nl123',Nl123 
        call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
        !--
        mem_size=dble((xmax-xmin)*nwx2+(ymax-ymin)*nwy2+(zmax-zmin)*nwz2)
        mem_size=mem_size*16.0d0/1024.0d0/1024.0d0/1024.0d0 
-       write(6,'(a35,f20.15)')'mem size realspace wannier (GB)',mem_size
+       write(6,'(a40,f20.15)')'mem size realspace wannier (GB)',mem_size
        if(mem_size>1.0d0)then 
-        write(6,'(a35,f20.15)')'mem size > 1 GB; skipp' 
+        write(6,'(a40,f20.15)')'mem size > 1 GB; skipp' 
         go to 9999
        endif  
        !--
@@ -2689,7 +2696,7 @@
         !enddo!jb 
         !
        enddo!ik 
-       write(6,*)'FINISH REDING C0_WN'
+       !write(6,*)'FINISH REDING C0_WN'
        !--
        do ix=1,N_write_wannier!NWF 
         iw=wrt_list(ix)!20170406  
