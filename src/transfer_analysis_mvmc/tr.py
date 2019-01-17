@@ -15,7 +15,7 @@ parser.add_argument('--gd',type=float,default=0.01,help='Greens function Delt in
 parser.add_argument('--we',type=int,default=0,help='Flg whether calculate Weighted transfers (0:not calc, 1:calc)') 
 parser.add_argument('--th',type=float,default=0.0,help='THreshold for transfer integral')
 parser.add_argument('--el',type=float,default=0.0,help='total number of ELectrons in unitcell') 
-parser.add_argument('--kdim',default='0 0 0',help='k grid') 
+parser.add_argument('--kgd',default='0 0 0',help='k grid') 
 #
 args = parser.parse_args()
 #
@@ -27,13 +27,13 @@ args = parser.parse_args()
 #print args.we
 #print args.th
 #print args.el 
-#print args.kdim 
+#print args.kgd 
 #
-kdim=args.kdim 
-kdim=kdim.split() 
-kdim=[int(i) for i in kdim] 
+kgd=args.kgd 
+kgd=kgd.split() 
+kgd=[int(i) for i in kgd] 
 #
 cmd=["./transfer_analysis", str(args.gd), str(args.we), str(args.th), str(args.el) \
-                          , str(kdim[0]), str(kdim[1]), str(kdim[2]) \
+                          , str(kgd[0]), str(kgd[1]), str(kgd[2]) \
                           , str(args.dos), str(args.bnd), str(args.frm), str(args.his)]
 subprocess.Popen(cmd)

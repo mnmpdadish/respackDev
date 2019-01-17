@@ -9,7 +9,7 @@
 !flwe=0                !Flg whether calculate weighted transfers (0:not calc, 1:calc)
 !thtr=0.0d0            !Threshold for transfer integral
 !elnm=0.0d0            !Total number of electrons in unitcell
-!kdim='nkb1 nkb2 nkb3' !k grid 
+!kgd='nkb1 nkb2 nkb3'  !k grid 
 !
 PROGRAM main 
   use m_rd_dat_zvo 
@@ -28,6 +28,7 @@ PROGRAM main
   call rd_dat_hr 
   call rd_dat_geom 
   call rd_dat_bandkpts 
+  call rd_dat_ef 
   !
   !read input from command line 
   !
@@ -64,10 +65,10 @@ PROGRAM main
   thtr=real_arg(3)  
   elnm=real_arg(4)  
   !
-  kdim(1)=nint(real_arg(5)); kdim(2)=nint(real_arg(6)); kdim(3)=nint(real_arg(7)) 
-  if(kdim(1)==0) kdim(1)=nkb1
-  if(kdim(2)==0) kdim(2)=nkb2
-  if(kdim(3)==0) kdim(3)=nkb3 
+  kgd(1)=nint(real_arg(5)); kgd(2)=nint(real_arg(6)); kgd(3)=nint(real_arg(7)) 
+  if(kgd(1)==0) kgd(1)=nkb1
+  if(kgd(2)==0) kgd(2)=nkb2
+  if(kgd(3)==0) kgd(3)=nkb3 
   !
   flg_weight=nint(flwe)  
   if(flg_weight/=0) flg_weight=1
@@ -84,7 +85,8 @@ PROGRAM main
   write(6,'(a50,x,i10  )')'Use weigted transfer (0:not)=',flg_weight 
   write(6,'(a50,x,f10.5)')'Threshold for transfer (eV)=',threshold_transfer*au
   write(6,'(a50,x,f10.5)')'Electron numbers in unit cell=',electron_number  
-  write(6,'(a50,x,3i10 )')'k grid=',kdim 
+  write(6,'(a50,x,3i10 )')'k grid=',kgd 
+  write(6,'(a50,x,f10.5 )')'FermiEnergy in band calculation (eV)=',FermiEnergy_bandcalc*au  
   write(6,*) 
   !
   if(dos)then 
@@ -134,11 +136,11 @@ PROGRAM main
     !
     !truncate HR
     !
-    !call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
     !
     !wrt fermi surface 
     !
-    !call wrt_frmsf(NWF,NTK,flg_weight,kdim(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),FermiEnergy,HR(1,1,-Na1,-Na2,-Na3)) 
+    call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
     !
     write(6,'(a50,f10.5)')'threshold_transfer [eV]=',threshold_transfer*au 
     write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (FRM) #####'

@@ -5,6 +5,7 @@ module m_rd_dat_zvo
   public::rd_dat_geom 
   public::rd_dat_bandkpts
   public::rd_dat_mkkpts 
+  public::rd_dat_ef 
   !h_mat_r(300) 
   integer,public::NWF 
   complex(8),public,allocatable::HR(:,:,:,:,:)!HR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
@@ -22,6 +23,8 @@ module m_rd_dat_zvo
   integer,public::nkb1,nkb2,nkb3 
   integer,public::Na1,Na2,Na3 
   real(8),public,allocatable::SK0(:,:)!SK0(3,NTK) 
+  !ef(306) 
+  real(8),public::FermiEnergy_bandcalc 
   contains
   !--
   subroutine rd_dat_hr 
@@ -113,6 +116,15 @@ module m_rd_dat_zvo
     call est_nkbi(NTK,SK0,nkb1,nkb2,nkb3)  
     Na1=nkb1/2; Na2=nkb2/2; Na3=nkb3/2
   end subroutine
+  !
+  subroutine rd_dat_ef 
+    implicit none 
+    !
+    !OPEN(306,R,FILE='zvo_ef.dat') 
+    !
+    OPEN(306,FILE='./dir-mvmc/zvo_ef.dat') 
+    read(306,'(f15.10)') FermiEnergy_bandcalc 
+  end subroutine rd_dat_ef 
   !
   subroutine OUTER_PRODUCT(vec_x,vec_y,vec_z)
     implicit none 

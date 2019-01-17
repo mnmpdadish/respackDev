@@ -30,7 +30,7 @@ integer::flg_weight !Flg whether calculate weighted transfers (0:not calc, 1:cal
 real(8)::threshold_transfer !Threshold for tranfer integral (eV)
 real(8)::electron_number !Total number of electron in unitcell 
 real(8)::delw !Grid width in eV
-integer::kdim(3)!k grid  
+integer::kgd(3)!k grid  
 !
 !eigenvalue and eigenstates
 !

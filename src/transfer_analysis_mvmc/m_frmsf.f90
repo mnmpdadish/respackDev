@@ -4,20 +4,19 @@ MODULE m_frmsf !(c) Mitsuaki Kawamura
   !
 CONTAINS
   !
-!SUBROUTINE wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,FermiEnergy,WEIGHT_R,H_MAT_R)
-SUBROUTINE wrt_frmsf(NWF,NTK,flg_weight,dense,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,FermiEnergy,H_MAT_R)
+!org SUBROUTINE wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,FermiEnergy,WEIGHT_R,H_MAT_R)
+SUBROUTINE wrt_frmsf(NWF,dense,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,FermiEnergy,H_MAT_R)
   !
   !USE m_rdinput, ONLY : n_occ, dense
   !
   IMPLICIT NONE
   !
-  integer,intent(in) :: NWF,NTK,flg_weight   
-  integer,intent(in) :: dense(3)! Dense k-grid for the Wnnier-interpolated FS
+  integer,intent(in) :: NWF!=n_occ  
+  integer,intent(in) :: dense(3)!Dense k-grid for the Wnnier-interpolated FS
   !
   INTEGER,INTENT(IN) :: Na1, Na2, Na3, nkb1, nkb2, nkb3
-  REAL(8),INTENT(IN) :: a1(3), a2(3), a3(3), b1(3), b2(3), b3(3), FermiEnergy!, &
+  REAL(8),INTENT(IN) :: a1(3), a2(3), a3(3), b1(3), b2(3), b3(3), FermiEnergy!, WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   !
-  !&                     WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   !COMPLEX(8),INTENT(IN) :: H_MAT_R(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   COMPLEX(8),INTENT(IN) :: H_MAT_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
   !
@@ -50,14 +49,6 @@ SUBROUTINE wrt_frmsf(NWF,NTK,flg_weight,dense,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a
   END DO
   !
   allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
-  if(flg_weight.eq.1)then
-   write(6,'(a20)')'WEIGHT CALCULATED' 
-   write(6,*) 
-   call make_weight_R(Na1,Na2,Na3,NTK,WEIGHT_R(-Na1,-Na2,-Na3)) 
-  else
-   write(6,'(a20)')'WEIGHT NOT CALCULATED' 
-   write(6,*) 
-  endif 
   !
   !$OMP PARALLEL DEFAULT(NONE) &
   !$OMP & SHARED(nk,NWF,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,tpi,ci, &
@@ -196,32 +187,5 @@ subroutine diagV(nm,mat,eig)
     deallocate(work_zheevd,rwork_zheevd,iwork_zheevd) 
     return 
 end subroutine diagV
-
-subroutine make_weight_R(Na1,Na2,Na3,NTK,WEIGHT_R) 
-  implicit none 
-  integer,intent(in)::Na1,Na2,Na3,NTK 
-  real(8),intent(inout)::WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3) 
-  integer::ia1,ia2,ia3
-  real(8)::SUM_REAL 
-  real(8),parameter::delta=1.0d-6 
-  ! 
-  SUM_REAL=0.0d0 
-  do ia1=-Na1,Na1
-   do ia2=-Na2,Na2
-    do ia3=-Na3,Na3
-     if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
-    enddo!ia3
-   enddo!ia2
-  enddo!ia1
-  write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
-  if(abs(SUM_REAL-dble(NTK))>delta)then 
-   write(6,'(a20)')'SUM_WEIGHT/=NTK'
-   stop 
-  endif 
-  return
-end subroutine make_weight_R
 !
 END MODULE m_frmsf 
