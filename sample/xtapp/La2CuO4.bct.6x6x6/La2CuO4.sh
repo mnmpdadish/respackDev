@@ -13,7 +13,7 @@ set -x
 #vbpef2gp-lsda La2CuO4.band 
 
 #interface 
-#./xtapp2respack.sh -b ./wfn2respack La2CuO4
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv La2CuO4
 
 #respack 
 #mpirun -np 1 calc_wannier < input.in > log.La2CuO4-wannier

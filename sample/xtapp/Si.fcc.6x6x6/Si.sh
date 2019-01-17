@@ -13,7 +13,7 @@ set -x
 #vbpef2gp-lsda Si.band 
 
 #interface 
-#./xtapp2respack.sh -b ./wfn2respack Si 
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv Si 
 
 #respack 
 #mpirun -np 1 calc_wannier < input.in > log.Si-wannier
