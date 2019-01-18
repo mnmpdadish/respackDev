@@ -226,9 +226,6 @@ def qe2respack(dirname, endian=sys.byteorder):
     else:
         raise RuntimeError('unknown endian, {0}'.format(endian))
 
-    if not os.path.exists('dir-wfn'):
-        os.mkdir('dir-wfn')
-
     xmlfile = os.path.join(dirname, 'data-file-schema.xml')
     if os.path.exists(xmlfile):
         print('New style QE output XML file (data-file-schema.xml) is found.')
@@ -268,6 +265,9 @@ def qe2respack(dirname, endian=sys.byteorder):
     ## end of read XML file
 
     k_vec = np.dot(A,k_vec) / celldm
+
+    if not os.path.exists('dir-wfn'):
+        os.mkdir('dir-wfn')
 
     print('generating dir-wfn/dat.sample-k')
     with open('./dir-wfn/dat.sample-k', 'w') as f:
@@ -399,6 +399,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if os.path.exists('dir-wfn'):
+        print('dir-wfn/ already exists. qe2respack.py moves this to dir-wfn.backup/ as a backup.')
         if os.path.exists('dir-wfn.backup'):
             shutil.rmtree('dir-wfn.backup')
         shutil.move('dir-wfn', 'dir-wfn.backup')
