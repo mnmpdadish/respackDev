@@ -218,7 +218,7 @@ def eigenvalues(dirname, num_k, num_b, oldxml=False):
             evs[k,:] = [float(x) for x in kse.find('eigenvalues').text.strip().split()]
     return evs
 
-def qe2respack(dirname, oldxml=False, endian=sys.byteorder):
+def qe2respack(dirname, endian=sys.byteorder):
     if endian == 'little':
         endian_fmt = '<'
     elif endian == 'big':
@@ -226,11 +226,18 @@ def qe2respack(dirname, oldxml=False, endian=sys.byteorder):
     else:
         raise RuntimeError('unknown endian, {0}'.format(endian))
 
-    if not os.path.exists('dir-wfn'):
-        os.mkdir('dir-wfn')
+    xmlfile = os.path.join(dirname, 'data-file-schema.xml')
+    if os.path.exists(xmlfile):
+        print('New style QE output XML file (data-file-schema.xml) is found.')
+        oldxml = False
+    else:
+        xmlfile = os.path.join(dirname, 'data-file.xml')
+        if os.path.exists(xmlfile):
+            print('Old style QE output XML file (data-file.xml) is found.')
+            oldxml = True
+        else:
+            raise RuntimeError('QE output XML file is NOT found in {0}.'.format(dirname))
 
-    xmlfile = 'data-file.xml' if oldxml else 'data-file-schema.xml'
-    xmlfile = os.path.join(dirname, xmlfile)
     print('loading {0}'.format(xmlfile))
     tree = ET.parse(xmlfile)
     root = tree.getroot()
@@ -258,6 +265,9 @@ def qe2respack(dirname, oldxml=False, endian=sys.byteorder):
     ## end of read XML file
 
     k_vec = np.dot(A,k_vec) / celldm
+
+    if not os.path.exists('dir-wfn'):
+        os.mkdir('dir-wfn')
 
     print('generating dir-wfn/dat.sample-k')
     with open('./dir-wfn/dat.sample-k', 'w') as f:
@@ -386,12 +396,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='convert Quangum Espresso output into RESPACK input.')
     parser.add_argument('QE_output_dir', help='output directory of Quantum Espresso (where data-file-schema.xml exists).')
-    parser.add_argument('--oldxml', action='store_true', help='deal with the old QE (use it if you have a data-file.xml instead of the data-file-schema.xml).')
     args = parser.parse_args()
 
     if os.path.exists('dir-wfn'):
+        print('dir-wfn/ already exists. qe2respack.py moves this to dir-wfn.backup/ as a backup.')
         if os.path.exists('dir-wfn.backup'):
             shutil.rmtree('dir-wfn.backup')
         shutil.move('dir-wfn', 'dir-wfn.backup')
 
-    qe2respack(args.QE_output_dir, oldxml=args.oldxml)
+    qe2respack(args.QE_output_dir)
