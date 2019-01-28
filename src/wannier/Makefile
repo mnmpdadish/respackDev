@@ -4,20 +4,20 @@
 #--------------------------------------------------------------------
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
-FC = ifort  
-FFLAGS = -O2 -qopenmp -xHost -g -traceback
+#FC = ifort  
+#FFLAGS = -O2 -qopenmp -xHost -g -traceback
 
 #######
 #DEBUG#
 #######
 #FFLAGS = -qopenmp -debug full -check all -warn all -traceback -g 
 
-LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm 
+#LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm 
 
 #GNU
-#FC = gfortran 
-#FFLAGS = -O2 -fopenmp -g -fbacktrace
-#LIBBLAS = -llapack -lblas -fopenmp 
+FC = gfortran 
+FFLAGS = -O2 -fopenmp -g -fbacktrace
+LIBBLAS = -llapack -lblas -fopenmp 
 #--------------------------------------------------------------------
 .SUFFIXES:
 .SUFFIXES: .o .F90 .F .f90 .c
