@@ -16,6 +16,9 @@ import argparse
 import xml.etree.ElementTree as ET
 import numpy as np
 
+if sys.version_info[0:2] < (2,7):
+    ET._ElementInterface.iter = ET._ElementInterface.getiterator
+
 class Iotk_dat():
     def __init__(self, filename, endian=sys.byteorder):
         self.f = open(filename, 'rb')
