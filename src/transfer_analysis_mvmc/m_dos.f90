@@ -2,11 +2,12 @@ module m_dos
   implicit none
 contains
   !
-  subroutine calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,electron_number,threshold_transfer,delt,delw,b1,b2,b3,SK0,EIG)
+  subroutine calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,electron_number,threshold_transfer,FermiEnergy,delt,delw,b1,b2,b3,SK0,EIG)
     implicit none 
     integer,intent(in)::NWF,NTK,nkb1,nkb2,nkb3
     real(8),intent(in)::electron_number
     real(8),intent(in)::threshold_transfer 
+    real(8),intent(in)::FermiEnergy 
     real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::SK0(3,NTK)
     real(8),intent(in)::EIG(NWF,NTK) 
@@ -19,7 +20,7 @@ contains
     real(8)::emax!=maxval(EIG)
     real(8)::emin!=minval(EIG)
     integer::ndosgrd!=int(2.0d0*diff/dlt)+1
-    real(8)::FermiEnergy 
+    real(8)::FermiEnergy_recalc 
     real(8),allocatable::dosgrd(:)!dosgrd(ndosgrd) 
     real(8),allocatable::dos(:)!dos(ndosgrd) 
     real(8),allocatable::efline(:)!efline(ndosgrd)   
@@ -37,7 +38,8 @@ contains
     !
     !estimate ef 
     !
-    call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
+    if(electron_number/=0.0d0)then 
+     call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy_recalc) 
     allocate(efline(ndosgrd));efline=0.0d0 
     call make_efline(ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
     !
@@ -69,11 +71,11 @@ contains
     emin=emin-0.5d0*diff
     !
     write(6,*)
-    write(6,'(a)')'GRID DATA FOR DOS'
-    write(6,'(a10,f12.7)')'emin(eV)',emin*au 
-    write(6,'(a10,f12.7)')'emax(eV)',emax*au 
-    write(6,'(a10,f12.7)')'deltw(eV)',deltw*au 
-    write(6,'(a10,i12)')'ndosgrd',ndosgrd 
+    write(6,'(a40)')'+++ GRID DATA FOR DOS +++'
+    write(6,'(a40,f15.7)')'emin(eV)',emin*au 
+    write(6,'(a40,f15.7)')'emax(eV)',emax*au 
+    write(6,'(a40,f15.7)')'deltw(eV)',deltw*au 
+    write(6,'(a40,i15)')'ndosgrd',ndosgrd 
     write(6,*)
     return
   end subroutine
@@ -92,29 +94,32 @@ contains
     return
   end subroutine 
   !
-  subroutine est_ef(ndosgrd,deltw,electron_number,dosgrd,dos,FermiEnergy)
+  subroutine est_ef(ndosgrd,deltw,electron_number,dosgrd,dos,FermiEnergy_bandcalc,FermiEnergy_recalc)
     implicit none
     integer,intent(in)::ndosgrd
-    real(8),intent(in)::deltw,electron_number 
+    real(8),intent(in)::deltw
+    real(8),intent(in)::electron_number 
     real(8),intent(in)::dosgrd(ndosgrd) 
     real(8),intent(in)::dos(ndosgrd) 
-    real(8),intent(out)::FermiEnergy 
+    real(8),intent(in)::FermiEnergy_bandcalc 
+    real(8),intent(out)::FermiEnergy_recalc 
     real(8)::SUM_REAL
     integer::ie 
     real(8),parameter::au=27.21151d0 
+    !
     SUM_REAL=0.0d0 
     do ie=1,ndosgrd
      SUM_REAL=SUM_REAL+deltw*dos(ie) 
     enddo 
-    write(6,*)'SUM of DOS',SUM_REAL
+    write(6,'(a40,f15.8)')'SUM of DOS',SUM_REAL
     SUM_REAL=0.0d0 
     do ie=1,ndosgrd
      if(SUM_REAL>=electron_number)goto 3000 
      SUM_REAL=SUM_REAL+deltw*dos(ie) 
     enddo 
 3000 FermiEnergy=dosgrd(ie) 
-    write(6,*)'electron_number',SUM_REAL
-    write(6,*)'FermiEnergy=',dosgrd(ie)*au  
+    write(6,'(a40,f15.8)')'FermiEnergy_bandcalc (eV)=',FermiEnergy_bandcalc*au 
+    write(6,'(a40,f15.8,a20,f15.8)')'FermiEnergy_recalc (eV)=',dosgrd(ie)*au,'@electron_number=',SUM_REAL 
     return
   end subroutine 
   !
@@ -157,9 +162,9 @@ contains
      SUM_REAL=SUM_REAL+dos(ie)*deltw 
      !write(6,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au  
     enddo 
+    N0ttr=dos(ief)/2.0d0 !2 is spin
     write(6,*)
     write(6,'(a40,f15.7)')'Integral dos(w) dw',SUM_REAL 
-    N0ttr=dos(ief)/2.0d0 !2 is spin
     write(6,'(a40,f15.7)')'N(0) in au per calc cell',N0ttr 
     write(6,'(a40,f15.7)')'N(0) in eV per calc cell',N0ttr/au   
     write(6,*)

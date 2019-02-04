@@ -93,7 +93,9 @@ PROGRAM main
     !
     !truncate HR
     !
-    call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    if(threshold_transfer/=0.0d0)then 
+     call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    endif 
     !
     !make EKS
     !
