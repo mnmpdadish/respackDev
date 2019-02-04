@@ -1,4 +1,5 @@
-subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,SK_BAND_DISP,H_MAT_R,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,&
+subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,&
+  SK_BAND_DISP,H_MAT_R,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,&
   kdata,E_BAND_DISP)  
   implicit none 
   !

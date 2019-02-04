@@ -100,7 +100,8 @@ PROGRAM main
     !make EKS
     !
     allocate(EKS(NWF,NTK)); EKS=0.0d0; allocate(VKS(NWF,NWF,NTK)); VKS=0.0d0 
-    call calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
+    call calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),&
+      SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
     !
     !make DOS 
     !
@@ -121,7 +122,8 @@ PROGRAM main
     !make EKS
     !
     allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0; allocate(VKS(NWF,NWF,NSK_BAND_DISP)); VKS=0.0d0 
-    call calculate_eigenstate(NWF,NSK_BAND_DISP,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),SK_BAND_DISP(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
+    call calculate_eigenstate(NWF,NSK_BAND_DISP,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),&
+      SK_BAND_DISP(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
     !
     !calc band disp
     !
@@ -142,7 +144,8 @@ PROGRAM main
     !
     !wrt fermi surface 
     !
-    call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
+    call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),&
+      FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
     !
     write(6,'(a50,f10.5)')'threshold_transfer [eV]=',threshold_transfer*au 
     write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (FRM) #####'
