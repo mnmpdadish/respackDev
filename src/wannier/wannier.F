@@ -2385,25 +2385,23 @@
       write(6,*)"Mb=",Mb 
       write(150,*) n_occ!20170331(n_occ=NWF) 
       allocate(UNT(Mb,n_occ,NTK));UNT(:,:,:)=0.0d0 
-      do ic=1,ncomp 
+      !do ic=1,ncomp 
        do ik=1,NTK 
         do ib=1,N_BAND(ik)
          do jb=1,n_occ 
-
-          !ic=1
-
           SUM_CMPX=0.0d0 
-          do ig=1,NG0(ik)  
-           SUM_CMPX 
-     +    =SUM_CMPX
-     +    +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,ic,jb,ik)
-!     +    +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,jb,ik)
+          do ig=1,NG0(ik)
+           do ic=1,ncomp  
+            SUM_CMPX 
+     +      =SUM_CMPX
+     +      +conjg(C0(ig,ic,ib+N_BAND_BTM(ik),ik))*C0WN(ig,ic,jb,ik)
+           enddo 
           enddo 
           UNT(ib,jb,ik)=SUM_CMPX 
          enddo 
         enddo 
        enddo
-      enddo
+      !enddo
       deallocate(C0WN) 
       do ik=1,NTK 
        do ib=1,N_BAND(ik)
