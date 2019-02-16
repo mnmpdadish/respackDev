@@ -62,6 +62,8 @@ real(8)::a,x,y,z
 real(8)::lx(3)!20170914
 real(8)::ly(3)!20170914
 real(8)::lz(3)!20170914
+complex(8)::s_up(2)!20190210 Maxime Charlebois
+complex(8)::s_dn(2)!20190210 Maxime Charlebois
 end type initial_guess  
 type(initial_guess),public,allocatable::vec_ini(:) 
 !BMAT  
@@ -169,14 +171,36 @@ if(flg_initial_guess_direc==0)then!default 20170914
   vec_ini(igs)%lx(1)=1.0d0  
   vec_ini(igs)%ly(2)=1.0d0  
   vec_ini(igs)%lz(3)=1.0d0  
+
+  vec_ini(igs)%s_up(:)=0.0d0  
+  vec_ini(igs)%s_dn(:)=0.0d0  
+  vec_ini(igs)%s_up(1)=1.0d0  
+  vec_ini(igs)%s_dn(2)=1.0d0  
  enddo 
 endif 
 !--
-if(flg_initial_guess_direc==1)then!default 20170914 
+if(flg_initial_guess_direc==1)then! 20170914 
  write(6,*)'DIRECTION OF INITIAL GUESS IS REPRESENTED IN LOCAL COORDINATE' 
  do igs=1,nigs
   !read(999,*)vec_ini(igs)
-   read(5,*)vec_ini(igs)
+  !read(5,*)vec_ini(igs)
+   read(5,*)vec_ini(igs)%orb,vec_ini(igs)%a,vec_ini(igs)%x,vec_ini(igs)%y,vec_ini(igs)%z,&
+           &vec_ini(igs)%lx,vec_ini(igs)%ly,vec_ini(igs)%lz
+ enddo 
+ do igs=1,nigs 
+  vec_ini(igs)%s_up(:)=0.0d0  
+  vec_ini(igs)%s_dn(:)=0.0d0  
+  vec_ini(igs)%s_up(1)=1.0d0  
+  vec_ini(igs)%s_dn(2)=1.0d0  
+ enddo 
+endif 
+!--
+if(flg_initial_guess_direc==2)then 
+ write(6,*) 'DIRECTION OF INITIAL GUESS IS REPRESENTED IN LOCAL COORDINATE'
+ write(6,*) 'ROTATION OF THE SPIN QUANTIZATION AXIS' 
+ do igs=1,nigs
+  !read(999,*)vec_ini(igs)
+  read(5,*)vec_ini(igs)
  enddo 
 endif 
 !--

@@ -16,9 +16,15 @@
       write(6,*)'E_LOWER_inner in au',E_LOWER_inner 
       write(6,*)'E_UPPER_inner in au',E_UPPER_inner 
 !--
-!      do ig=1,nigs 
-!       write(6,*) vec_ini(ig) 
-!      enddo 
+      do ig=1,nigs 
+       write(6,*) vec_ini(ig)%lx
+       write(6,*) vec_ini(ig)%ly
+       write(6,*) vec_ini(ig)%lz
+       write(6,*) vec_ini(ig)%s_up
+       write(6,*) vec_ini(ig)%s_dn
+       write(6,*) 
+      enddo 
+!      stop
 !--
 !      do ix=1,3 
 !       write(6,'(100f10.5)')(SK_sym_pts(ix,ik),ik=1,N_sym_points)
@@ -1355,6 +1361,8 @@
       allocate(loc_x(3,nigs));loc_x=0.0d0
       allocate(loc_y(3,nigs));loc_y=0.0d0
       allocate(loc_z(3,nigs));loc_z=0.0d0
+      allocate(loc_s_up(2,nigs));loc_s_up=0.0d0
+      allocate(loc_s_dn(2,nigs));loc_s_dn=0.0d0
 !--
       do ig=1,nigs 
        orbtype(ig)=vec_ini(ig)%orb
@@ -1365,6 +1373,8 @@
        loc_x(:,ig)=vec_ini(ig)%lx(:)
        loc_y(:,ig)=vec_ini(ig)%ly(:)
        loc_z(:,ig)=vec_ini(ig)%lz(:)
+       loc_s_up(:,ig)=vec_ini(ig)%s_up(:)
+       loc_s_dn(:,ig)=vec_ini(ig)%s_dn(:)
       enddo 
 !--
 !20170406 
@@ -1458,8 +1468,9 @@
       do ik=1,NTK         
        call make_amat(nigs,NTB,NTG,ncomp,NG0(ik),SK0(1,ik),
      + KG0(1,1,ik),b1(1),b2(1),b3(1),TAU_GAUSS(1,1),
-     + ALPHA_GAUSS(1), loc_x(1,1),loc_y(1,1),loc_z(1,1),LGAUSS(1),
-     + MGAUSS(1),N_BAND(ik),C0(1,1,1,ik),N_BAND_BTM(ik),
+     + ALPHA_GAUSS(1), loc_x(1,1),loc_y(1,1),loc_z(1,1),
+     + loc_s_up(1,1),loc_s_dn(1,1),  
+     + LGAUSS(1),MGAUSS(1),N_BAND(ik),C0(1,1,1,ik),N_BAND_BTM(ik),
      + NORM_GAUSS(1),VOLUME,A_TMP(1,1)) 
        A_MAT(:,:,ik)=A_TMP(:,:) 
       enddo!ik           

@@ -114,6 +114,8 @@
       real(8),allocatable::loc_x(:,:)!loc_x(3,nigs)20170914 
       real(8),allocatable::loc_y(:,:)!loc_y(3,nigs)20170914 
       real(8),allocatable::loc_z(:,:)!loc_z(3,nigs)20170914 
+      complex(8),allocatable::loc_s_up(:,:)!loc_s_dn(2,nigs)20190210 
+      complex(8),allocatable::loc_s_dn(:,:)!loc_s_dn(2,nigs)20190210 
       complex(8),allocatable::A_MAT(:,:,:)!A_MAT(NTB,nigs,NTK)
       complex(8),allocatable::A_TMP(:,:)!A_TMP(NTB,nigs)
 !spillage 

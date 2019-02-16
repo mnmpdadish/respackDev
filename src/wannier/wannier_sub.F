@@ -918,8 +918,9 @@
 !     + A_TMP(1,1)) 
 !--
       subroutine make_amat(nigs,NTB,NTG,ncomp,NG0,SK0,KG0,b1,b2,b3,    
-     + TAU_GAUSS,ALPHA_GAUSS,loc_x,loc_y,loc_z,LGAUSS,MGAUSS,
-     + N_BAND,C0,N_BAND_BTM,NORM_GAUSS,VOLUME,A_TMP) 
+     + TAU_GAUSS,ALPHA_GAUSS,loc_x,loc_y,loc_z,
+     + loc_s_up,loc_s_dn,LGAUSS,MGAUSS,
+     + N_BAND,C0,N_BAND_BTM,NORM_GAUSS,VOLUME,A_TMP)  
       implicit none
       integer::nigs,NTB,NTG, ncomp
       integer::NG0
@@ -931,6 +932,7 @@
       real(8)::ALPHA_GAUSS(nigs)
       real(8)::NORM_GAUSS(nigs)
       real(8)::loc_x(3,nigs),loc_y(3,nigs),loc_z(3,nigs) 
+      complex(8)::loc_s_up(2,nigs),loc_s_dn(2,nigs) 
       integer::LGAUSS(nigs),MGAUSS(nigs)
       integer::N_BAND,N_BAND_BTM 
       complex(8)::C0(NTG,ncomp,NTB)
@@ -946,6 +948,7 @@
       real(8)::PF2(NTG) 
       real(8)::ktmp(3),tmp(3)
       complex(8)::SUM_CMPX        
+      complex(8)::C0_MIX
       !
       !write(6,*) C0 
       !write(6,*) VOLUME  
@@ -1011,142 +1014,140 @@
        jM=MGAUSS(j_gauss)     
        !--
        do i_band=1,N_BAND 
-        SUM_CMPX=0.0D0                   
+        SUM_CMPX=0.0D0
+        do ig=1,NG0 
+         if(ncomp==2) then
+          if( ic == 1 ) then
+           C0_MIX=CONJG(loc_s_up(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
+     +                  loc_s_up(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
+          else
+           ! attention: at first sight, this seems to be an error, but 
+           ! it is important to alternate the indices here for spin 
+           ! down. An easy way to understand it is to note that
+           C0_MIX=CONJG(loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
+     +                  loc_s_dn(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
+          end if
+         else
+          C0_MIX=CONJG(C0(ig,ic,i_band+N_BAND_BTM))
+         endif
 !<Psi|s>
-        IF(jL==1)THEN                          
-         do ig=1,NG0 
+         IF(jL==1)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           YLM=DSQRT(1.0D0/4.0D0/pi)        
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig) 
      +   *YLM                                      
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*PF2(ig)       
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|py>
-        IF(jL==2.AND.jM==2)THEN
-         do ig=1,NG0 
+         IF(jL==2.AND.jM==2)THEN
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=1.0D0/2.0D0/ALPHA_GAUSS(j_gauss) 
           YLM=DSQRT(3.0D0/4.0D0/pi)*VEC_KG(2,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)  
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig)       
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|pz>
-        IF(jL==2.AND.jM==3)THEN
-         do ig=1,NG0 
+         IF(jL==2.AND.jM==3)THEN
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=1.0D0/2.0D0/ALPHA_GAUSS(j_gauss) 
           YLM=DSQRT(3.0D0/4.0D0/pi)*VEC_KG(3,ig) 
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)            
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig)  
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|px>
-        IF(jL==2.AND.jM==1)THEN
-         do ig=1,NG0
+         IF(jL==2.AND.jM==1)THEN
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=1.0D0/2.0D0/ALPHA_GAUSS(j_gauss) 
           YLM=DSQRT(3.d0/4.d0/pi)*VEC_KG(1,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)  
      +   *(-ci)*YLM                                      
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig)     
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|dxy>
-        IF(jL==3.AND.jM==1)THEN                          
-         do ig=1,NG0          
+         IF(jL==3.AND.jM==1)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=(1.0D0/2.0D0/ALPHA_GAUSS(j_gauss))**2.0D0   
           YLM=0.5d0*DSQRT(15.d0/pi)*VEC_KG(1,ig)*VEC_KG(2,ig)       
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)     
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig) 
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|dyz>
-        IF(jL==3.AND.jM==2)THEN                          
-         do ig=1,NG0
+         IF(jL==3.AND.jM==2)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=(1.0D0/2.0D0/ALPHA_GAUSS(j_gauss))**2.0D0   
           YLM=(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(2,ig)*VEC_KG(3,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)  
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig) 
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|dz2>
-        IF(jL==3.AND.jM==3)THEN                          
-         do ig=1,NG0
+         IF(jL==3.AND.jM==3)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=(1.0D0/2.0D0/ ALPHA_GAUSS(j_gauss))**2.0D0     
           YLM=(0.25d0)*DSQRT(5.d0/pi)*(3.d0*VEC_KG(3,ig)**2-KG2(ig))
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)  
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig) 
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|dzx>
-        IF(jL==3.AND.jM==4)THEN                          
-         do ig=1,NG0 
+         IF(jL==3.AND.jM==4)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=(1.0D0/2.0D0/ALPHA_GAUSS(j_gauss))**2.0D0    
           YLM=(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(3,ig)*VEC_KG(1,ig)
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)           
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig) 
-         enddo!ig          
-        ENDIF 
+         ENDIF 
 !<Psi|dx2>
-        IF(jL==3.AND.jM==5)THEN                          
-         do ig=1,NG0 
+         IF(jL==3.AND.jM==5)THEN                          
           ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
           ZETA2=(1.0D0/2.0D0/ALPHA_GAUSS(j_gauss))**2.0D0    
           YLM=(0.25d0)*DSQRT(15.d0/pi)
      +       *(VEC_KG(1,ig)**2-VEC_KG(2,ig)**2) 
           SUM_CMPX 
      +   =SUM_CMPX 
-     +   +CONJG(C0(ig,ic,i_band+N_BAND_BTM)) 
+     +   +C0_MIX 
      +   *PF1(ig)              
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig)     
-         enddo!ig          
-        ENDIF 
+         ENDIF 
+        enddo!ig          
         !--
         A_TMP(i_band,j_gauss)=SUM_CMPX/DSQRT(VOLUME)             
        enddo!i_band         
