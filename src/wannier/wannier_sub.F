@@ -1017,15 +1017,15 @@
         SUM_CMPX=0.0D0
         do ig=1,NG0 
          if(ncomp==2) then
+          !if there is spin-orbit calculation, we rotate the orbitals
+          !(in the spinor basis) with the 2x2 complex matrix inputed 
+          !by using FLG_INITIAL_GUESS_DIREC = 2:
           if( ic == 1 ) then
            C0_MIX=CONJG(loc_s_up(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
      +                  loc_s_up(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
           else
-           ! attention: at first sight, this seems to be an error, but 
-           ! it is important to alternate the indices here for spin 
-           ! down. An easy way to understand it is to note that
-           C0_MIX=CONJG(loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
-     +                  loc_s_dn(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
+           C0_MIX=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
+     +                  loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
           end if
          else
           C0_MIX=CONJG(C0(ig,ic,i_band+N_BAND_BTM))
