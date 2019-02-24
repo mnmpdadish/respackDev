@@ -14,10 +14,10 @@
 PROGRAM main 
   use m_rd_dat_zvo 
   use m_rd_transdef  
+  use m_truncation 
   use m_dos, only: calculate_dos 
   use m_eigenstate, only: calculate_eigenstate
   use m_hist, only: calculate_hist 
-  use m_truncation, only: truncation 
   use m_band, only: calculate_banddisp 
   use m_frmsf, only: wrt_frmsf 
   include "config.h" 
@@ -66,9 +66,6 @@ PROGRAM main
   elnm=real_arg(4)  
   !
   kgd(1)=nint(real_arg(5)); kgd(2)=nint(real_arg(6)); kgd(3)=nint(real_arg(7)) 
-  if(kgd(1)==0) kgd(1)=nkb1
-  if(kgd(2)==0) kgd(2)=nkb2
-  if(kgd(3)==0) kgd(3)=nkb3 
   !
   flg_weight=nint(flwe)  
   if(flg_weight/=0) flg_weight=1
@@ -79,35 +76,51 @@ PROGRAM main
   write(6,*) 
   write(6,'(a50)')'##### TRANSFER ANALYSIS #####'
   write(6,*) 
-  write(6,'(a50,x,f10.5)')'Greens function delt (eV)=',delt*au
-  write(6,'(a50,x,f10.5)')'Grid spacing delw (eV) [dos]=',2.0d0*delt*au
-  write(6,'(a50,x,f10.5)')'Grid spacing delw (eV) [hist]=',10.0d0*delt*au
-  write(6,'(a50,x,i10  )')'Use weigted transfer (0:not)=',flg_weight 
-  write(6,'(a50,x,f10.5)')'Threshold for transfer (eV)=',threshold_transfer*au
-  write(6,'(a50,x,f10.5)')'Electron numbers in unit cell=',electron_number  
-  write(6,'(a50,x,3i10 )')'k grid=',kgd 
-  write(6,'(a50,x,f10.5 )')'FermiEnergy in band calculation (eV)=',FermiEnergy_bandcalc*au  
+  write(6,'(a50,x,f10.5)')'Greens function delt (eV):',delt*au
+  write(6,'(a50,x,f10.5)')'Grid spacing delw (eV) [dos]:',2.0d0*delt*au
+  write(6,'(a50,x,f10.5)')'Grid spacing delw (eV) [hist]:',10.0d0*delt*au
+  write(6,'(a50,x,i10  )')'Use weigted transfer (0:not):',flg_weight 
+  write(6,'(a50,x,f10.5)')'Threshold for transfer (eV):',threshold_transfer*au
+  write(6,'(a50,x,f10.5)')'Electron numbers in unit cell:',electron_number  
+  write(6,'(a50,x,f10.5 )')'FermiEnergy in band calculation (eV):',FermiEnergy_bandcalc*au  
+  if(kgd(1)==0.and.kgd(2)==0.and.kgd(3)==0)then 
+      write(6,'(a50,x,3i10 )')'k grid:',nkb1,nkb2,nkb3  
+  else
+      write(6,'(a50,x,3i10 )')'k grid:',kgd 
+  endif  
   write(6,*) 
   !
   if(dos)then 
     !
-    !truncate HR
+    !truncate H(R) on threshold 
     !
-    if(threshold_transfer/=0.0d0)then 
-     call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    !
+    !set kvec
+    !
+    if(kgd(1)==0.and.kgd(2)==0.and.kgd(3)==0)then 
+        kgd(1)=nkb1; kgd(2)=nkb2; kgd(3)=nkb3 
     endif 
+    ncalck=PRODUCT(kgd(1:3))
+    allocate(kvec(3,ncalck)); kvec=0.0d0 
+    call set_kgrid(kgd(1),kvec(1,1)) 
+    write(6,*) 
+    write(6,'(a7)')'kvec:' 
+    do i=1,ncalck
+     write(6,'(3f15.10)') kvec(:,i) 
+    enddo 
     !
     !make EKS
     !
-    allocate(EKS(NWF,NTK)); EKS=0.0d0; allocate(VKS(NWF,NWF,NTK)); VKS=0.0d0 
-    call calculate_eigenstate(NWF,NTK,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),&
-      SK0(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
+    allocate(EKS(NWF,ncalck)); EKS=0.0d0; allocate(VKS(NWF,NWF,ncalck)); VKS=0.0d0 
+    call calculate_eigenstate(NWF,ncalck,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),kvec(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
     !
     !make DOS 
     !
     delw=2.0d0*delt !Grid spacing delw [dos] 
-    call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,electron_number,threshold_transfer,delt,delw,b1(1),b2(1),b3(1),SK0(1,1),EKS(1,1))
+    call calculate_dos(NWF,ncalck,kgd(1),kgd(2),kgd(3),electron_number,threshold_transfer,delt,delw,b1(1),b2(1),b3(1),kvec(1,1),EKS(1,1))
     deallocate(EKS,VKS) 
+    deallocate(kvec) 
     !
     write(6,'(a50,f10.5)')'threshold_transfer [eV]=',threshold_transfer*au 
     write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (DOS) #####'
@@ -115,15 +128,23 @@ PROGRAM main
   !
   if(bnd)then 
     !
-    !truncate HR
+    !truncate H(R) on threshold 
     !
     call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
+    !
+    !set F(R) 
+    !
+    if(kgd(1)==0.and.kgd(2)==0.and.kgd(3)==0)then 
+        kgd(1)=nkb1; kgd(2)=nkb2; kgd(3)=nkb3 
+    endif 
+    La1=kgd(1)/2; La2=kgd(2)/2; La3=kgd(3)/2 
+    allocate(FR(NWF,NWF,-La1:La1,-La2:La2,-La3:La3)); FR(:,:,:,:,:)=0.0d0  
+    call set_FR(NWF,nkb1,nkb2,nkb3,kgd(1),kgd(2),kgd(3),Na1,Na2,Na3,La1,La2,La3,HR(1,1,-Na1,-Na2,-Na3),FR(1,1,-La1,-La2,-La3)) 
     !
     !make EKS
     !
     allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0; allocate(VKS(NWF,NWF,NSK_BAND_DISP)); VKS=0.0d0 
-    call calculate_eigenstate(NWF,NSK_BAND_DISP,Na1,Na2,Na3,nkb1,nkb2,nkb3,flg_weight,a1(1),a2(1),a3(1),&
-      SK_BAND_DISP(1,1),HR(1,1,-Na1,-Na2,-Na3),EKS(1,1),VKS(1,1,1)) 
+    call calculate_eigenstate(NWF,NSK_BAND_DISP,La1,La2,La3,kgd(1),kgd(2),kgd(3),flg_weight,a1(1),a2(1),a3(1),SK_BAND_DISP(1,1),FR(1,1,-La1,-La2,-La3),EKS(1,1),VKS(1,1,1)) 
     !
     !calc band disp
     !
@@ -138,14 +159,13 @@ PROGRAM main
     !
     write(6,'(a50)')'##### STILL NOT SURPORTED (FRM) #####'
     !
-    !truncate HR
+    !truncate H(R) on threshold 
     !
     call truncation(NWF,Na1,Na2,Na3,threshold_transfer,HR(1,1,-Na1,-Na2,-Na3))
     !
     !wrt fermi surface 
     !
-    call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),&
-      FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
+    call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
     !
     write(6,'(a50,f10.5)')'threshold_transfer [eV]=',threshold_transfer*au 
     write(6,'(a50)')'##### FINISH TRANSFER ANALYSIS (FRM) #####'

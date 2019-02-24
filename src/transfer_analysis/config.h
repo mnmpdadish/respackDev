@@ -34,8 +34,11 @@ integer::kgd(3)!k grid
 !
 !eigenvalue and eigenstates
 !
-real(8),allocatable::EKS(:,:) !EKS(NWF,NTK) 
-complex(8),allocatable::VKS(:,:,:) !VKS(NWF,NWF,NTK)   
+integer::ncalck,La1,La2,La3 
+real(8),allocatable::kvec(:,:)!kvec(3,ncalck) 
+real(8),allocatable::EKS(:,:)!EKS(NWF,ncalck) 
+complex(8),allocatable::VKS(:,:,:)!VKS(NWF,NWF,ncalck)   
+complex(8),allocatable::FR(:,:,:,:,:)!FR(NWF,NWF,-La1:La1,-La2:La2,-La3:La3) 
 !
 !--
 !end config.h 
