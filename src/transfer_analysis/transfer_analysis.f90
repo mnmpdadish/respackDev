@@ -5,7 +5,7 @@
 !dmna=0.001d0          !Ttrhdrn parameter dmna in eV
 !dmnr=0.001d0          !Ttrhdrn parameter dmnr in eV
 !delw=2.0d0*delt       !Grid width in eV [dos]
-!delw=10.0d0*delt      ! Grid width in eV [hist]
+!delw=10.0d0*delt      !Grid width in eV [hist]
 !flwe=0                !Flg whether calculate weighted transfers (0:not calc, 1:calc)
 !thtr=0.0d0            !Threshold for transfer integral
 !elnm=0.0d0            !Total number of electrons in unitcell

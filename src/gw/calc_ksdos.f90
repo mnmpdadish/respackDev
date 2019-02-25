@@ -33,9 +33,9 @@ subroutine calc_ksdos(NWF,NTK,nsgm,Na1,Na2,Na3,nkb1,nkb2,nkb3,idlt,dmna,dmnr,Fer
   do ia1=-Na1,Na1
    do ia2=-Na2,Na2
     do ia3=-Na3,Na3
-     if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia1)==Na1.and.mod(nkb1,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia2)==Na2.and.mod(nkb2,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia3)==Na3.and.mod(nkb3,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
      SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
     enddo!ia3
    enddo!ia2

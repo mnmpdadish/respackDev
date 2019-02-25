@@ -23,29 +23,17 @@ contains
     real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
     complex(8),parameter::ci=(0.0D0,1.0D0) 
     !
-    !1. WEIGHT_R BY Y.Nomura NOMURA 
+    !WEIGHT_R BY Y.Nomura NOMURA 
     !
     allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
     if(flg_weight.eq.1)then
      write(6,'(a40)')'WEIGHT CALCULATED' 
-     SUM_REAL=0.0d0 
-     do ia1=-Na1,Na1
-      do ia2=-Na2,Na2
-       do ia3=-Na3,Na3
-        if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-        if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-        if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-        SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
-       enddo!ia3
-      enddo!ia2
-     enddo!ia1
-     write(6,'(a40,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
-     if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
-      stop 'SUM_WEIGHT/=NTK'
-     endif 
+     call make_WEIGHT_R(nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK,WEIGHT_R(-Na1,-Na2,-Na3)) 
     else
      write(6,'(a40)')'WEIGHT NOT CALCULATED' 
     endif 
+    !
+    !phase factor
     !
     allocate(pf(-Na1:Na1,-Na2:Na2,-Na3:Na3,Ncalck)); pf=0.0d0 
     do ik=1,Ncalck 
@@ -63,7 +51,7 @@ contains
      enddo!ia3 
     enddo!ik  
     !
-    !2. HKS IN WANNIER BASIS. AND DIAGONALIZE
+    !HKS IN WANNIER BASIS. AND DIAGONALIZE
     !
     EKS=0.0d0 
     VKS=0.0d0 
@@ -210,5 +198,32 @@ contains
     deallocate(work_zheevd,rwork_zheevd,iwork_zheevd) 
     return 
   end subroutine
+  !
+  subroutine make_WEIGHT_R(nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK,WEIGHT_R) 
+    implicit none 
+    integer,intent(in)::nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK 
+    real(8),intent(out)::WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
+    integer::ia1,ia2,ia3
+    real(8)::SUM_REAL 
+    real(8),parameter::dlt_eps=1.0d-6 
+    !
+    SUM_REAL=0.0d0 
+    do ia1=-Na1,Na1
+     do ia2=-Na2,Na2
+      do ia3=-Na3,Na3
+       if(abs(ia1)==Na1.and.mod(nkb1,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+       if(abs(ia2)==Na2.and.mod(nkb2,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+       if(abs(ia3)==Na3.and.mod(nkb3,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+       SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
+      enddo!ia3
+     enddo!ia2
+    enddo!ia1
+    write(6,'(a40,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+    if(abs(SUM_REAL-dble(NTK))>dlt_eps)then 
+     stop 'SUM_WEIGHT/=NTK'
+    endif 
+    !
+    return 
+  end subroutine make_WEIGHT_R 
   !
 end module m_eigenstate 

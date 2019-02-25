@@ -36,7 +36,7 @@ contains
     !3. WEIGHT_R
     !
     allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
-    call make_WEIGHT_R(Na1,Na2,Na3,NTK,flg_weight,WEIGHT_R(-Na1,-Na2,-Na3)) 
+    call make_WEIGHT_R(nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK,flg_weight,WEIGHT_R(-Na1,-Na2,-Na3)) 
     !
     !4. phase factor
     !
@@ -193,9 +193,9 @@ contains
     return 
   end subroutine  
 
-  subroutine make_WEIGHT_R(Na1,Na2,Na3,NTK,flg_weight,WEIGHT_R) 
+  subroutine make_WEIGHT_R(nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK,flg_weight,WEIGHT_R) 
     implicit none 
-    integer,intent(in)::Na1,Na2,Na3,NTK,flg_weight  
+    integer,intent(in)::nkb1,nkb2,nkb3,Na1,Na2,Na3,NTK,flg_weight  
     real(8),intent(out)::WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
     integer::ia1,ia2,ia3
     real(8)::SUM_REAL 
@@ -207,9 +207,9 @@ contains
      do ia1=-Na1,Na1
       do ia2=-Na2,Na2
        do ia3=-Na3,Na3
-        if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-        if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-        if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+        if(abs(ia1)==Na1.and.mod(nkb1,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+        if(abs(ia2)==Na2.and.mod(nkb2,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+        if(abs(ia3)==Na3.and.mod(nkb3,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
         SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
        enddo!ia3
       enddo!ia2
