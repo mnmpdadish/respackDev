@@ -6,3 +6,4 @@ install(FILES qe2respack/qe2respack.py DESTINATION bin
         OWNER_READ OWNER_WRITE OWNER_EXECUTE 
         GROUP_READ GROUP_EXECUTE 
         WORLD_READ WORLD_EXECUTE)
+add_subdirectory(xtapp2respack)
