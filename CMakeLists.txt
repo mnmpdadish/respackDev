@@ -38,7 +38,7 @@ if("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS "15.0.0.20140528")
 else()
   find_package(OpenMP)
   if(OPENMP_FOUND)
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_C_FLAGS}")
   endif(OPENMP_FOUND)
 endif()
 
