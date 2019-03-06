@@ -47,6 +47,7 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
   real(8)::wcenter_lat(3) 
   real(8)::SUM_REAL
   real(8),parameter::bohr=0.529177249d0 
+  integer,parameter::unity=1 
   !
   ainv(:,1)=a1(:)
   ainv(:,2)=a2(:)
@@ -72,6 +73,21 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
    enddo!i
    write(303,*)(wcenter_lat(i),i=1,3) 
   enddo 
+  !
+  !OPEN(307,W,FILE='zvo_wan_center.xsf') 
+  !
+  OPEN(307,FILE='./dir-mvmc/zvo_wan_center.xsf') 
+  write(307,'(a10)')'CRYSTAL'
+  write(307,'(a10)')'PRIMVEC'
+  write(307,'(3f15.10)')(a1(i)*bohr,i=1,3)  
+  write(307,'(3f15.10)')(a2(i)*bohr,i=1,3)  
+  write(307,'(3f15.10)')(a3(i)*bohr,i=1,3)  
+  write(307,'(a10)')'PRIMCOORD'
+  write(307,'(2i10)') n_occ,unity 
+  do ib=1,n_occ
+   write(307,'(a5,3f15.10)')' H ',(wcenter(j,ib)*bohr,j=1,3)
+  enddo 
+  !
   return
 end subroutine wrt_mvmc_wcenter 
 !
