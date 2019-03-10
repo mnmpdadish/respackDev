@@ -349,7 +349,7 @@ void StdFace_Wannier90(
   FILE *fp;
   double complex Cphase;
   double dR[3], *Uspin;
-  double utmp, sum_real; /*Kazuma Nakamura*/ 
+  double utmp, sum_real, scale_onsite; /*Kazuma Nakamura*/ 
   int n_t, n_u, n_j, n_d; /*Kazuma Nakamura*/ 
   double complex *W90_t, *W90_j, *W90_u, *W90_d; /*Kazuma Nakamura*/ 
   int **t_indx, **u_indx, **j_indx, **d_indx; /*Kazuma Nakamura*/ 
@@ -649,7 +649,7 @@ void StdFace_Wannier90(
     /*
      Correction
     */
-    fprintf(stdout, "\n  @ Wannier90 IDXGEN \n\n");
+    fprintf(stdout, "\n  @ Wannier90 U_INDEX GENERATE \n\n");
     for (it = 0; it < n_u; it++) {
       /*
        Local term
@@ -660,7 +660,7 @@ void StdFace_Wannier90(
         StdFace_FindSite(StdI, iW, iL, iH,
           u_indx[it][0], u_indx[it][1], u_indx[it][2],
           u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
+          //printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
           i_idx[it]=isite; 
           j_idx[it]=jsite; 
           u_idx[isite][jsite]=StdI->Cintra[StdI->NCintra];  
@@ -674,7 +674,7 @@ void StdFace_Wannier90(
         StdFace_FindSite(StdI, iW, iL, iH,
           u_indx[it][0], u_indx[it][1], u_indx[it][2],
           u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
+          //printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
           i_idx[it]=isite; 
           j_idx[it]=jsite; 
           u_idx[isite][jsite]=StdI->Cinter[StdI->NCinter];  
@@ -682,49 +682,31 @@ void StdFace_Wannier90(
           StdI->NCinter += 1; 
       }/*Non-local term*/
     }/*for (it = 0; it < n_t; it++)*/
-    fprintf(stdout, "\n  @ Wannier90 LIST \n\n");
-    for (it = 0; it < n_u; it++) {
-      /*
-       Local term
-      */
-      if (u_indx[it][0] == 0 && u_indx[it][1] == 0 && u_indx[it][2] == 0
-        && u_indx[it][3] == u_indx[it][4])
-      {
-        StdFace_FindSite(StdI, iW, iL, iH,
-          u_indx[it][0], u_indx[it][1], u_indx[it][2],
-          u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          printf("isite, jsite, U, DMX, %d %d %f %f \n",isite,jsite,u_idx[isite][jsite],d_idx[isite][jsite]); 
-      }/*Local term*/
-      else {
-        /*
-         Non-local term
-        */
-        StdFace_FindSite(StdI, iW, iL, iH,
-          u_indx[it][0], u_indx[it][1], u_indx[it][2],
-          u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          printf("isite, jsite, U, DMX, %d %d %f %f \n",isite,jsite,u_idx[isite][jsite],d_idx[isite][jsite]); 
-      }/*Non-local term*/
-    }/*for (it = 0; it < n_t; it++)*/
-    fprintf(stdout, "\n  @ Wannier90 LOOP-SITE \n\n");
+    fprintf(stdout, "\n  @ Wannier90 ONE-BODY CORRECTION \n\n");
+    scale_onsite=1.0; 
     for (iorb=0; iorb<StdI->NsiteUC; iorb++){
       sum_real=0.0; 
       for (jorb=0; jorb<StdI->NsiteUC; jorb++){ 
-        if(iorb<=jorb){ 
-           printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb],d_idx[jorb][jorb]); 
-           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb];  
-        }
+        if(iorb==jorb){ 
+           printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb]*scale_onsite,d_idx[jorb][jorb]); 
+           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb]*scale_onsite;  
+        } 
         else {
-           printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[jorb][iorb],d_idx[jorb][jorb]); 
-           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[jorb][iorb];  
+             if(iorb<jorb){ 
+                printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb],d_idx[jorb][jorb]); 
+                sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb];  
+             } else {
+                printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[jorb][iorb],d_idx[jorb][jorb]); 
+                sum_real=sum_real+d_idx[jorb][jorb]*u_idx[jorb][iorb];  
+             } 
         }
       }
       delta[iorb]=sum_real;  
-      printf("delta, iorb: %d %f \n",iorb,delta[iorb]);  
+      printf("correction delta, iorb: %d %f \n\n",iorb,delta[iorb]);  
     }
     /*
      Hopping
     */
-    fprintf(stdout, "\n  @ Wannier90 ADDED \n\n");
     for (it = 0; it < n_t; it++) {
       /*
        Local term
@@ -740,7 +722,6 @@ void StdFace_Wannier90(
             StdI->transindx[StdI->ntrans][1] = ispin;
             StdI->transindx[StdI->ntrans][2] = isite;
             StdI->transindx[StdI->ntrans][3] = ispin;
-            //printf("%f\n",StdI->trans[StdI->ntrans]);/*Kazuma Nakamura*/
             StdI->ntrans = StdI->ntrans + 1;
           }/*for (ispin = 0; ispin < 2; ispin++)*/
         }/*if (strcmp(StdI->model, "hubbrad") == 0 )*/
