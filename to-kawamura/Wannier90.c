@@ -349,12 +349,12 @@ void StdFace_Wannier90(
   FILE *fp;
   double complex Cphase;
   double dR[3], *Uspin;
-  double utmp, sum_real, scale_onsite; /*Kazuma Nakamura*/ 
+  double utmp, sum_real, scale_factor; /*Kazuma Nakamura*/ 
   int n_t, n_u, n_j, n_d; /*Kazuma Nakamura*/ 
   double complex *W90_t, *W90_j, *W90_u, *W90_d; /*Kazuma Nakamura*/ 
   int **t_indx, **u_indx, **j_indx, **d_indx; /*Kazuma Nakamura*/ 
-  int *i_idx, *j_idx; /*Kazuma Nakamura*/ 
-  double **u_idx, **d_idx; /*Kazuma Nakamura*/ 
+  int *i_idx, *j_idx, *ih_idx, *jh_idx; /*Kazuma Nakamura*/ 
+  double **u_idx, **h_idx, **d_idx; /*Kazuma Nakamura*/ 
   double *delta; /*Kazuma Nakamura*/ 
   int iorb, jorb; /*Kazuma Nakamura*/
   char filename[256];
@@ -401,10 +401,14 @@ void StdFace_Wannier90(
   */ 
   i_idx = (int *)malloc(sizeof(int) * n_u);
   j_idx = (int *)malloc(sizeof(int) * n_u);
+  ih_idx = (int *)malloc(sizeof(int) * n_j);
+  jh_idx = (int *)malloc(sizeof(int) * n_j);
   u_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
   for (ii = 0; ii < StdI->NsiteUC; ii++) u_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
   d_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
   for (ii = 0; ii < StdI->NsiteUC; ii++) d_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
+  h_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
+  for (ii = 0; ii < StdI->NsiteUC; ii++) h_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
   delta = (double *)malloc(sizeof(double) * StdI->NsiteUC);
   // 
   read_W90(StdI, filename, 
@@ -628,6 +632,7 @@ void StdFace_Wannier90(
   StdI->NCintra = 0; 
   StdI->NCinter = 0;
   StdI->ntrans  = 0; 
+  StdI->NHund   = 0;
   for (kCell = 0; kCell < StdI->NCell; kCell++){
     /**/
     iW = StdI->Cell[kCell][0];
@@ -647,7 +652,7 @@ void StdFace_Wannier90(
       }
     }
     /*
-     Correction
+     Correction from U part
     */
     fprintf(stdout, "\n  @ Wannier90 U_INDEX GENERATE \n\n");
     for (it = 0; it < n_u; it++) {
@@ -682,28 +687,53 @@ void StdFace_Wannier90(
           StdI->NCinter += 1; 
       }/*Non-local term*/
     }/*for (it = 0; it < n_t; it++)*/
+    fprintf(stdout, "\n  @ Wannier90 U_INDEX GENERATE \n\n");
+    /*
+     Correction from J part
+    */
+    for (it = 0; it < n_j; it++) {
+      /*
+      Local term should not be computed
+      */
+      if (j_indx[it][0] != 0 || j_indx[it][1] != 0 || j_indx[it][2] != 0
+        || j_indx[it][3] != j_indx[it][4])
+      {
+        StdFace_FindSite(StdI, iW, iL, iH,
+          j_indx[it][0], j_indx[it][1], j_indx[it][2],
+          j_indx[it][3], j_indx[it][4], &isite, &jsite, &Cphase, dR);
+          //printf("jidx %d %d \n",j_indx[it][3],j_indx[it][4]); 
+          ih_idx[it]=isite; 
+          jh_idx[it]=jsite; 
+          h_idx[isite][jsite]=StdI->Hund[StdI->NHund]; 
+          StdI->NHund += 1;
+      }/*Non-local term*/
+    }/*for (it = 0; it < n_t; it++)*/
+    /*
+     One-body correction 
+    */
     fprintf(stdout, "\n  @ Wannier90 ONE-BODY CORRECTION \n\n");
-    scale_onsite=1.0; 
+    scale_factor=1.0; //0.5; //1.0; 
+    printf("scale_factor: %f \n",scale_factor); 
     for (iorb=0; iorb<StdI->NsiteUC; iorb++){
       sum_real=0.0; 
       for (jorb=0; jorb<StdI->NsiteUC; jorb++){ 
         if(iorb==jorb){ 
-           printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb]*scale_onsite,d_idx[jorb][jorb]); 
-           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb]*scale_onsite;  
+           printf("iorb, jorb, U, DMX: %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb]*scale_factor,d_idx[jorb][jorb]); 
+           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb]*scale_factor;  
         } 
         else {
              if(iorb<jorb){ 
-                printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb],d_idx[jorb][jorb]); 
-                sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb];  
+                printf("iorb, jorb, U, H, DMX: %d %d %f %f %f \n",iorb,jorb,u_idx[iorb][jorb],h_idx[iorb][jorb],d_idx[jorb][jorb]); 
+                sum_real=sum_real+d_idx[jorb][jorb]*(u_idx[iorb][jorb]-(1.0-scale_factor)*h_idx[iorb][jorb]);  
              } else {
-                printf("iorb, jorb, U, DMX, %d %d %f %f \n",iorb,jorb,u_idx[jorb][iorb],d_idx[jorb][jorb]); 
-                sum_real=sum_real+d_idx[jorb][jorb]*u_idx[jorb][iorb];  
+                printf("iorb, jorb, U, H, DMX: %d %d %f %f %f \n",iorb,jorb,u_idx[jorb][iorb],h_idx[jorb][iorb],d_idx[jorb][jorb]); 
+                sum_real=sum_real+d_idx[jorb][jorb]*(u_idx[jorb][iorb]-(1.0-scale_factor)*h_idx[jorb][iorb]);  
              } 
-        }
-      }
+        }/*iorb<jorb*/
+      }/*jorb*/
       delta[iorb]=sum_real;  
       printf("correction delta, iorb: %d %f \n\n",iorb,delta[iorb]);  
-    }
+    }/*iorb*/
     /*
      Hopping
     */
