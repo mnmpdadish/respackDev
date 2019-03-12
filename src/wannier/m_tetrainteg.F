@@ -534,48 +534,58 @@
       if(i4+i5.ne.4)     call errexec("bad i4 and i5")
       end subroutine
 
-      subroutine ttritg_mkidx(n1,n2,n3,idx1)
+      !subroutine ttritg_mkidx(n1,n2,n3,idx1)
+      subroutine ttritg_mkidx(n1,n2,n3,idx1,bvec1,bvec2,bvec3)
       integer, intent(in) :: n1
       integer, intent(in) :: n2
       integer, intent(in) :: n3
       integer, intent(out):: idx1(nvtx,n1*n2*n3*ndiv)
+      real(8), intent(in), optional :: bvec1(3),bvec2(3),bvec3(3)
+      real(8) :: bvec(3,3)
       integer :: i1,i2,i3,i4,i5,i6,i7
       integer :: imt1(8,8)
       integer :: ia1(8)
       if(n1.eq.1.and.n2.eq.1.and.n3.eq.1)return
-      imt1(:,1)=(/0,1,n1,n1+1,n1*n2,n1*n2+1,n1*n2+n1,n1*n2+n1+1/)
-      imt1(:,2)=imt1(:,1)-(/0,n1,0,n1,0,n1,0,n1/)
-      imt1(:,3)=imt1(:,1)
-     $                -(/0,0,n1*n2,n1*n2,0,0,n1*n2,n1*n2/)
-      imt1(:,4)=imt1(:,3)-(/0,n1,0,n1,0,n1,0,n1/)
-      imt1(:,5)=imt1(:,1)
-     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
-      imt1(:,6)=imt1(:,2)
-     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
-      imt1(:,7)=imt1(:,3)
-     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
-      imt1(:,8)=imt1(:,4)
-     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
-      i6=0
-      i4=0
-      do i3=1,n3
-      do i2=1,n2
-      do i1=1,n1
-        i4=i4+1
-        i5=1
-        if (i1.eq.n1) i5=i5+1
-        if (i2.eq.n2) i5=i5+2
-        if (i3.eq.n3) i5=i5+4
-        ia1=i4+imt1(:,i5)
-        do i7=1,ndiv
-          i6=i6+1
-          idx1(:,i6)=ia1(ttritg_tbl1(:,i7))
-        end do
-      end do
-      end do
-      end do
-      if (i4.ne.n1*n2*n3     ) call errexec("bad i4")
-      if (i6.ne.n1*n2*n3*ndiv) call errexec("bad i6")
+!--
+!      imt1(:,1)=(/0,1,n1,n1+1,n1*n2,n1*n2+1,n1*n2+n1,n1*n2+n1+1/)
+!      imt1(:,2)=imt1(:,1)-(/0,n1,0,n1,0,n1,0,n1/)
+!      imt1(:,3)=imt1(:,1)
+!     $                -(/0,0,n1*n2,n1*n2,0,0,n1*n2,n1*n2/)
+!      imt1(:,4)=imt1(:,3)-(/0,n1,0,n1,0,n1,0,n1/)
+!      imt1(:,5)=imt1(:,1)
+!     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
+!      imt1(:,6)=imt1(:,2)
+!     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
+!      imt1(:,7)=imt1(:,3)
+!     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
+!      imt1(:,8)=imt1(:,4)
+!     $                -(/0,0,0,0,n1*n2*n3,n1*n2*n3,n1*n2*n3,n1*n2*n3/)
+!      i6=0
+!      i4=0
+!      do i3=1,n3
+!      do i2=1,n2
+!      do i1=1,n1
+!        i4=i4+1
+!        i5=1
+!        if (i1.eq.n1) i5=i5+1
+!        if (i2.eq.n2) i5=i5+2
+!        if (i3.eq.n3) i5=i5+4
+!        ia1=i4+imt1(:,i5)
+!        do i7=1,ndiv
+!          i6=i6+1
+!          idx1(:,i6)=ia1(ttritg_tbl1(:,i7))
+!        end do
+!      end do
+!      end do
+!      end do
+!      if (i4.ne.n1*n2*n3     ) call errexec("bad i4")
+!      if (i6.ne.n1*n2*n3*ndiv) call errexec("bad i6")
+!--
+      bvec=reshape((/1d0,0d0,0d0,0d0,1d0,0d0,0d0,0d0,1d0/),(/3,3/))
+      if(present(bvec1))bvec(:,1)=bvec1
+      if(present(bvec2))bvec(:,2)=bvec2
+      if(present(bvec3))bvec(:,3)=bvec3
+      call libtetrabzinitialize(bvec,(/n1,n2,n3/),idx1)
       end subroutine
         
       subroutine errexec(smsg)
@@ -590,4 +600,69 @@
       stop
       end subroutine
 
+!!!FROM LIBTETRABZ, MIT License, Copyright (c) 2014 Mitsuaki Kawamura!!!
+      subroutine libtetrabzinitialize(bvec,ng,indx1)
+      real(8), intent(in   ) :: bvec(3,3)
+      integer, intent(in   ) :: ng(3)
+      integer, intent(  out) :: indx1(4,*)
+      integer :: nk,nt, ivvec(3,4,6), ikv(3)
+      integer :: itype, i1, i2, i3, it, ii, divvec(4,4), ivvec0(4)
+      real(8) :: l(4), bvec2(3,3), bvec3(3,4)
+      nk = product(ng(1:3))
+      nt = nk * 6
+      do i1 = 1, 3
+        bvec2(1:3,i1) = bvec(1:3,i1) / dble(ng(i1))
+      end do
+      bvec3(1:3,1) = -bvec2(1:3,1) + bvec2(1:3,2) + bvec2(1:3,3)
+      bvec3(1:3,2) =  bvec2(1:3,1) - bvec2(1:3,2) + bvec2(1:3,3)
+      bvec3(1:3,3) =  bvec2(1:3,1) + bvec2(1:3,2) - bvec2(1:3,3)
+      bvec3(1:3,4) =  bvec2(1:3,1) + bvec2(1:3,2) + bvec2(1:3,3)
+      ! length of delta bvec
+      do i1 = 1, 4
+        l(i1) = dot_product(bvec3(1:3,i1),bvec3(1:3,i1))
+      end do
+      itype = minloc(l(1:4),1)
+      ! start & last
+      ivvec0(1:4) = (/ 0, 0, 0, 0 /)
+      divvec(1:4,1) = (/ 1, 0, 0, 0 /)
+      divvec(1:4,2) = (/ 0, 1, 0, 0 /)
+      divvec(1:4,3) = (/ 0, 0, 1, 0 /)
+      divvec(1:4,4) = (/ 0, 0, 0, 1 /)
+      ivvec0(itype) = 1
+      divvec(itype, itype) = - 1
+      ! Corners of tetrahedra
+      it = 0
+      do i1 = 1, 3
+        do i2 = 1, 3
+          if(i2 == i1) cycle
+          do i3 = 1, 3
+            if(i3 == i1 .or. i3 == i2) cycle
+            it = it + 1
+            ivvec(1:3,1,it) = ivvec0(1:3)
+            ivvec(1:3,2,it) = ivvec(1:3,1,it) + divvec(1:3,i1)
+            ivvec(1:3,3,it) = ivvec(1:3,2,it) + divvec(1:3,i2)
+            ivvec(1:3,4,it) = ivvec(1:3,3,it) + divvec(1:3,i3)
+          end do
+        end do
+      end do
+!     allocate(indx1(20, 6 * nk), indx2(20, 6 * nk), indx3(20 * 6 * nk))
+      nt = 0
+      do i3 = 1, ng(3)
+        do i2  = 1, ng(2)
+          do i1 = 1, ng(1)
+            do it = 1, 6
+              nt = nt + 1
+              do ii = 1, 4
+                ikv(1:3) = (/i1, i2, i3/) + ivvec(1:3,ii,it) - 1
+                ikv(1:3) = modulo(ikv(1:3), ng(1:3))
+                indx1(ii,nt) = 1 + ikv(1) + ng(1) * ikv(2) 
+     $                                    + ng(1) * ng(2) * ikv(3)
+              end do
+            end do
+          end do
+        end do
+      end do
+      end subroutine
+!!!FROM LIBTETRABZ, MIT License, Copyright (c) 2014 Mitsuaki Kawamura!!!
+        
       end module

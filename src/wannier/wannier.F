@@ -2538,9 +2538,15 @@
      +     SK_BAND_DISP(1,1)) 
       call wrt_mvmc_SK0(NTK,SK0(1,1)) 
       call wrt_mvmc_ef(FermiEnergy) 
-      call calculate_dmx(NTB,NTK,n_occ,nkb1,nkb2,nkb3,Na1,Na2,Na3, !n_occ=NWF
-     +     FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
-     +     E_EIG(1,1),UNT(1,1,1)) 
+      !
+      !ELECTRON NUMBER == 0.0 -> DMX IS EVALUATED WITH BAND-CALC EF
+      !
+      if(elec_num==0.0d0)then 
+       call calculate_dmx(NTB,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
+     +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
+     +      E_EIG(1,1),UNT(1,1,1)) 
+      endif 
+      !
       deallocate(E_EIG) 
       !
 !--
@@ -2634,10 +2640,10 @@
      +                      WEIGHT_R,H_MAT_R)
       END IF
 !--
-!wannier DOS
+!wannier DOS and DMX 
 !--
       write(6,*) 
-      write(6,'(a40)')'+++ write wannier DOS +++'
+      write(6,'(a40)')'+++ write wannier DOS and DMX +++'
       write(6,*) 
       allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
       allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
@@ -2646,11 +2652,23 @@
      +                          NTK,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),1,
      +                          NTK,SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))  
       filename='./dir-wan/dat.dos.wannier'
-      call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
-     +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
       !
-      ! '0.0' --- not calculate FermiEnergy 
+      !ELECTRON NUMBER == 0.0 -> DOS IS EVALUATED WITH BAND-CALC EF
       !
+      if(elec_num==0.0d0)then 
+       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
+     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+      endif 
+      !
+      !ELECTRON NUMBER /= 0.0 -> DOS & DMX ARE EVALUATED WITH RECALC EF
+      !
+      if(elec_num/=0.0d0)then  
+       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
+     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+       call calculate_dmx(NWF,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
+     +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
+     +      E_EIG(1,1),V_EIG(1,1,1)) 
+      endif 
       deallocate(E_EIG,V_EIG)
 
 !==================================

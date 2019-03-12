@@ -31,7 +31,7 @@ contains
     !2. xow(ib,ik) 
     !
     allocate(xow(NTB,nkb1,nkb2,nkb3)); xow=0.0d0 
-    call make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,SK0(1,1),EIG(1,1),xow(1,1,1,1)) 
+    call make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1(1),b2(1),b3(1),SK0(1,1),EIG(1,1),xow(1,1,1,1)) 
     !
     !3. WEIGHT_R
     !
@@ -79,11 +79,12 @@ contains
     return 
   end subroutine make_lat_num 
 
-  subroutine make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,SK0,E_EIG,xow) 
+  subroutine make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1,b2,b3,SK0,E_EIG,xow) 
     use m_tetrainteg
     implicit none 
     integer,intent(in)::nkb1,nkb2,nkb3,NTB,NTK
     real(8),intent(in)::FermiEnergy 
+    real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::SK0(3,NTK) 
     real(8),intent(in)::E_EIG(NTB,NTK) 
     real(8),intent(out)::xow(NTB,nkb1,nkb2,nkb3) 
@@ -108,7 +109,7 @@ contains
     call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
     !
     imt1=0 
-    call ttritg_mkidx(nkb1,nkb2,nkb3,imt1(1)) 
+    call ttritg_mkidx(nkb1,nkb2,nkb3,imt1(1),b1(1),b2(1),b3(1)) 
     !
     omega(1)=cmplx(FermiEnergy,0.0d0)
     !
@@ -296,7 +297,8 @@ contains
     complex(8),intent(out)::dmx(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
     integer::iR,ia1,ia2,ia3,iw,jw,ib,ikb1,ikb2,ikb3,ik 
     integer::index_kpt(nkb1,nkb2,nkb3) 
-    complex(8)::SUM_CMPX 
+    real(8)::DMX_REAL 
+    complex(8)::SUM_CMPX,DMX_CMPX
     !
     index_kpt=0 
     call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
@@ -326,6 +328,22 @@ contains
       enddo!jw 
      enddo!iw 
     enddo!iR 
+    ! 
+    !impose sum rule
+    !
+    do iw=1,NWF
+     SUM_CMPX=SUM_CMPX+dmx(iw,iw,0,0,0) 
+    enddo 
+    write(6,*) 
+    write(6,'(a40)')'+++ m_dmx: Tr(DMX) +++' 
+    DMX_REAL=dble(nint(dble(SUM_CMPX))) 
+    DMX_CMPX=cmplx(DMX_REAL,0.0d0)    
+    write(6,'(a40,2f15.10)')'before correction',SUM_CMPX 
+    write(6,'(a40,2f15.10)')'after  correction',DMX_CMPX 
+    do iw=1,NWF
+     dmx(iw,iw,0,0,0)=dmx(iw,iw,0,0,0)*(DMX_CMPX/SUM_CMPX) 
+    enddo 
+    !
     return 
   end subroutine make_dmx 
 

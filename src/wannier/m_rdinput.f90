@@ -29,10 +29,8 @@ real(8),public::tcut_mvmc!Cutoff of transfer for mvmc
 integer,public::flg_vis_bloch!flag for visualization  of Bloch function
 logical,public::CALC_REAL_SPACE_BLOCH!flag for visualization of Bloch function 
 real(8),public::calc_k(3)!k points to be calculated 
-!&param-vis_bloch 
-!integer,public::flg_vis_bloch!flag for visualization  of Bloch function
-!logical,public::CALC_REAL_SPACE_BLOCH!flag for visualization of Bloch function 
-!real(8),public::calc_k(3)!k points to be calculated 
+real(8),public::electron_number_wannier_space!electron number in wannier_space for density matrix 
+real(8),public::elec_num!electron number in wannier_space for density matrix 
 !&param-interpolation   
 integer,public::N_sym_points!The number of k-point points in symmetry line
 integer,public::Ndiv!Separation between symmetry points  
@@ -73,11 +71,10 @@ integer,public,allocatable::wrt_list(:)!wrt_list(N_write_wannier)
 !--
 namelist/param_wannier/icell,N_wannier,N_initial_guess,EPS_SPILLAGE,DAMP,EPS_SPREAD,MAX_STEP_LENGTH,&
 Lower_energy_window,Upper_energy_window,set_inner_window,Upper_inner_window,Lower_inner_window,flg_BMAT,&
-tcut_mvmc,reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k 
+tcut_mvmc,reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k,electron_number_wannier_space 
 namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense!20170709  
 namelist/param_visualization/flg_vis_wannier,N_write_wannier,& 
 ix_vis_min,ix_vis_max,iy_vis_min,iy_vis_max,iz_vis_min,iz_vis_max
-!namelist/param_vis_bloch/flg_vis_bloch,calc_k 
 contains
 
 subroutine read_input
@@ -100,6 +97,7 @@ READING_BMAT_FORMAT=0
 FLG_INITIAL_GUESS_DIREC=0
 flg_vis_bloch=0
 calc_k(:)=0.0d0
+electron_number_wannier_space=0.0d0 
 !---
 !open(999,file='input.in')
 !read(999,nml=param_wannier)
@@ -111,6 +109,7 @@ E_LOWER=Lower_energy_window
 E_UPPER=Upper_energy_window
 E_LOWER_inner=Lower_inner_window
 E_UPPER_inner=Upper_inner_window
+elec_num=electron_number_wannier_space 
 !--
 !check ENERGY WINDOW
 if(E_LOWER>=E_UPPER)then 

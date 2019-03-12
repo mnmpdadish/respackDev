@@ -112,14 +112,15 @@ contains
     enddo 
     write(6,'(a40)')'+++ m_dos: est_ef +++'
     write(6,'(a40,f15.8)')'SUM of DOS',SUM_REAL
+    write(6,'(a40,f15.8)')'FermiEnergy(before)=',dosgrd(ie)*au  
     SUM_REAL=0.0d0 
     do ie=1,ndosgrd
      if(SUM_REAL>=electron_number)goto 3000 
      SUM_REAL=SUM_REAL+deltw*dos(ie) 
     enddo 
   3000 FermiEnergy=dosgrd(ie) 
+    write(6,'(a40,f15.8)')'FermiEnergy(after)=',dosgrd(ie)*au  
     write(6,'(a40,f15.8)')'electron_number',SUM_REAL
-    write(6,'(a40,f15.8)')'FermiEnergy=',dosgrd(ie)*au  
     return
   end subroutine 
 
