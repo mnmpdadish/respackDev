@@ -2648,9 +2648,8 @@
       allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
       allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
       call calculate_eigenstate(NWF,Na1,Na2,Na3,
-     +                          H_MAT_R(1,1,-Na1,-Na2,-Na3),
-     +                          NTK,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),1,
-     +                          NTK,SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))  
+     +     H_MAT_R(1,1,-Na1,-Na2,-Na3),NTK,nkb1,nkb2,nkb3,
+     +     a1(1),a2(1),a3(1),1,NTK,SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))   
       filename='./dir-wan/dat.dos.wannier'
       !
       !ELECTRON NUMBER == 0.0 -> DOS IS EVALUATED WITH BAND-CALC EF

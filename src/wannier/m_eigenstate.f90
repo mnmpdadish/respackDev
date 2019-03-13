@@ -128,7 +128,19 @@ contains
      E_TMP_R(:)=0.0D0 
      call diagV(NWF,Hin(1,1),E_TMP_R(1)) 
      EKS(:,ik)=E_TMP_R(:) 
-     VKS(:,:,ik)=Hin(:,:) 
+     !
+     !H(ib,jb):: ib: basis, jb: eigenvector
+     !
+     ![NOTE] trnspose 
+     !
+     !VKS(jb,ib):: jb: eigenvector, ib: basis 
+     !
+     do ib=1,NWF
+      do jb=1,NWF
+       VKS(jb,ib,ik)=Hin(ib,jb) 
+      enddo
+     enddo
+     !
     enddo!ik 
     deallocate(Hin,E_TMP_R) 
     !
