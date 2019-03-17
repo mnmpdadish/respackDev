@@ -179,6 +179,7 @@ static int read_W90_query(
   fprintf(stdout, "\n      EFFECTIVE terms:\n");
   fprintf(stdout, "           R0   R1   R2 band_i band_f Hamiltonian\n");
   nMat = 0;
+  //printf("%d \n",nWSC); /*Kazuma Nakamura*/ 
   for (iWSC = 0; iWSC < nWSC; iWSC++) {
     for (iWan = 0; iWan < StdI->NsiteUC; iWan++) {
       for (jWan = 0; jWan < StdI->NsiteUC; jWan++) {
@@ -186,6 +187,7 @@ static int read_W90_query(
           fprintf(stdout, "        %5d%5d%5d%5d%5d%12.6f%12.6f\n",
             indx_tot[iWSC][0], indx_tot[iWSC][1], indx_tot[iWSC][2], iWan, jWan,
             creal(Mat_tot[iWSC][iWan][jWan]), cimag(Mat_tot[iWSC][iWan][jWan]));
+            //printf("%d \n",nMat); /*Kazuma Nakamura*/ 
           nMat += 1;
         }
       }
@@ -349,7 +351,7 @@ void StdFace_Wannier90(
   FILE *fp;
   double complex Cphase;
   double dR[3], *Uspin;
-  double utmp, sum_real, scale_factor; /*Kazuma Nakamura*/ 
+  double utmp, sum_real, scale_factor, UIN, DMX, JIN; /*Kazuma Nakamura*/ 
   int n_t, n_u, n_j, n_d; /*Kazuma Nakamura*/ 
   double complex *W90_t, *W90_j, *W90_u, *W90_d; /*Kazuma Nakamura*/ 
   int **t_indx, **u_indx, **j_indx, **d_indx; /*Kazuma Nakamura*/ 
@@ -357,6 +359,9 @@ void StdFace_Wannier90(
   double **u_idx, **h_idx, **d_idx; /*Kazuma Nakamura*/ 
   double *delta; /*Kazuma Nakamura*/ 
   int iorb, jorb; /*Kazuma Nakamura*/
+  int i0,i1,i2,i0max,i1max,i2max,iu,id,ih; /*Kazuma Nakamura*/
+  int *****tmpU; /*Kazuma Nakamura*/ 
+  int *****tmpJ; /*Kazuma Nakamura*/ 
   char filename[256];
   /**@brief
   (1) Compute the shape of the super-cell and sites in the super-cell
@@ -396,21 +401,6 @@ void StdFace_Wannier90(
   W90_u = (double complex *)malloc(sizeof(double complex) * n_u);
   u_indx = (int **)malloc(sizeof(int*) * n_u);
   for (ii = 0; ii < n_u; ii++) u_indx[ii] = (int *)malloc(sizeof(int) * 5);
-  /*
-  Kazuma Nakamura
-  */ 
-  i_idx = (int *)malloc(sizeof(int) * n_u);
-  j_idx = (int *)malloc(sizeof(int) * n_u);
-  ih_idx = (int *)malloc(sizeof(int) * n_j);
-  jh_idx = (int *)malloc(sizeof(int) * n_j);
-  u_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) u_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  d_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) d_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  h_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) h_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  delta = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  // 
   read_W90(StdI, filename, 
     StdI->cutoff_u, StdI->cutoff_UR, StdI->cutoff_length_U, W90_u, u_indx);
   /*
@@ -441,6 +431,181 @@ void StdFace_Wannier90(
   for (ii = 0; ii < n_d; ii++) d_indx[ii] = (int *)malloc(sizeof(int) * 5);
   read_W90(StdI, filename, 
     StdI->cutoff_d, StdI->cutoff_DR, StdI->cutoff_length_D, W90_d, d_indx);
+  /*
+  Kazuma Nakamura
+  */ 
+  printf("n_u: %d \n",n_u); 
+  printf("n_j: %d \n",n_u); 
+  printf("NsiteUC: %d \n",StdI->NsiteUC); 
+  printf("NCell: %d \n",StdI->NCell); 
+  i_idx = (int *)malloc(sizeof(int) * n_u);
+  j_idx = (int *)malloc(sizeof(int) * n_u);
+  ih_idx = (int *)malloc(sizeof(int) * n_j);
+  jh_idx = (int *)malloc(sizeof(int) * n_j);
+  u_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
+  for (ii = 0; ii < StdI->NsiteUC; ii++) u_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
+  d_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
+  for (ii = 0; ii < StdI->NsiteUC; ii++) d_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
+  h_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
+  for (ii = 0; ii < StdI->NsiteUC; ii++) h_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
+  delta = (double *)malloc(sizeof(double) * StdI->NsiteUC);
+  //
+  i0max=0; 
+  i1max=0; 
+  i2max=0; 
+  for (it = 0; it < n_u; it++){
+    if(abs(u_indx[it][0])>i1max){
+       i0max=abs(u_indx[it][0]);  
+       printf("i0max %d \n",i1max); 
+    }
+    if(abs(u_indx[it][1])>i1max){
+       i1max=abs(u_indx[it][1]);  
+       printf("i1max %d \n",i1max); 
+    }
+    if(abs(u_indx[it][2])>i2max){
+       i2max=abs(u_indx[it][2]);  
+       printf("i2max %d \n",i2max); 
+    }
+  }
+  printf("i0max i1max i2max: %d %d %d \n",i0max,i1max,i2max); 
+  /*malloc*/
+  tmpU = (int *****)malloc(sizeof(int ****) * 2*i0max+1);
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    tmpU[i0] = (int ****)malloc(sizeof(int ***) * 2*i1max+1);
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      tmpU[i0][i1] = (int ***)malloc(sizeof(int **) * 2*i2max+1);
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        tmpU[i0][i1][i2] = (int **)malloc(sizeof(int *) * StdI->NsiteUC);
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          tmpU[i0][i1][i2][iorb] = (int *)malloc(sizeof(int) * StdI->NsiteUC);
+        }
+      }
+    }
+  }
+  /*initialize*/
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          for (jorb = 0; jorb < StdI->NsiteUC; jorb++) { 
+            tmpU[i0][i1][i2][iorb][jorb]=-1;  
+          }
+        }
+      }
+    }
+  }
+  /*U*/
+  printf("+++\n"); 
+  for (it = 0; it < n_u; it++){
+    i0=u_indx[it][0];  
+    i1=u_indx[it][1];
+    i2=u_indx[it][2];
+    iorb=u_indx[it][3];
+    jorb=u_indx[it][4]; 
+    if(i0==0 && i1==0 && i2==0 && iorb==jorb){ 
+     //printf("it: %d \n",it); 
+     tmpU[i0][i1][i2][iorb][jorb]=it;  
+    }
+    else if(i0==0 && i1==0 && i2==0 && iorb!=jorb){ 
+     //printf("it: %d \n",it); 
+     tmpU[i0][i1][i2][iorb][jorb]=it;  
+     tmpU[i0][i1][i2][jorb][iorb]=it;  
+    } 
+    else {
+     //printf("it: %d \n",it); 
+     tmpU[i0][i1][i2][iorb][jorb]=it;  
+     i0=-i0; 
+     i1=-i1; 
+     i2=-i2; 
+     tmpU[i0][i1][i2][jorb][iorb]=it;  
+    }
+  }  
+  printf("+++\n"); 
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          for (jorb = 0; jorb < StdI->NsiteUC; jorb++) { 
+            it=tmpU[i0][i1][i2][iorb][jorb]; 
+            if(it==-1) {
+                    continue; 
+            }
+            printf("%d %d %d %d %d %f \n",i0,i1,i2,iorb,jorb,creal(W90_u[it]));  
+          }
+        }
+      }
+    }
+  }
+  /*malloc*/
+  tmpJ = (int *****)malloc(sizeof(int ****) * 2*i0max+1);
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    tmpJ[i0] = (int ****)malloc(sizeof(int ***) * 2*i1max+1);
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      tmpJ[i0][i1] = (int ***)malloc(sizeof(int **) * 2*i2max+1);
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        tmpJ[i0][i1][i2] = (int **)malloc(sizeof(int *) * StdI->NsiteUC);
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          tmpJ[i0][i1][i2][iorb] = (int *)malloc(sizeof(int) * StdI->NsiteUC);
+        }
+      }
+    }
+  }
+  /*initialize*/
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          for (jorb = 0; jorb < StdI->NsiteUC; jorb++) { 
+            tmpJ[i0][i1][i2][iorb][jorb]=-1;  
+          }
+        }
+      }
+    }
+  }
+  /*J*/
+  printf("+++\n"); 
+  for (it = 0; it < n_j; it++){
+    i0=j_indx[it][0];  
+    i1=j_indx[it][1];
+    i2=j_indx[it][2];
+    iorb=j_indx[it][3];
+    jorb=j_indx[it][4]; 
+    if(i0==0 && i1==0 && i2==0 && iorb==jorb){ 
+     //printf("it: %d \n",it); 
+     tmpJ[i0][i1][i2][iorb][jorb]=-1; //it;  
+    }
+    else if(i0==0 && i1==0 && i2==0 && iorb!=jorb){ 
+     //printf("it: %d \n",it); 
+     tmpJ[i0][i1][i2][iorb][jorb]=it;  
+     tmpJ[i0][i1][i2][jorb][iorb]=it;  
+    } 
+    else {
+     //printf("it: %d \n",it); 
+     tmpJ[i0][i1][i2][iorb][jorb]=it;  
+     i0=-i0; 
+     i1=-i1; 
+     i2=-i2; 
+     tmpJ[i0][i1][i2][jorb][iorb]=it;  
+    }
+  }  
+  printf("+++\n"); 
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          for (jorb = 0; jorb < StdI->NsiteUC; jorb++) { 
+            it=tmpJ[i0][i1][i2][iorb][jorb]; 
+            if(it==-1) {
+                    continue; 
+            }
+            printf("%d %d %d %d %d %f \n",i0,i1,i2,iorb,jorb,creal(W90_j[it]));  
+          }
+        }
+      }
+    }
+  }
+  //exit(0);   
+  // 
   /**@brief
   (2) check & store parameters of Hamiltonian
   */
@@ -590,7 +755,7 @@ void StdFace_Wannier90(
       Local term should not be computed
       */
       if (j_indx[it][0] != 0 || j_indx[it][1] != 0 || j_indx[it][2] != 0
-        || j_indx[it][3] != j_indx[it][4])
+       || j_indx[it][3] != j_indx[it][4])
       {
         StdFace_FindSite(StdI, iW, iL, iH,
           j_indx[it][0], j_indx[it][1], j_indx[it][2],
@@ -629,108 +794,68 @@ void StdFace_Wannier90(
 ///////////////////
 /*Kazuma Nakamura*/
 ///////////////////
-  StdI->NCintra = 0; 
-  StdI->NCinter = 0;
-  StdI->ntrans  = 0; 
-  StdI->NHund   = 0;
+  StdI->ntrans = 0; 
   for (kCell = 0; kCell < StdI->NCell; kCell++){
     /**/
     iW = StdI->Cell[kCell][0];
     iL = StdI->Cell[kCell][1];
     iH = StdI->Cell[kCell][2];
     /*
-     Local term 1
-    */
-    if (strcmp(StdI->model, "spin") == 0) {
-      for (isite = StdI->NsiteUC*kCell; isite < StdI->NsiteUC*(kCell + 1); isite++) {
-        StdFace_MagField(StdI, StdI->S2, -StdI->h, -StdI->Gamma, isite);
-      }
-    }/*if (strcmp(StdI->model, "spin") == 0 )*/
-    else {
-      for (isite = StdI->NsiteUC*kCell; isite < StdI->NsiteUC*(kCell + 1); isite++) {
-        StdFace_HubbardLocal(StdI, StdI->mu, -StdI->h, -StdI->Gamma, 0.0, isite);
-      }
-    }
-    /*
-     Correction from U part
-    */
-    fprintf(stdout, "\n  @ Wannier90 U_INDEX GENERATE \n\n");
-    for (it = 0; it < n_u; it++) {
-      /*
-       Local term
-      */
-      if (u_indx[it][0] == 0 && u_indx[it][1] == 0 && u_indx[it][2] == 0
-        && u_indx[it][3] == u_indx[it][4])
-      {
-        StdFace_FindSite(StdI, iW, iL, iH,
-          u_indx[it][0], u_indx[it][1], u_indx[it][2],
-          u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          //printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
-          i_idx[it]=isite; 
-          j_idx[it]=jsite; 
-          u_idx[isite][jsite]=StdI->Cintra[StdI->NCintra];  
-          d_idx[isite][jsite]=creal(W90_d[it]); 
-          StdI->NCintra += 1;
-      }/*Local term*/
-      else {
-        /*
-         Non-local term
-        */
-        StdFace_FindSite(StdI, iW, iL, iH,
-          u_indx[it][0], u_indx[it][1], u_indx[it][2],
-          u_indx[it][3], u_indx[it][4], &isite, &jsite, &Cphase, dR);
-          //printf("uidx %d %d \n",u_indx[it][3],u_indx[it][4]); 
-          i_idx[it]=isite; 
-          j_idx[it]=jsite; 
-          u_idx[isite][jsite]=StdI->Cinter[StdI->NCinter];  
-          d_idx[isite][jsite]=creal(W90_d[it]); 
-          StdI->NCinter += 1; 
-      }/*Non-local term*/
-    }/*for (it = 0; it < n_t; it++)*/
-    fprintf(stdout, "\n  @ Wannier90 U_INDEX GENERATE \n\n");
-    /*
-     Correction from J part
-    */
-    for (it = 0; it < n_j; it++) {
-      /*
-      Local term should not be computed
-      */
-      if (j_indx[it][0] != 0 || j_indx[it][1] != 0 || j_indx[it][2] != 0
-        || j_indx[it][3] != j_indx[it][4])
-      {
-        StdFace_FindSite(StdI, iW, iL, iH,
-          j_indx[it][0], j_indx[it][1], j_indx[it][2],
-          j_indx[it][3], j_indx[it][4], &isite, &jsite, &Cphase, dR);
-          //printf("jidx %d %d \n",j_indx[it][3],j_indx[it][4]); 
-          ih_idx[it]=isite; 
-          jh_idx[it]=jsite; 
-          h_idx[isite][jsite]=StdI->Hund[StdI->NHund]; 
-          StdI->NHund += 1;
-      }/*Non-local term*/
-    }/*for (it = 0; it < n_t; it++)*/
-    /*
      One-body correction 
     */
     fprintf(stdout, "\n  @ Wannier90 ONE-BODY CORRECTION \n\n");
-    scale_factor=1.0; //0.5; //1.0; 
+    scale_factor=0.5; //1.0; 
     printf("scale_factor: %f \n",scale_factor); 
     for (iorb=0; iorb<StdI->NsiteUC; iorb++){
       sum_real=0.0; 
-      for (jorb=0; jorb<StdI->NsiteUC; jorb++){ 
-        if(iorb==jorb){ 
-           printf("iorb, jorb, U, DMX: %d %d %f %f \n",iorb,jorb,u_idx[iorb][jorb]*scale_factor,d_idx[jorb][jorb]); 
-           sum_real=sum_real+d_idx[jorb][jorb]*u_idx[iorb][jorb]*scale_factor;  
-        } 
-        else {
-             if(iorb<jorb){ 
-                printf("iorb, jorb, U, H, DMX: %d %d %f %f %f \n",iorb,jorb,u_idx[iorb][jorb],h_idx[iorb][jorb],d_idx[jorb][jorb]); 
-                sum_real=sum_real+d_idx[jorb][jorb]*(u_idx[iorb][jorb]-(1.0-scale_factor)*h_idx[iorb][jorb]);  
-             } else {
-                printf("iorb, jorb, U, H, DMX: %d %d %f %f %f \n",iorb,jorb,u_idx[jorb][iorb],h_idx[jorb][iorb],d_idx[jorb][jorb]); 
-                sum_real=sum_real+d_idx[jorb][jorb]*(u_idx[jorb][iorb]-(1.0-scale_factor)*h_idx[jorb][iorb]);  
-             } 
-        }/*iorb<jorb*/
-      }/*jorb*/
+      for (i0 = -i0max; i0 < i0max+1; i0++) {
+         for (i1 = -i1max; i1 < i1max+1; i1++) {
+            for (i2 = -i2max; i2 < i2max+1; i2++) {
+               for(jorb=0; jorb<StdI->NsiteUC; jorb++){ 
+                  if(i0==0 && i1==0 && i2==0 && iorb==jorb){ 
+                    iu=tmpU[i0][i1][i2][iorb][jorb]; 
+                    ih=tmpJ[i0][i1][i2][iorb][jorb]; 
+                    id=tmpU[0][0][0][jorb][jorb]; 
+                    if(iu==-1) {
+                      UIN=0.0; 
+                    }
+                    else {
+                      UIN=creal(W90_u[iu]);  
+                    }
+                    if(ih==-1) {
+                      JIN=0.0; 
+                    }
+                    else {
+                      JIN=creal(W90_j[ih]);  
+                    }
+                    DMX=creal(W90_d[id]);  
+                    printf("UIN DMX JIN: %f %f %f \n",UIN,DMX,JIN);
+                    sum_real=sum_real+DMX*UIN*scale_factor;  
+                  }/*local*/ 
+                  else {
+                    iu=tmpU[i0][i1][i2][iorb][jorb]; 
+                    id=tmpU[0][0][0][jorb][jorb]; 
+                    ih=tmpJ[i0][i1][i2][iorb][jorb]; 
+                    if(iu==-1) {
+                      UIN=0.0; 
+                    }
+                    else {
+                      UIN=creal(W90_u[iu]);  
+                    }
+                    if(ih==-1) {
+                      JIN=0.0; 
+                    }
+                    else {
+                      JIN=creal(W90_j[ih]);  
+                    }
+                    DMX=creal(W90_d[id]);  
+                    printf("UIN DMX JIN: %f %f %f \n",it,UIN,DMX,JIN);
+                    sum_real=sum_real+DMX*(UIN-(1.0-scale_factor)*JIN); 
+                  }/*non-local*/
+               }/*jorb*/
+            }/*i2*/
+         }/*i1*/
+      }/*i0*/
       delta[iorb]=sum_real;  
       printf("correction delta, iorb: %d %f \n\n",iorb,delta[iorb]);  
     }/*iorb*/
@@ -742,7 +867,7 @@ void StdFace_Wannier90(
        Local term
       */
       if (t_indx[it][0] == 0 && t_indx[it][1] == 0 && t_indx[it][2] == 0
-        && t_indx[it][3] == t_indx[it][4])
+       && t_indx[it][3] == t_indx[it][4])
       {
         if (strcmp(StdI->model, "hubbard") == 0) {
           isite = StdI->NsiteUC*kCell + t_indx[it][3];
