@@ -351,17 +351,15 @@ void StdFace_Wannier90(
   FILE *fp;
   double complex Cphase;
   double dR[3], *Uspin;
-  double utmp, sum_real, scale_factor, UIN, DMX, JIN; /*Kazuma Nakamura*/ 
+  double sum_real, scale_factor, UIN, DMX, JIN; /*Kazuma Nakamura*/ 
   int n_t, n_u, n_j, n_d; /*Kazuma Nakamura*/ 
   double complex *W90_t, *W90_j, *W90_u, *W90_d; /*Kazuma Nakamura*/ 
   int **t_indx, **u_indx, **j_indx, **d_indx; /*Kazuma Nakamura*/ 
-  int *i_idx, *j_idx, *ih_idx, *jh_idx; /*Kazuma Nakamura*/ 
-  double **u_idx, **h_idx, **d_idx; /*Kazuma Nakamura*/ 
   double *delta; /*Kazuma Nakamura*/ 
   int iorb, jorb; /*Kazuma Nakamura*/
   int i0,i1,i2,i0max,i1max,i2max,iu,id,ih; /*Kazuma Nakamura*/
-  int *****tmpU; /*Kazuma Nakamura*/ 
-  int *****tmpJ; /*Kazuma Nakamura*/ 
+  static int *****tmpU; /*Kazuma Nakamura*/ 
+  static int *****tmpJ; /*Kazuma Nakamura*/ 
   char filename[256];
   /**@brief
   (1) Compute the shape of the super-cell and sites in the super-cell
@@ -438,16 +436,6 @@ void StdFace_Wannier90(
   printf("n_j: %d \n",n_u); 
   printf("NsiteUC: %d \n",StdI->NsiteUC); 
   printf("NCell: %d \n",StdI->NCell); 
-  i_idx = (int *)malloc(sizeof(int) * n_u);
-  j_idx = (int *)malloc(sizeof(int) * n_u);
-  ih_idx = (int *)malloc(sizeof(int) * n_j);
-  jh_idx = (int *)malloc(sizeof(int) * n_j);
-  u_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) u_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  d_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) d_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
-  h_idx = (double **)malloc(sizeof(double*) * StdI->NsiteUC);
-  for (ii = 0; ii < StdI->NsiteUC; ii++) h_idx[ii] = (double *)malloc(sizeof(double) * StdI->NsiteUC);
   delta = (double *)malloc(sizeof(double) * StdI->NsiteUC);
   //
   i0max=0; 
@@ -470,10 +458,13 @@ void StdFace_Wannier90(
   printf("i0max i1max i2max: %d %d %d \n",i0max,i1max,i2max); 
   /*malloc*/
   tmpU = (int *****)malloc(sizeof(int ****) * 2*i0max+1);
+  tmpU = tmpU + i0max; // base shift
   for (i0 = -i0max; i0 < i0max+1; i0++) {
     tmpU[i0] = (int ****)malloc(sizeof(int ***) * 2*i1max+1);
+    tmpU[i0] = tmpU[i0] + i1max; // base shift
     for (i1 = -i1max; i1 < i1max+1; i1++) {
       tmpU[i0][i1] = (int ***)malloc(sizeof(int **) * 2*i2max+1);
+      tmpU[i0][i1] = tmpU[i0][i1] + i2max; // base shift
       for (i2 = -i2max; i2 < i2max+1; i2++) {
         tmpU[i0][i1][i2] = (int **)malloc(sizeof(int *) * StdI->NsiteUC);
         for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
@@ -494,6 +485,7 @@ void StdFace_Wannier90(
       }
     }
   }
+  //exit(0); 
   /*U*/
   printf("+++\n"); 
   for (it = 0; it < n_u; it++){
@@ -538,10 +530,13 @@ void StdFace_Wannier90(
   }
   /*malloc*/
   tmpJ = (int *****)malloc(sizeof(int ****) * 2*i0max+1);
+  tmpJ = tmpJ + i0max; // base shift
   for (i0 = -i0max; i0 < i0max+1; i0++) {
     tmpJ[i0] = (int ****)malloc(sizeof(int ***) * 2*i1max+1);
+    tmpJ[i0] = tmpJ[i0] + i1max; // base shift
     for (i1 = -i1max; i1 < i1max+1; i1++) {
       tmpJ[i0][i1] = (int ***)malloc(sizeof(int **) * 2*i2max+1);
+      tmpJ[i0][i1] = tmpJ[i0][i1] + i2max; // base shift
       for (i2 = -i2max; i2 < i2max+1; i2++) {
         tmpJ[i0][i1][i2] = (int **)malloc(sizeof(int *) * StdI->NsiteUC);
         for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
@@ -604,7 +599,6 @@ void StdFace_Wannier90(
       }
     }
   }
-  //exit(0);   
   // 
   /**@brief
   (2) check & store parameters of Hamiltonian
@@ -804,7 +798,7 @@ void StdFace_Wannier90(
      One-body correction 
     */
     fprintf(stdout, "\n  @ Wannier90 ONE-BODY CORRECTION \n\n");
-    scale_factor=0.5; //1.0; 
+    scale_factor=1.0; //0.5; //1.0; 
     printf("scale_factor: %f \n",scale_factor); 
     for (iorb=0; iorb<StdI->NsiteUC; iorb++){
       sum_real=0.0; 
@@ -883,7 +877,7 @@ void StdFace_Wannier90(
       }/*Local term*/
     }/*for (it = 0; it < n_t; it++)*/
   }/*for (kCell = 0; kCell < StdI->NCell; kCell++)*/
-
+  //
   fclose(fp);
   StdFace_PrintXSF(StdI);
   StdFace_PrintGeometry(StdI);
@@ -901,6 +895,33 @@ void StdFace_Wannier90(
   for (it = 0; it < n_d; it++) free(d_indx[it]);
   free(d_indx);
   free(W90_d); 
-  if (strcmp(StdI->model, "spin") == 0) free(Uspin);
-
+  /*Kazuma Nakamura*/ 
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          free(tmpU[i0][i1][i2][iorb]);
+       }
+        free(tmpU[i0][i1][i2]); 
+      }
+      free(tmpU[i0][i1]-i2max); /*base sihit*/
+    }
+    free(tmpU[i0]-i1max); /*base sihit*/
+  }
+  free(tmpU-i0max); /*base sihit*/
+  /*Kazuma Nakamura*/ 
+  for (i0 = -i0max; i0 < i0max+1; i0++) {
+    for (i1 = -i1max; i1 < i1max+1; i1++) {
+      for (i2 = -i2max; i2 < i2max+1; i2++) {
+        for (iorb = 0; iorb < StdI->NsiteUC; iorb++) {
+          free(tmpJ[i0][i1][i2][iorb]);
+        }
+        free(tmpJ[i0][i1][i2]); 
+      }
+      free(tmpJ[i0][i1]-i2max); /*base shift*/  
+    }
+    free(tmpJ[i0]-i1max);  /*base shift*/ 
+  }
+  free(tmpJ-i0max);  /*base shift*/ 
+  exit(0); 
 }/*void StdFace_Wannier90*/

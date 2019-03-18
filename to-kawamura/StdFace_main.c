@@ -2259,6 +2259,7 @@ void StdFace_main(
     else if (strcmp(keyword, "cutoff_jh") == 0) StoreWithCheckDup_i(keyword, value, &StdI->cutoff_JR[2]);
     else if (strcmp(keyword, "cutoff_jl") == 0) StoreWithCheckDup_i(keyword, value, &StdI->cutoff_JR[1]);
     else if (strcmp(keyword, "cutoff_jw") == 0) StoreWithCheckDup_i(keyword, value, &StdI->cutoff_JR[0]);
+    else if (strcmp(keyword, "cutoff_length_d") == 0) StoreWithCheckDup_d(keyword, value, &StdI->cutoff_length_D);
     else if (strcmp(keyword, "cutoff_length_j") == 0) StoreWithCheckDup_d(keyword, value, &StdI->cutoff_length_J);
     else if (strcmp(keyword, "cutoff_length_u") == 0) StoreWithCheckDup_d(keyword, value, &StdI->cutoff_length_U);
     else if (strcmp(keyword, "cutoff_length_t") == 0) StoreWithCheckDup_d(keyword, value, &StdI->cutoff_length_t);
