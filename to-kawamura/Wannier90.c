@@ -485,7 +485,6 @@ void StdFace_Wannier90(
       }
     }
   }
-  //exit(0); 
   /*U*/
   printf("+++\n"); 
   for (it = 0; it < n_u; it++){
@@ -891,6 +890,7 @@ void StdFace_Wannier90(
   for (it = 0; it < n_j; it++) free(j_indx[it]);
   free(j_indx);
   free(W90_j); 
+  if (strcmp(StdI->model, "spin") == 0) free(Uspin);
   /*Kazuma Nakamura*/
   for (it = 0; it < n_d; it++) free(d_indx[it]);
   free(d_indx);
@@ -922,6 +922,6 @@ void StdFace_Wannier90(
     }
     free(tmpJ[i0]-i1max);  /*base shift*/ 
   }
-  free(tmpJ-i0max);  /*base shift*/ 
+  free(tmpJ-i0max); /*base shift*/ 
   exit(0); 
 }/*void StdFace_Wannier90*/
