@@ -98,6 +98,20 @@ class Iotk_dat():
                         ret[r,c] = x
             return ret
 
+def calc_fermienergy_insulator(root):
+    highest = -float('inf')
+    lowest = float('inf')
+    for kse in root.find('output').find('band_structure').iter('ks_energies'):
+        es = map(float, kse.find('eigenvalues').text.strip().split())
+        os = map(float, kse.find('occupations').text.strip().split())
+        for e,o in zip(es, os):
+            if o == 0.0:
+                lowest = min(lowest, e)
+                break
+            else:
+                highest = max(highest, e)
+    return 0.5*(highest+lowest)
+
 def band_structure_info(root, oldxml=False):
     if oldxml:
         child = root.find('BAND_STRUCTURE_INFO')
@@ -109,7 +123,8 @@ def band_structure_info(root, oldxml=False):
         num_k = int(child.find('nks').text)
         num_b = int(child.find('nbnd').text)
         if child.find('fermi_energy')==None:
-            eFermi = float(child.find('highestOccupiedLevel').text)
+            # eFermi = float(child.find('highestOccupiedLevel').text)
+            eFermi = calc_fermienergy_insulator(root)
         else:
             eFermi = float(child.find('fermi_energy').text)
     return num_k, num_b, eFermi
