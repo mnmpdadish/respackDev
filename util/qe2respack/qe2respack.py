@@ -203,6 +203,8 @@ def symmetry(root, oldxml=False):
             rot = sym.find('rotation').text.strip().split('\n')
             for j in range(3):
                 mat_sym[j,:,i] = [int(round(float(x))) for x in rot[j].split()]
+            if i == n_sym - 1:
+                break
     return mat_sym, ftau
 
 def eigenvalues(dirname, num_k, num_b, oldxml=False):
