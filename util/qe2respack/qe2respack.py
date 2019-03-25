@@ -149,6 +149,11 @@ def latvectors(root, oldxml=False):
         cell = child.find('cell')
         for i in range(3):
             A[i,:] = [float(x) for x in cell.find('a{0}'.format(i+1)).text.split()]
+        # The celldm should be alat when "CELL_PARAMETERS alat" is used, but it isn't
+        # in the <input> tag probably due to a but in QE. The value in the 'alat' attribute
+        # of the <atomic_structure> tag inside <output> is alat (= celldm(1)).
+        # So, let's update celldm as follows:
+        celldm = float(root.find('output').find('atomic_structure').attrib['alat'])
     return A, celldm
 
 def atoms_information(root, oldxml=False):
