@@ -20,6 +20,7 @@ contains
     real(8),allocatable::efline(:)!efline(ndosgrd)   
     !
     real(8),parameter::au=27.21151d0
+    !real(8),parameter::delt=0.005d0/au!Greens function delt in au 
     real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
@@ -68,8 +69,8 @@ contains
     !define grid range
     !
     ndosgrd=int(2.0d0*diff/deltw)+1
-    emax=emax+0.5d0*diff
-    emin=emin-0.5d0*diff
+    emax=emax+0.50d0*diff
+    emin=emin-0.50d0*diff
     !
     write(6,*)
     write(6,'(a40)')'+++ m_dos: est_ndosgrd +++'
@@ -106,17 +107,27 @@ contains
     real(8)::SUM_REAL
     integer::ie 
     real(8),parameter::au=27.21151d0 
+    !
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd
-     SUM_REAL=SUM_REAL+deltw*dos(ie) 
+    do ie=1,ndosgrd-1
+     !--
+     !SUM_REAL=SUM_REAL+deltw*dos(ie) 
+     !--
+     !Trapezoidal 
+     SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
     enddo 
+    !
     write(6,'(a40)')'+++ m_dos: est_ef +++'
     write(6,'(a40,f15.8)')'SUM of DOS',SUM_REAL
     write(6,'(a40,f15.8)')'FermiEnergy(before)=',FermiEnergy*au  
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd
+    do ie=1,ndosgrd-1
      if(SUM_REAL>=electron_number)goto 3000 
-     SUM_REAL=SUM_REAL+deltw*dos(ie) 
+       !--
+       !SUM_REAL=SUM_REAL+deltw*dos(ie) 
+       !--
+       !Trapezoidal 
+       SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
     enddo 
   3000 FermiEnergy=dosgrd(ie) 
     write(6,'(a40,f15.8)')'FermiEnergy(after)=',dosgrd(ie)*au  
@@ -159,8 +170,12 @@ contains
     !Integral dos(w) dw
     !
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd 
-     SUM_REAL=SUM_REAL+dos(ie)*deltw 
+    do ie=1,ndosgrd-1 
+     !--
+     !SUM_REAL=SUM_REAL+dos(ie)*deltw 
+     !--
+     !Trapezoidal 
+     SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
      !write(6,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au  
     enddo 
     N0ttr=dos(ief)/2.0d0 !2 is spin

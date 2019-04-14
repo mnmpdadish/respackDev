@@ -100,6 +100,7 @@ contains
     integer::ib,ikb1,ikb2,ikb3,ik 
     real(8)::SUM_REAL 
     real(8),parameter::au=27.21151d0
+    !real(8),parameter::delt=0.005d0/au!Greens function delt in au 
     real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
@@ -303,12 +304,30 @@ contains
     index_kpt=0 
     call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
     !
+    !write(6,*) 
+    !write(6,'(a40)')'+++ m_dmx: UNT check +++' 
+    !do iw=1,NWF
+    ! SUM_CMPX=0.0d0 
+    ! do ib=1,NTB 
+    !  do ikb1=1,nkb1
+    !   do ikb2=1,nkb2
+    !    do ikb3=1,nkb3 
+    !     ik=index_kpt(ikb1,ikb2,ikb3)
+    !     write(6,'(a,i8,2f15.8)')'pf000ik',ik,pf(0,0,0,ik)  
+    !     SUM_CMPX=SUM_CMPX+CONJG(UNT(ib,iw,ik))*UNT(ib,iw,ik)*pf(0,0,0,ik)*WEIGHT_R(0,0,0)*xow(ib,ikb1,ikb2,ikb3) 
+    !    enddo
+    !   enddo
+    !  enddo
+    ! enddo 
+    ! write(6,'(a40,i8,x,2f15.10)')'(2/N)sum_{a,k}|<ak|i0>|^2',iw,2.0d0*SUM_CMPX/dble(NTK)  
+    !enddo 
+    !
     dmx=0.0d0 
     do iR=1,NR 
      ia1=lat_num_a1(iR)
      ia2=lat_num_a2(iR)
      ia3=lat_num_a3(iR)
-     !write(6,*)ia1,ia2,ia3 
+     !write(6,'(3i5,f15.8)')ia1,ia2,ia3,WEIGHT_R(ia1,ia2,ia3) 
      do iw=1,NWF
       do jw=1,NWF 
        SUM_CMPX=0.0d0 
@@ -331,6 +350,7 @@ contains
     ! 
     !impose sum rule
     !
+    SUM_CMPX=0.0d0 
     do iw=1,NWF
      SUM_CMPX=SUM_CMPX+dmx(iw,iw,0,0,0) 
     enddo 
