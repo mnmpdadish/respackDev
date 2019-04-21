@@ -171,7 +171,7 @@ module m_rd_dat_zvo
     enddo    
     nkb3=nint(1.0d0/x)  
     NTK=nkb1*nkb2*nkb3 
-    write(6,'(a24,4i10)') 'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
+    write(6,'(a50,4i10)')'nkb1, nkb2, nkb3, NTK:',nkb1,nkb2,nkb3,NTK  
     return 
   end subroutine 
   !

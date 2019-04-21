@@ -23,14 +23,17 @@ logical::bnd !BaND dispersion calc for zvo data
 logical::frm !FeRMi surface calc for fine k-mesh 
 logical::his !HIStgram analysis for ztrans.def 
 real(8)::delt !Greens function delt in eV
-real(8)::flwe !Flg whether calculate weighted transfers  
-real(8)::thtr !Threshold for transfer integral in eV
 real(8)::elnm !Total number of electrons in unitcell
-integer::flg_weight !Flg whether calculate weighted transfers (0:not calc, 1:calc)
-real(8)::threshold_transfer !Threshold for tranfer integral (eV)
+real(8)::ecut !Energy cutoff for transfer integral in eV
+real(8)::rcut !Distance cutoff for transfer integral in AA 
+real(8)::diff !Match threshold for two transfer integral in eV 
 real(8)::electron_number !Total number of electron in unitcell 
+real(8)::threshold_e !Energy cutoff for tranfer integral in eV
+real(8)::threshold_r !Discance cutoff for tranfer integral in AA
+real(8)::diff_transfers !Match threshold for two transfer integral in eV 
 real(8)::delw !Grid width in eV
-integer::kgd(3)!k grid  
+integer::kgd(3) !k grid  
+integer::flg_weight !Flg whether calculate weighted transfers (0:not calc, 1:calc)
 !
 !eigenvalue and eigenstates
 !

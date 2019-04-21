@@ -15,7 +15,6 @@ contains
     integer::ia1min,ia2min,ia3min 
     integer::ia1,ia2,ia3,ik 
     real(8)::PHASE 
-    real(8)::SUM_REAL
     real(8),parameter::au=27.21151d0
     real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
     complex(8),parameter::ci=(0.0D0,1.0D0) 
@@ -24,11 +23,13 @@ contains
     !
     allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
     if(flg_weight.eq.1)then
-     write(6,'(a20)')'WEIGHT CALCULATED' 
+     write(6,*) 
+     write(6,'(a50)')'WEIGHT CALCULATED:' 
      write(6,*) 
      call get_weightR(nkb1,nkb2,nkb3,Na1,Na2,Na3,WEIGHT_R(-Na1,-Na2,-Na3))      
     else
-     write(6,'(a20)')'WEIGHT NOT CALCULATED' 
+     write(6,*) 
+     write(6,'(a50)')'WEIGHT NOT CALCULATED:' 
      write(6,*) 
     endif 
     !
@@ -60,6 +61,7 @@ contains
     !
     return 
   end subroutine 
+
   subroutine search_Rmin(i,j,k,nkb1,nkb2,nkb3,a1,a2,a3,imin,jmin,kmin)
     implicit none
     integer::i,j,k,nkb1,nkb2,nkb3
@@ -91,6 +93,7 @@ contains
     kmin=k+lmin*nkb3
     return
   end subroutine 
+
   subroutine eigenvalue(NTK,NWF,Na1,Na2,Na3,HmatR,pf,EKS,VKS)  
     implicit none 
     integer,intent(in)::NTK,NWF,Na1,Na2,Na3 
@@ -130,6 +133,7 @@ contains
     deallocate(Hin,E_TMP_R) 
     return
   end subroutine 
+
   subroutine diagV(nm,mat,eig)
     implicit none 
     integer,intent(in)::nm
@@ -154,13 +158,14 @@ contains
     call zheevd("V","U",nm,mat,nm,eig,work_zheevd,LWORK,rwork_zheevd,LRWORK,iwork_zheevd,LIWORK,ind)
     !
     if(ind/=0)then 
-     write(6,*)'ind=',ind 
+     write(6,'(a50,i10)')'ind:',ind 
      stop
     endif 
     !
     deallocate(work_zheevd,rwork_zheevd,iwork_zheevd) 
     return 
   end subroutine
+
   subroutine diagN(nm,mat,eig)
     implicit none 
     integer,intent(in)::nm
@@ -185,13 +190,14 @@ contains
     call zheevd("N","U",nm,mat,nm,eig,work_zheevd,LWORK,rwork_zheevd,LRWORK,iwork_zheevd,LIWORK,ind)
     !
     if(ind/=0)then 
-     write(6,*)'ind=',ind 
+     write(6,'(a50,i10)')'ind:',ind 
      stop
     endif 
     !
     deallocate(work_zheevd,rwork_zheevd,iwork_zheevd) 
     return 
   end subroutine
+
   subroutine get_weightR(kgd1,kgd2,kgd3,Na1,Na2,Na3,WEIGHT_R) 
     implicit none 
     integer,intent(in)::kgd1,kgd2,kgd3,Na1,Na2,Na3 
@@ -213,10 +219,11 @@ contains
       enddo!ia3
      enddo!ia2
     enddo!ia1
-    write(6,'(a20,f15.8,i8)')'SUM_WEIGHT, ncalck',SUM_REAL, ncalck 
+    write(6,'(a50,f15.8,i8)')'SUM_WEIGHT, ncalck:',SUM_REAL, ncalck 
     if(abs(SUM_REAL-dble(ncalck))>1.0d-6)then 
      stop 'SUM_WEIGHT/=ncalck'
     endif
     return
   end subroutine get_weightR    
+
 end module m_eigenstate 

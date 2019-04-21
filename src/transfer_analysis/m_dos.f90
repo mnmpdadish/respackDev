@@ -69,11 +69,11 @@ contains
     emin=emin-0.5d0*diff
     !
     write(6,*)
-    write(6,'(a)')'GRID DATA FOR DOS'
-    write(6,'(a10,f12.7)')'emin(eV)',emin*au 
-    write(6,'(a10,f12.7)')'emax(eV)',emax*au 
-    write(6,'(a10,f12.7)')'deltw(eV)',deltw*au 
-    write(6,'(a10,i12)')'ndosgrd',ndosgrd 
+    write(6,'(a50)')'GRID DATA FOR DOS:'
+    write(6,'(a50,f15.7)')'emin(eV):',emin*au 
+    write(6,'(a50,f15.7)')'emax(eV):',emax*au 
+    write(6,'(a50,f15.7)')'deltw(eV):',deltw*au 
+    write(6,'(a50,i15)')'ndosgrd:',ndosgrd 
     write(6,*)
     return
   end subroutine
@@ -102,19 +102,29 @@ contains
     real(8)::SUM_REAL
     integer::ie 
     real(8),parameter::au=27.21151d0 
+    ! 
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd
-     SUM_REAL=SUM_REAL+deltw*dos(ie) 
+    do ie=1,ndosgrd-1
+     !--
+     !SUM_REAL=SUM_REAL+deltw*dos(ie) 
+     !--
+     !Trapezoidal 
+     SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
     enddo 
-    write(6,*)'SUM of DOS',SUM_REAL
+    write(6,'(a50,f15.7)')'SUM of DOS:',SUM_REAL
+    !
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd
+    do ie=1,ndosgrd-1
      if(SUM_REAL>=electron_number)goto 3000 
-     SUM_REAL=SUM_REAL+deltw*dos(ie) 
+     !--
+     !SUM_REAL=SUM_REAL+deltw*dos(ie) 
+     !--
+     !Trapezoidal 
+     SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
     enddo 
 3000 FermiEnergy=dosgrd(ie) 
-    write(6,*)'electron_number',SUM_REAL
-    write(6,*)'FermiEnergy=',dosgrd(ie)*au  
+    write(6,'(a50,f15.7)')'electron_number:',SUM_REAL
+    write(6,'(a50,f15.7)')'FermiEnergy:',dosgrd(ie)*au  
     return
   end subroutine 
   !
@@ -153,15 +163,19 @@ contains
     !Integral dos(w) dw
     !
     SUM_REAL=0.0d0 
-    do ie=1,ndosgrd 
-     SUM_REAL=SUM_REAL+dos(ie)*deltw 
+    do ie=1,ndosgrd-1 
+     !--
+     !SUM_REAL=SUM_REAL+dos(ie)*deltw 
+     !--
+     !Trapezoidal 
+     SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
      !write(6,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au  
     enddo 
     write(6,*)
-    write(6,'(a40,f15.7)')'Integral dos(w) dw',SUM_REAL 
+    write(6,'(a50,f15.7)')'Integral dos(w) dw:',SUM_REAL 
     N0ttr=dos(ief)/2.0d0 !2 is spin
-    write(6,'(a40,f15.7)')'N(0) in au per calc cell',N0ttr 
-    write(6,'(a40,f15.7)')'N(0) in eV per calc cell',N0ttr/au   
+    write(6,'(a50,f15.7)')'N(0) in au per calc cell:',N0ttr 
+    write(6,'(a50,f15.7)')'N(0) in eV per calc cell:',N0ttr/au   
     write(6,*)
     return
   end subroutine 
@@ -180,7 +194,7 @@ contains
     !
     OPEN(300,file='./dat.dos') 
     rewind(300) 
-    write(300,'(a,x,f10.5)')'#Threshold for transfer (eV)=',threshold_transfer*au
+    write(300,'(a,x,f10.5)')'#Energy cutoff for transfer (eV):',threshold_transfer*au
     do ie=1,ndosgrd
      write(300,'(3f15.10)') dosgrd(ie)*au,dos(ie)/au,efline(ie)  
     enddo!ie 

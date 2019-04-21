@@ -72,7 +72,7 @@ contains
     !
     OPEN(114,FILE='./dat.iband') 
     write(114,'(a)')'#Wannier interpolaed band'
-    write(114,'(a,x,f10.5)')'#Threshold for transfer (eV)=',threshold_transfer*au
+    write(114,'(a,x,f10.5)')'#Energy cutoff for transfer (eV)=',threshold_transfer*au
     write(114,'(a)')'#1:k, 2:Energy [eV]' 
     REVERSE=.TRUE.        
     do ib=1,NWF 

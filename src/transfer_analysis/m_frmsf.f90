@@ -90,6 +90,31 @@ SUBROUTINE wrt_frmsf(NWF,dense,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,Ferm
   END DO !ik
   !$OMP END DO
   !$OMP END PARALLEL
+  ! 
+  !20190421 Kazuma Nakamura 
+  !
+  WRITE(fname,'(a)')"./dat.frmsf"
+  OPEN(fo,FILE=TRIM(fname)) 
+  rewind(fo) 
+  WRITE(fo,*) dense(1:3)
+  WRITE(fo,*) 1
+  WRITE(fo,*) NWF 
+  WRITE(fo,*) REAL(b1(1:3))
+  WRITE(fo,*) REAL(b2(1:3))
+  WRITE(fo,*) REAL(b3(1:3))
+  DO ib=1,NWF 
+     DO ik=1,nk
+        WRITE(fo,*) REAL(Ek(ib,ik)-FermiEnergy)
+     ENDDO!ik
+  ENDDO!ib
+  DO ib=1,NWF 
+     DO ik=1,nk
+        WRITE(fo,*) REAL(ib) 
+     ENDDO!ik
+  ENDDO!ib
+  CLOSE(fo)
+  !
+  WRITE(*,*) TRIM(fname)," finish" 
   !
   ! Write to file
   !
