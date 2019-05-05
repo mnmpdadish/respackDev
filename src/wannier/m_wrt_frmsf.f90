@@ -1,16 +1,19 @@
 module m_wrt_frmsf 
   implicit none
 contains
-subroutine wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG,SK0,FermiEnergy,b1,b2,b3)                     
+!
+subroutine wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG,SK0,FermiEnergy,filename,b1,b2,b3)                     
   implicit none 
-  integer::NTB,NTK,nkb1,nkb2,nkb3 
-  real(8)::E_EIG(NTB,NTK)           
-  real(8)::SK0(3,NTK)           
+  integer,intent(in)::NTB,NTK,nkb1,nkb2,nkb3 
+  real(8),intent(in)::E_EIG(NTB,NTK)           
+  real(8),intent(in)::SK0(3,NTK)           
+  real(8),intent(in)::FermiEnergy,b1(3),b2(3),b3(3)
+  character(99),intent(in)::filename 
   integer::index_kpt(nkb1,nkb2,nkb3) 
   integer::ib,ik,ikb1,ikb2,ikb3
-  real(8)::FermiEnergy,b1(3),b2(3),b3(3)
   real(8)::E_3D(nkb3,nkb2,nkb1,NTB) 
-  integer::fo,ishift  
+  integer::ishift  
+  !
   index_kpt=0     
   E_3D=0.0d0 
   call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
@@ -26,20 +29,22 @@ subroutine wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG,SK0,FermiEnergy,b1,b2,b3)
   enddo 
   ! 
   ishift=0 
-  fo=301
-  OPEN(fo,FILE='./dir-wan/dat.frmsf') 
-  rewind(fo) 
-  write(fo,*) nkb1,nkb2,nkb3
-  write(fo,*) ishift!not grid shift
-  write(fo,*) NTB 
-  write(fo,*) real(b1(1:3))
-  write(fo,*) real(b2(1:3))
-  write(fo,*) real(b3(1:3))
+  !
+  !OPEN(301,W,file='./dir-wan/dat.frmsf')
+  !
+  OPEN(301,file=trim(filename)) 
+  rewind(301) 
+  write(301,*) nkb1,nkb2,nkb3
+  write(301,*) ishift!not grid shift
+  write(301,*) NTB 
+  write(301,*) real(b1(1:3))
+  write(301,*) real(b2(1:3))
+  write(301,*) real(b3(1:3))
   do ib=1,NTB 
    do ikb1=1,nkb1
     do ikb2=1,nkb2
      do ikb3=1,nkb3
-      write(fo,*) real(E_3D(ikb3,ikb2,ikb1,ib))
+      write(301,*) real(E_3D(ikb3,ikb2,ikb1,ib))
      end do
     end do
    end do
@@ -48,12 +53,12 @@ subroutine wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG,SK0,FermiEnergy,b1,b2,b3)
    do ikb1=1,nkb1
     do ikb2=1,nkb2
      do ikb3=1,nkb3
-      write(fo,*) real(ib)!real(phys(ikb3,ikb2,ikb1,ib))
+      write(301,*) real(ib)!real(phys(ikb3,ikb2,ikb1,ib))
      end do
     end do
    end do
   end do
-  close(fo)
+  close(301)
   return
 end subroutine 
 !

@@ -90,7 +90,6 @@
       call est_latparam(a1(1),a2(1),a3(1),a,b,c,alp,bet,gmm) 
       write(6,'(6f15.10)') a,b,c,alp,bet,gmm 
 !--
-!20180906
 !OPEN(107,R,FILE='dat.atom_kind')
 !      OPEN(107,FILE='./dir-wfn/dat.atom_kind') 
 !      rewind(107)
@@ -102,7 +101,6 @@
 !      enddo
 !      close(107)
 !--
-!20180906
 !OPEN(108,R,FILE='dat.atom_position')
 !      OPEN(108,FILE='./dir-wfn/dat.atom_position') 
 !      rewind(108)
@@ -114,7 +112,6 @@
 !      enddo 
 !      close(108)
 !--
-!20180921 
 !OPEN(108,R,FILE='dat.atom_position')
       OPEN(108,FILE='./dir-wfn/dat.atom_position') 
       rewind(108)
@@ -249,7 +246,7 @@
       write(6,*)'Ecut_for_psi=',Ecut_for_psi 
 !--
 !fft grid
-      !20180309 
+      !--
       !m1=maxval(abs(KGI(1,:,:))) 
       !m2=maxval(abs(KGI(2,:,:))) 
       !m3=maxval(abs(KGI(3,:,:))) 
@@ -278,13 +275,13 @@
       !--
       nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
       Nl123=nfft1*nfft2*nfft3 
-      write(6,*)'nwx2=',nwx2 
-      write(6,*)'nwy2=',nwy2 
-      write(6,*)'nwz2=',nwz2 
-      write(6,*)'nfft1=',nfft1 
-      write(6,*)'nfft2=',nfft2 
-      write(6,*)'nfft3=',nfft3 
-      write(6,*)'NL123=',Nl123  
+      write(6,'(a20,i10)')'nwx2:',nwx2 
+      write(6,'(a20,i10)')'nwy2:',nwy2 
+      write(6,'(a20,i10)')'nwz2:',nwz2 
+      write(6,'(a20,i10)')'nfft1:',nfft1 
+      write(6,'(a20,i10)')'nfft2:',nfft2 
+      write(6,'(a20,i10)')'nfft3:',nfft3 
+      write(6,'(a20,i10)')'NL123:',Nl123  
 !--
 !call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
 !--
@@ -304,10 +301,10 @@
       !--
       NTB_glb=NBAND 
       NTB=NB_end-NB_start+1!TOTAL NUMBER OF CONSIDERED BAND in wannier  
-      write(6,'(a10,i10)')'NTB_glb=',NTB_glb  
-      write(6,'(a10,i10)')'NB_start=',NB_start 
-      write(6,'(a10,i10)')'NB_end=',NB_end 
-      write(6,'(a10,i10)')'NTB=',NTB 
+      write(6,'(a20,i10)')'NTB_glb:',NTB_glb  
+      write(6,'(a20,i10)')'NB_start:',NB_start 
+      write(6,'(a20,i10)')'NB_end:',NB_end 
+      write(6,'(a20,i10)')'NTB:',NTB 
       deallocate(E_EIGI) 
 !--
 !OPEN(111,R,FILE='dat.eigenvalue') 
@@ -325,9 +322,8 @@
        enddo!ib
       enddo!ik          
 !--
-!20180302  
       call est_NTK(Nk_irr,Nsymq,SKI(1,1),rg(1,1,1),NTK)
-      write(6,*)'Estimated NTK=',NTK 
+      write(6,'(a20,i10)')'Estimated NTK:',NTK 
 !--
 !SK0,numirr,numrot,trs,RW
       allocate(SK0(3,NTK));SK0(:,:)=0.0d0
@@ -335,7 +331,7 @@
       allocate(numrot(NTK));numrot(:)=0
       allocate(trs(NTK));trs(:)=0
       allocate(RW(3,NTK));RW(:,:)=0
-!20161207 
+!--
 !      do ik=1,Nk_irr 
 !       SK0(:,ik)=SKI(:,ik) 
 !       numirr(ik)=ik;numrot(ik)=1;trs(ik)=1;RW(1:3,ik)=0
@@ -411,35 +407,50 @@
       Na1=nkb1/2;Na2=nkb2/2;Na3=nkb3/2
       write(6,'(a24,3i10)')'Na1,Na2,Na3=',Na1,Na2,Na3 
 !--
-!write Fermi surface 
-      allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
-      do jk=1,NTK 
-       if(trs(jk)==1) then 
-        ik=numirr(jk) 
-        E_EIG(:,jk)=E_EIGI(:,ik) 
-       elseif(trs(jk)==-1)then  
-        ik=numirr(jk) 
-        E_EIG(:,jk)=E_EIGI(:,ik) 
-       endif 
-      enddo 
       call system('rm -rf dir-wan') 
       call system('mkdir dir-wan') 
-      write(6,*) 
-      write(6,*)'write Fermi surface'
-      write(6,*) 
-      call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
-     +     FermiEnergy,b1(1),b2(1),b3(1)) 
+!--
+!write Fermi surface 
+      if(CALC_FERMISURFACE)then 
+        write(6,*) 
+        write(6,'(a30)')'write Fermi surface'
+        write(6,*) 
+        allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
+        do jk=1,NTK 
+         if(trs(jk)==1) then 
+          ik=numirr(jk) 
+          E_EIG(:,jk)=E_EIGI(:,ik) 
+         elseif(trs(jk)==-1)then  
+          ik=numirr(jk) 
+          E_EIG(:,jk)=E_EIGI(:,ik) 
+         endif 
+        enddo!jk  
+        filename='./dir-wan/dat.frmsf'
+        call wrt_frmsf(NTB,NTK,nkb1,nkb2,nkb3,E_EIG(1,1),SK0(1,1),
+     +       FermiEnergy,filename,b1(1),b2(1),b3(1)) 
+        deallocate(E_EIG)
+      endif 
 !-- 
 !write global DOS
-      write(6,*) 
-      write(6,*)'write global DOS'
-      write(6,*) 
-      filename='./dir-wan/dat.dos.global'
-      call calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
-     +     filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
-      deallocate(E_EIG)
-!--
-!     stop
+      if(CALC_GLOBAL_DOS)then 
+        write(6,*) 
+        write(6,'(a30)')'write global DOS'
+        write(6,*) 
+        allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
+        do jk=1,NTK 
+         if(trs(jk)==1) then 
+          ik=numirr(jk) 
+          E_EIG(:,jk)=E_EIGI(:,ik) 
+         elseif(trs(jk)==-1)then  
+          ik=numirr(jk) 
+          E_EIG(:,jk)=E_EIGI(:,ik) 
+         endif 
+        enddo!jk  
+        filename='./dir-wan/dat.dos.global'
+        call calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
+     +       filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+        deallocate(E_EIG)
+      endif 
 !--
 !OPEN(102,R,FILE='dat.wfn',FORM='unformatted') 
       OPEN(102,FILE='./dir-wfn/dat.wfn',FORM='unformatted') 
@@ -641,23 +652,26 @@
        !--
        nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 
-       write(6,'(a15,i5,i5,i5)')'nwx2,nwy2,nwz2',nwx2,nwy2,nwz2 
-       write(6,'(a15,i5,i5,i5)')'nfft1,nfft2,nfft2',nfft1,nfft2,nfft3 
-       write(6,'(a15,i10)')'Nl123',Nl123 
+       write(6,'(a20,3i10)')'nwx2,nwy2,nwz2:',nwx2,nwy2,nwz2 
+       write(6,'(a20,3i10)')'nfft1,nfft2,nfft2:',nfft1,nfft2,nfft3 
+       write(6,'(a20,i10)')'Nl123:',Nl123 
        call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
        allocate(fftwk(Nl123*2),stat=err) 
        allocate(wfunc(Nl123*2),stat=err) 
        !--
-       write(6,'(a,3f15.10)')'calc_k',calc_k
+       write(6,'(a20,3f15.10)')'calc_k:',calc_k
        call search_ik(NTK,SK0(1,1),calc_k(1),ik) 
-       write(6,'(a,i10)')'ik=',ik 
-       call search_vis_range(calc_k(1),amin,amax,bmin,bmax,cmin,cmax) 
-       !
-       !20181124 Kazuma Nakamura
+       write(6,'(a20,i10)')'ik:',ik 
        !
        amax=1; bmax=1; cmax=1 
+       if(CALC_BLOCH_VIS_RANGE)then 
+        write(6,*) 
+        write(6,'(a40)')'CALCULATE BLOCH VISUALIZATION RANGE'
+        write(6,*) 
+        call search_vis_range(calc_k(1),amin,amax,bmin,bmax,cmin,cmax) 
+       endif  
        !
-       write(6,'(a,3i10)')'supercell=',amax,bmax,cmax 
+       write(6,'(a20,3i10)')'supercell:',amax,bmax,cmax 
        allocate(BF_REALSPACE((amin)*nwx2:(amax)*nwx2-1,
      +                       (bmin)*nwy2:(bmax)*nwy2-1, 
      +                       (cmin)*nwz2:(cmax)*nwz2-1))!<--complex(8)
@@ -686,7 +700,7 @@
         aa2=a2*dble(bmax-bmin)
         aa3=a3*dble(cmax-cmin)
         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
-        write(116,'(a,f10.5)')'Electron density and energy (eV)',
+        write(116,'(a40,f10.5)')'Electron density and energy (eV)',
      +  E_EIG(N_BAND_BTM(ik)+ib,ik)*au 
         write(116,'(6f15.10)') a*bohr,b*bohr,c*bohr,alp,bet,gmm  
         write(116,'(3I5)')
@@ -2403,23 +2417,25 @@
       allocate(H_TMP_OUT(n_occ,n_occ));H_TMP_OUT(:,:)=0.0d0  
       allocate(H_MAT_R(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
       allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
-!(1)SAMPLE k-POINTS FOR INTERPOLATED BAND DISPERSION 
+!--
+!(1) SAMPLE k-POINTS FOR INTERPOLATED BAND DISPERSION 
       NSK_BAND_DISP=Ndiv*(N_sym_points-1)+1
       allocate(SK_BAND_DISP(3,NSK_BAND_DISP));SK_BAND_DISP(:,:)=0.0d0 
       allocate(E_BAND_DISP(n_occ,NSK_BAND_DISP));E_BAND_DISP(:,:)=0.0d0 
       call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),
      +              SK_BAND_DISP(1,1))
       write(6,*) 
-      write(6,*)'==================================='
-      write(6,*)'CALCULATED kpts FOR BAND DISPERSION'
-      write(6,*)'==================================='
+      write(6,*)'====================================='
+      write(6,*)' CALCULATED kpts FOR BAND DISPERSION '
+      write(6,*)'====================================='
       write(6,*) 
       write(6,'(a20,i15)')'NSK_BAND_DISP=',NSK_BAND_DISP
       write(6,*) 
       do ik=1,NSK_BAND_DISP 
        write(6,*) SK_BAND_DISP(:,ik)
       enddo 
-!(2)H_MAT(k) IN WANNIER BASIS 
+!--
+!(2) H_MAT(k) IN WANNIER BASIS 
       H_MAT_K(:,:,:)=0.0D0            
       Do ik=1,NTK 
        Do i_band=1,n_occ   
@@ -2436,7 +2452,8 @@
         ENDDO!j_band    
        ENDDO!i_band    
       ENDDO!ik        
-!(3)H_MAT(R) IN WANNIER BASIS 
+!--
+!(3) H_MAT(R) IN WANNIER BASIS 
       H_MAT_R(:,:,:,:,:)=0.0D0            
       Do ia1=-Na1,Na1!-1
        Do ia2=-Na2,Na2!-1
@@ -2460,8 +2477,11 @@
         ENDDO!ia3      
        ENDDO!ia2       
       ENDDO!ia1         
-!--- 
-!OPEN(122,W,FILE='dat.h_mat_r') 
+!-- 
+!(4) PRINT H_MAT(R) IN WANNIER BASIS 
+      !
+      !OPEN(122,W,FILE='dat.h_mat_r') 
+      !
       OPEN(122,FILE='./dir-wan/dat.h_mat_r') 
       REWIND(122)
       write(122,'(a)')'#transfer'
@@ -2501,7 +2521,7 @@
        enddo      
       enddo      
 !--
-!(3') WEIGHT_R 20170317 by Y.Nomura 
+!(5) WEIGHT_R 20170317 by Y.Nomura 
       write(6,'(a40)')'WEIGHT CALCULATED' 
       WEIGHT_R=1.0d0; SUM_REAL=0.0d0 
       do ia1=-Na1,Na1!-1         
@@ -2523,13 +2543,12 @@
        stop 
       endif 
 !--
-!write mvmc 
+!(6) OUTPUT Hphi/mVMC DATA 
       write(6,*) 
       write(6,'(a40)')'+++ write transfers in dir-mvmc +++'
       write(6,*) 
       call system('rm -rf dir-mvmc') 
       call system('mkdir dir-mvmc') 
-      tcut_mvmc=tcut_mvmc/au 
       !
       call wrt_mvmc_hr(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
      +     WEIGHT_R(-Na1,-Na2,-Na3)) 
@@ -2546,11 +2565,9 @@
      +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
      +      E_EIG(1,1),UNT(1,1,1)) 
       endif 
-      !
       deallocate(E_EIG) 
-      !
 !--
-!(4) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 
+!(7) H_MAT(k') IN WANNIER BASIS. AND DIAGONALIZE 
       do ik=1,NSK_BAND_DISP          
        H_TMP_IN(:,:)=0.0D0               
        do ib=1,n_occ      
@@ -2559,12 +2576,9 @@
          do ia1=-Na1,Na1!-1         
           do ia2=-Na2,Na2!-1         
            do ia3=-Na3,Na3!-1         
-!--
-!            PHASE=tpi*(SK_BAND_DISP(1,ik)*DBLE(ia1) 
-!     +                +SK_BAND_DISP(2,ik)*DBLE(ia2) 
-!     +                +SK_BAND_DISP(3,ik)*DBLE(ia3))                
-!--
-!-- NEAREST R SEARCH BY YOSHIHIDE YOSHIMOTO 
+            !--
+            !-- NEAREST R SEARCH BY YOSHIHIDE YOSHIMOTO 
+            !--
             call search_Rmin(ia1,ia2,ia3,nkb1,nkb2,nkb3,
      +      a1(1),a2(1),a3(1),ia1min,ia2min,ia3min)
             PHASE=tpi*(SK_BAND_DISP(1,ik)*DBLE(ia1min) 
@@ -2579,7 +2593,7 @@
          H_TMP_IN(ib,jb)=SUM_CMPX           
         enddo!jb
        enddo!ib
-!diag H_TMP_IN
+       !--
        E_TMP(:)=0.0D0                
        call diagV(n_occ,H_TMP_IN(1,1),E_TMP(1)) 
        H_TMP_OUT(:,:)=H_TMP_IN(:,:)
@@ -2592,8 +2606,8 @@
 !        write(6,*) E_BAND_DISP(i_band,ik)*27.21151D0  
 !       enddo 
 !      enddo 
-!
-!(5) WRITE BAND DISPERSION ---*        
+!--
+!(8) WRITE BAND DISPERSION 
       allocate(DIST_K(NSK_BAND_DISP));DIST_K(:)=0.0d0 
       allocate(dist(0:N_sym_points-1));dist(:)=0.0d0 
       !--
@@ -2612,8 +2626,9 @@
        enddo!ik 
        dist(ix)=dist(ix-1)+DIST_KSPACE
       enddo!ix 
-!--
-!OPEN(114,W,FILE='dat.iband') 
+      !
+      !OPEN(114,W,FILE='dat.iband') 
+      !
       OPEN(114,FILE='./dir-wan/dat.iband') 
       write(114,'(a)')'#Wannier interpolaed band'
       write(114,'(a)')'#1:k, 2:Energy [eV]' 
@@ -2633,17 +2648,22 @@
         REVERSE=.TRUE.        
        endif!REVERSE                   
       enddo!ib                      
-
-      IF(ALL(dense(1:3) /= 0)) THEN
+!--
+!(9) WRITE FERMISURFACE WITH WANNIER INTERPOLATION 
+      IF(ALL(dense(1:3)/=0)) THEN
          CALL wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,
      +                      a1,a2,a3,b1,b2,b3,FermiEnergy,
      +                      WEIGHT_R,H_MAT_R)
-      END IF
-!--
-!wannier DOS and DMX 
-!--
+      ENDIF
+
+!============================================================
+!=== DENSITY OF STATE and DENSITY MATRIX IN WANNIER SPACE ===
+!============================================================
+   
       write(6,*) 
-      write(6,'(a40)')'+++ write wannier DOS and DMX +++'
+      write(6,'(a40)')'==============================='
+      write(6,'(a40)')' CALCULATE WANNIER DOS AND DMX '
+      write(6,'(a40)')'==============================='
       write(6,*) 
       allocate(E_EIG(NWF,NTK)); E_EIG(:,:)=0.0d0
       allocate(V_EIG(NWF,NWF,NTK)); V_EIG(:,:,:)=0.0d0
@@ -2677,7 +2697,9 @@
       if(CALC_REAL_SPACE_WANNIER)then 
        !--
        write(6,*) 
-       write(6,'(a40)')'+++ calc realspace wannier +++' 
+      write(6,'(a40)')'============================='
+      write(6,'(a40)')' CALCULATE REALSPACE WANNIER '
+      write(6,'(a40)')'============================='
        write(6,*) 
        nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 

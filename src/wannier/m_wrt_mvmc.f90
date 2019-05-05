@@ -74,9 +74,9 @@ subroutine wrt_mvmc_wcenter(n_occ,a1,a2,a3,wcenter)
    write(303,*)(wcenter_lat(i),i=1,3) 
   enddo 
   !
-  !OPEN(307,W,FILE='zvo_wan_center.xsf') 
+  !OPEN(307,W,FILE='zvo_geom.xsf') 
   !
-  OPEN(307,FILE='./dir-mvmc/zvo_wan_center.xsf') 
+  OPEN(307,FILE='./dir-mvmc/zvo_geom.xsf') 
   write(307,'(a10)')'CRYSTAL'
   write(307,'(a10)')'PRIMVEC'
   write(307,'(3f15.10)')(a1(i)*bohr,i=1,3)  
