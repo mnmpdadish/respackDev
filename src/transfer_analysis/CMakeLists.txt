@@ -16,8 +16,8 @@ m_truncation.f90
 transfer_analysis.f90
 )
 
-add_custom_target(trans ALL)
-add_executable(transfer_analysis ${SOURCES})
-target_link_libraries(transfer_analysis ${LAPACK_LIBRARIES})
-add_dependencies(trans transfer_analysis)
-install(TARGETS transfer_analysis RUNTIME DESTINATION bin)
+add_custom_target(transfer_analysis ALL)
+add_executable(calc_tr ${SOURCES})
+target_link_libraries(calc_tr ${LAPACK_LIBRARIES})
+add_dependencies(transfer_analysis calc_tr)
+install(TARGETS calc_tr RUNTIME DESTINATION bin)

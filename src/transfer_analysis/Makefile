@@ -31,7 +31,7 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 .F90.o:
 	${FC} ${F90FLAGS} ${FFLAGS} -c $<
 #--------------------------------------------------------------------
-TARGET = transfer_analysis 
+TARGET = calc_tr 
 
 OBJECTS = m_rd_dat_zvo.o m_rd_transdef.o m_tetrahedron_20170325.o \
 	  m_dos.o m_band.o m_eigenstate.o m_hist.o m_truncation.o \

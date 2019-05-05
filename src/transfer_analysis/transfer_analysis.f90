@@ -94,11 +94,11 @@ PROGRAM main
   endif  
   write(6,*) 
   !
+  !truncate H(R) on threshold 
+  !
+  call truncation(NWF,Na1,Na2,Na3,threshold_e,threshold_r,diff_transfers,a1(1),a2(1),a3(1),wcenter_lat(1,1),HR(1,1,-Na1,-Na2,-Na3))
+  !
   if(dos)then 
-    !
-    !truncate H(R) on threshold 
-    !
-    call truncation(NWF,Na1,Na2,Na3,threshold_e,threshold_r,diff_transfers,a1(1),a2(1),a3(1),wcenter_lat(1,1),HR(1,1,-Na1,-Na2,-Na3))
     !
     !set kvec
     !
@@ -132,10 +132,6 @@ PROGRAM main
   !
   if(bnd)then 
     !
-    !truncate H(R) on threshold 
-    !
-    call truncation(NWF,Na1,Na2,Na3,threshold_e,threshold_r,diff_transfers,a1(1),a2(1),a3(1),wcenter_lat(1,1),HR(1,1,-Na1,-Na2,-Na3))
-    !
     !set F(R) 
     !
     if(kgd(1)==0.and.kgd(2)==0.and.kgd(3)==0)then 
@@ -160,12 +156,6 @@ PROGRAM main
   endif!bnd 
   !
   if(frm)then
-    !
-    write(6,'(a50)')'##### STILL NOT SURPORTED (FRM) #####'
-    !
-    !truncate H(R) on threshold 
-    !
-    call truncation(NWF,Na1,Na2,Na3,threshold_e,threshold_r,diff_transfers,a1(1),a2(1),a3(1),wcenter_lat(1,1),HR(1,1,-Na1,-Na2,-Na3))
     !
     !wrt fermi surface 
     !
