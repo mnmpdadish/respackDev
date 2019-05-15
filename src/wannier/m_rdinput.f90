@@ -57,7 +57,7 @@ integer,public::dense(3)! Dense k-grid for the Wnnier-interpolated FS
 !initial_guess 
 type initial_guess 
 !integer::i,j!20170406
-character(3)::orb!20170406
+character(10)::orb!20170406
 real(8)::a,x,y,z 
 real(8)::lx(3)!20170914
 real(8)::ly(3)!20170914

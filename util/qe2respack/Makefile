@@ -17,11 +17,11 @@ LINKER =  mpiifort
 LDFLAGS = -liomp5 -lpthread
 LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
 # GNU
-#FC = gfortran
-#FFLAGS = -O3 -g -fbacktrace
-#LINKER = mpif90
-#LDFLAGS = -g -pthread
-#LAPACK = -llapack -lblas
+FC = gfortran
+FFLAGS = -O2 -g -fbacktrace
+LINKER = mpif90
+LDFLAGS = -g -pthread
+LAPACK = -llapack -lblas
 
 LFLAGS = ${LDFLAGS} ${LAPACK}
 INCLUDE= -I${QEROOT}/iotk/include -I${QEROOT}/iotk/src 

@@ -1408,6 +1408,18 @@
        if(orbtype(ig)=='dx2')then 
         LGAUSS(ig)=3;MGAUSS(ig)=5   
        endif 
+       if(orbtype(ig)=='dxy+dyz')then 
+        LGAUSS(ig)=3;MGAUSS(ig)=6   
+       endif 
+       if(orbtype(ig)=='dxy-dyz')then 
+        LGAUSS(ig)=3;MGAUSS(ig)=7   
+       endif 
+       if(orbtype(ig)=='dxy+idyz')then 
+        LGAUSS(ig)=3;MGAUSS(ig)=8   
+       endif 
+       if(orbtype(ig)=='dxy-idyz')then 
+        LGAUSS(ig)=3;MGAUSS(ig)=9   
+       endif 
       enddo!ig 
 !--
 !NORMALIZE
@@ -2487,11 +2499,11 @@
       allocate(H_MAT_K(n_occ,n_occ,NTK));H_MAT_K(:,:,:)=0.0D0      
       allocate(E_TMP(n_occ));E_TMP(:)=0.0d0            
       allocate(H_TMP_IN(n_occ,n_occ));H_TMP_IN(:,:)=0.0d0           
-      allocate(H_TMP_OUT(n_occ,n_occ));H_TMP_OUT(:,:)=0.0d0  
       allocate(H_MAT_R(n_occ,n_occ,-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
       allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
 !(1)SAMPLE k-POINTS FOR INTERPOLATED BAND DISPERSION 
       NSK_BAND_DISP=Ndiv*(N_sym_points-1)+1
+      allocate(H_TMP_OUT(n_occ,n_occ,NSK_BAND_DISP));H_TMP_OUT(:,:,:)=0.0d0  
       allocate(SK_BAND_DISP(3,NSK_BAND_DISP));SK_BAND_DISP(:,:)=0.0d0 
       allocate(E_BAND_DISP(n_occ,NSK_BAND_DISP));E_BAND_DISP(:,:)=0.0d0 
       call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),
@@ -2571,7 +2583,7 @@
 !--
       write(6,*) 
       write(6,*)'============='
-      write(6,*)'H_MAT_R in eV'
+      write(6,*)'H_MAT_R in eV real'
       write(6,*)'============='
       write(6,*) 
       do ia1=-Na1,Na1!-1
@@ -2580,12 +2592,32 @@
          write(6,*) ia1,ia2,ia3           
          do ib=1,n_occ          
           write(6,'(300f15.8)')
-     +    (DBLE(H_MAT_R(ib,jb,ia1,ia2,ia3)*au),jb=1,n_occ)
+     +    (real(H_MAT_R(ib,jb,ia1,ia2,ia3)*au),jb=1,n_occ)
          enddo 
          write(6,*) 
         enddo      
        enddo      
       enddo      
+      
+      if(ncomp==2) then
+        write(6,*) 
+        write(6,*)'============='
+        write(6,*)'H_MAT_R in eV imaginary'
+        write(6,*)'============='
+        write(6,*) 
+        do ia1=-Na1,Na1!-1
+         do ia2=-Na2,Na2!-1
+          do ia3=-Na3,Na3!-1
+           write(6,*) ia1,ia2,ia3           
+           do ib=1,n_occ          
+            write(6,'(300f15.8)')
+     +      (imag(H_MAT_R(ib,jb,ia1,ia2,ia3)*au),jb=1,n_occ)
+           enddo 
+           write(6,*) 
+          enddo      
+         enddo      
+        enddo   
+      endif
 !--
 !(3') WEIGHT_R 20170317 by Y.Nomura 
       WEIGHT_R=1.0d0; SUM_REAL=0.0d0 
@@ -2665,7 +2697,7 @@
 !diag H_TMP_IN
        E_TMP(:)=0.0D0                
        call diagV(n_occ,H_TMP_IN(1,1),E_TMP(1)) 
-       H_TMP_OUT(:,:)=H_TMP_IN(:,:)
+       H_TMP_OUT(:,:,ik)=H_TMP_IN(:,:)
        E_BAND_DISP(:,ik)=E_TMP(:)            
       ENDDO!ik           
 !--
@@ -2729,9 +2761,51 @@
         write(115,fmt='(F10.5," ")',advance='no') 
      +             E_BAND_DISP(ib,ik)*au
        enddo!ib         
-        write(115,fmt='(a)',advance='yes')                     
+       write(115,fmt='(a)',advance='yes')                     
       enddo!ik        
       close(115)
+
+!OPEN(114,W,FILE='dat.iband') 
+      OPEN(118,FILE='./dir-wan/dat.ifatband') 
+      write(118,'(a)')'#Wannier interpolated band and weights'
+      write(118,'(a)', advance='no')'#1:k, 2:Energy_n [eV],    ' 
+      do jb=1,n_occ
+       write(118,fmt='(I2,a,I2,a)',advance='no') 
+     +                jb+2,':|U_', jb,'n|^2  '             
+      enddo!jb
+      write(118,fmt='(a)',advance='yes')                     
+
+      REVERSE=.TRUE.        
+      do ib=1,n_occ             
+       if(REVERSE) then 
+        do ik=1,NSK_BAND_DISP
+         write(118,fmt='(F10.6," ",F10.6,"   ")',advance='no') 
+     +                DIST_K(ik)/DIST_K(NSK_BAND_DISP),
+     +                E_BAND_DISP(ib,ik)*au
+         do jb=1,n_occ             
+          SUM_REAL = H_TMP_OUT(jb,ib,ik)*conjg(H_TMP_OUT(jb,ib,ik))
+          write(118,fmt='(F13.6," ")',advance='no') SUM_REAL
+         enddo!jb
+         write(118,fmt='(a)',advance='yes')                     
+        enddo!ik        
+        REVERSE=.FALSE.        
+       else         
+        do ik=NSK_BAND_DISP,1,-1
+         write(118,fmt='(F10.6," ",F10.6,"   ")',advance='no') 
+     +                DIST_K(ik)/DIST_K(NSK_BAND_DISP),
+     +                E_BAND_DISP(ib,ik)*au
+         
+         do jb=1,n_occ             
+          SUM_REAL = H_TMP_OUT(jb,ib,ik)*conjg(H_TMP_OUT(jb,ib,ik))
+          write(118,fmt='(F13.6," ")',advance='no') SUM_REAL
+         enddo!jb
+         write(118,fmt='(a)',advance='yes')                     
+        enddo!ik        
+        REVERSE=.TRUE.        
+       endif!REVERSE                   
+      enddo!ib                      
+      close(118)
+
 
 
       IF(ALL(dense(1:3) /= 0)) THEN
@@ -2777,6 +2851,7 @@
        enddo!ik 
        write(6,*)'FINISH READING C0_WN'
 !--
+       do ic=1,ncomp
        do ix=1,N_write_wannier!NWF 
         iw=wrt_list(ix)!20170406  
         WANNIER_REALSPACE=0.0d0           
@@ -2789,7 +2864,7 @@
      +              (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
 !$OMP DO 
         do ik=1,NTK
-         C0_I(:)=C0WN(:,1,iw,ik) !! need to be changed.
+         C0_I(:)=C0WN(:,ic,iw,ik) !! 2019/03/26
          call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),
      +    NTG,
      +    nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
@@ -2808,7 +2883,11 @@
         !--
         !OUTPUT by VESTA format 
         !OPEN(116,W,FILE='dat.wan-realspace-xxx.grd')
-        write(filename,"('dat.wan-realspace-',i3.3,'.grd')") iw 
+        if(ic==1) then
+         write(filename,"('dat.wan-realspace-',i3.3,'.grd')") iw 
+        else
+         write(filename,"('dat.wan-realspace-',i3.3,'_dn.grd')") iw          
+        endif
         OPEN(116,FILE=filename) 
         REWIND(116)
         na_grid=nwx2 
@@ -2823,7 +2902,7 @@
      +  a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
         write(116,'(3I5)') 
      +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
-        write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
+        write(116,"(6g25.16)") (((imag(WANNIER_REALSPACE(i1,i2,i3)),
      +  i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
      +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
@@ -2841,6 +2920,7 @@
         enddo!i1
         write(6,*) ix, SUM_REAL
        enddo!ix 
+       enddo!ic
        !--
        !gencif 20180906  
        call gencif(a1(1),a2(1),a3(1),xmin,xmax,ymin,ymax,zmin,zmax,

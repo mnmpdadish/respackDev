@@ -105,7 +105,7 @@
       real(8),allocatable::aa(:,:)!aa(NBh,6)
       integer::ab,ix,jx,NBh
 !initial guess
-      character(3),allocatable::orbtype(:)!orbtype(nigs)20170406 
+      character(10),allocatable::orbtype(:)!orbtype(nigs)20170406 
       integer,allocatable::LGAUSS(:)!LGAUSS(nigs)
       integer,allocatable::MGAUSS(:)!MGAUSS(nigs)
       real(8),allocatable::TAU_GAUSS(:,:)!TAU_GAUSS(3,nigs)
@@ -163,7 +163,7 @@
       real(8),allocatable::dist(:)!dist(0:Nblk-1)
       complex(8),allocatable::H_MAT_K(:,:,:)!H_MAT_K(n_occ,n_occ,NTK) 
       complex(8),allocatable::H_TMP_IN(:,:)!H_TMP_IN(n_occ,n_occ)
-      complex(8),allocatable::H_TMP_OUT(:,:)!H_TMP_OUT(n_occ,n_occ)
+      complex(8),allocatable::H_TMP_OUT(:,:,:)!H_TMP_OUT(n_occ,n_occ,NSK_BAND_DISP)
       integer::NSK_BAND_DISP,ia1,ia2,ia3,ks,ke,ia1min,ia2min,ia3min 
       real(8)::DIST_B(3),DIST_KSPACE
       real(8)::PHASE 

@@ -941,14 +941,14 @@
       real(8),parameter::pi=dacos(-1.0d0)
       complex(8),parameter::ci=(0.0D0,1.0D0) 
       integer::j_gauss,ig,i_band,jL,jM, ic
-      real(8)::PHASE,ZETA1,ZETA2,YLM
+      real(8)::PHASE,ZETA1,ZETA2,YLM, YLM2
       real(8)::VEC_KG(3,NTG)  
       real(8)::KG2(NTG) 
       complex(8)::PF1(NTG)
       real(8)::PF2(NTG) 
       real(8)::ktmp(3),tmp(3)
       complex(8)::SUM_CMPX        
-      complex(8)::C0_MIX
+      complex(8)::C0_MIX, C0_MIX2, factor
       !
       !write(6,*) C0 
       !write(6,*) VOLUME  
@@ -1023,12 +1023,22 @@
           if( ic == 1 ) then
            C0_MIX=CONJG(loc_s_up(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
      +                  loc_s_up(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
+           if(jL==3.AND.jM>5) then
+           C0_MIX2=CONJG(loc_s_up(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)+
+     +                   loc_s_up(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
+           endif
           else
            C0_MIX=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
      +                  loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
+           if(jL==3.AND.jM>5) then
+           C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)+
+     +                  loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)) 
+!           C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
+!     +                   loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
+           endif
           end if
          else
-          C0_MIX=CONJG(C0(ig,ic,i_band+N_BAND_BTM))
+          C0_MIX=CONJG(C0(ig,1,i_band+N_BAND_BTM))
          endif
 !<Psi|s>
          IF(jL==1)THEN                          
@@ -1146,6 +1156,31 @@
      +   *(-YLM)                                             
      +   *NORM_GAUSS(j_gauss) 
      +   *ZETA1*ZETA2*PF2(ig)     
+         ENDIF 
+!<Psi_up|dxy> + factor* <Psi_down|dyz>
+         IF(jL==3.AND.jM>5)THEN            
+          if(jM==6) then
+            factor=(1.0D0,0.0D0) 
+          elseif(jM==7) then
+            factor=(-1.0D0,0.0D0) 
+          elseif(jM==8) then
+            factor=(0.0D0,1.0D0) 
+          elseif(jM==9) then
+            factor=(0.0D0,-1.0D0) 
+          endif  
+          if(ig==1) then
+           write(6,*) "factor=", factor, "psi=",C0_MIX, C0_MIX2
+          endif         
+          ZETA1=(pi/ALPHA_GAUSS(j_gauss))**1.5D0          
+          ZETA2=(1.0D0/2.0D0/ALPHA_GAUSS(j_gauss))**2.0D0   
+          YLM =(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(1,ig)*VEC_KG(2,ig)       
+          YLM2=(0.5d0)*DSQRT(15.d0/pi)*VEC_KG(2,ig)*VEC_KG(3,ig)
+          SUM_CMPX 
+     +   =SUM_CMPX 
+     +   -(C0_MIX*YLM+factor*C0_MIX2*YLM2) 
+     +   *PF1(ig)     
+     +   *NORM_GAUSS(j_gauss) 
+     +   *ZETA1*ZETA2*PF2(ig) 
          ENDIF 
         enddo!ig          
         !--
