@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#Copyright (c) 2018 Yuichi Motoyama
+#Copyright (c) 2018 Yuichi Motoyama, 2019 Terumasa Tadano
 
 '''
 qe2respack.py -- convert Quantum ESPRESSO output into RESPACK input.
