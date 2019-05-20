@@ -437,6 +437,7 @@
         write(6,'(a30)')'write global DOS'
         write(6,*) 
         allocate(E_EIG(NTB,NTK));E_EIG(:,:)=0.0d0
+        allocate(V_EIG(NTB,NTB,NTK));V_EIG(:,:,:)=0.0d0
         do jk=1,NTK 
          if(trs(jk)==1) then 
           ik=numirr(jk) 
@@ -448,8 +449,8 @@
         enddo!jk  
         filename='./dir-wan/dat.dos.global'
         call calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
-     +       filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
-        deallocate(E_EIG)
+     +   filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
+        deallocate(E_EIG,V_EIG)
       endif 
 !--
 !OPEN(102,R,FILE='dat.wfn',FORM='unformatted') 
@@ -865,12 +866,12 @@
        VEC_b(:,2) =  (1.0D0/DBLE(nkb2)) * b2(:) 
        VEC_b(:,3) =  (1.0D0/DBLE(nkb1)) * b1(:) 
      +            -  (1.0D0/DBLE(nkb2)) * b2(:)!SiO2(hcp) 
-     !+            +  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp) 
+!+            +  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp) 
        VEC_b(:,4) = -(1.0D0/DBLE(nkb1)) * b1(:) 
        VEC_b(:,5) = -(1.0D0/DBLE(nkb2)) * b2(:) 
        VEC_b(:,6) = -(1.0D0/DBLE(nkb1)) * b1(:) 
      +            +  (1.0D0/DBLE(nkb2)) * b2(:)!SiO2(hcp)  
-     !+            -  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp)
+!+            -  (1.0D0/DBLE(nkb2)) * b2(:)!Re(hcp)
        VEC_b(:,7) =  (1.0D0/DBLE(nkb3)) * b3(:) 
        VEC_b(:,8) = -(1.0D0/DBLE(nkb3)) * b3(:)            
        La = DSQRT( a1(1)**2 + a1(2)**2 + a1(3)**2 )     
@@ -2670,20 +2671,20 @@
       call calculate_eigenstate(NWF,Na1,Na2,Na3,
      +     H_MAT_R(1,1,-Na1,-Na2,-Na3),NTK,nkb1,nkb2,nkb3,
      +     a1(1),a2(1),a3(1),1,NTK,SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))   
-      filename='./dir-wan/dat.dos.wannier'
+      filename='./dir-wan/dat.dos.wan'
       !
       !ELECTRON NUMBER == 0.0 -> DOS IS EVALUATED WITH BAND-CALC EF
       !
       if(elec_num==0.0d0)then 
        call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
-     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
       endif 
       !
       !ELECTRON NUMBER /= 0.0 -> DOS & DMX ARE EVALUATED WITH RECALC EF
       !
       if(elec_num/=0.0d0)then  
        call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
-     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1))
+     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
        call calculate_dmx(NWF,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
      +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
      +      E_EIG(1,1),V_EIG(1,1,1)) 
@@ -2787,6 +2788,17 @@
      +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
         CLOSE(116)
+        !
+        !20190515 check whether wannier is real
+        !
+        !do i1=(xmin)*na_grid,(xmax)*na_grid-1
+        ! do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
+        !  do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
+        !   write(6,"(2f15.10)") WANNIER_REALSPACE(i1,i2,i3)
+        !  enddo!i3
+        ! enddo!i2
+        !enddo!i1
+        !
        enddo!ix 
        !--
        !gencif 20180906  

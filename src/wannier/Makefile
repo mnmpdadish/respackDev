@@ -17,7 +17,8 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 
 #GNU
 #FC = gfortran 
-#FFLAGS = -O2 -fopenmp -g -fbacktrace
+##FFLAGS = -O2 -fopenmp -g -fbacktrace
+#FFLAGS = -fopenmp -debug -check -warn -fbacktrace -g 
 #LIBBLAS = -llapack -lblas -fopenmp 
 #--------------------------------------------------------------------
 .SUFFIXES:

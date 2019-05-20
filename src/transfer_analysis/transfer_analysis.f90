@@ -123,7 +123,7 @@ PROGRAM main
     !make DOS 
     !
     delw=2.0d0*delt !Grid spacing delw [dos] 
-    call calculate_dos(NWF,ncalck,kgd(1),kgd(2),kgd(3),electron_number,threshold_e,delt,delw,b1(1),b2(1),b3(1),kvec(1,1),EKS(1,1))
+    call calculate_dos(NWF,ncalck,kgd(1),kgd(2),kgd(3),electron_number,threshold_e,delt,delw,b1(1),b2(1),b3(1),kvec(1,1),EKS(1,1),VKS(1,1,1))
     deallocate(EKS,VKS) 
     deallocate(kvec) 
     !

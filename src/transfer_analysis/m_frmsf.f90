@@ -120,8 +120,8 @@ SUBROUTINE wrt_frmsf(NWF,dense,Na1,Na2,Na3,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,Ferm
   !
   DO ib = 1, NWF!n_occ
      !
-     !WRITE(fname,'(a,i0,a)') "./dir-wan/orb", ib, ".frmsf"
-     WRITE(fname,'(a,i0,a)') "./orb", ib, ".frmsf"
+     !WRITE(fname,'(a,i0,a)')"./dir-wan/orb",ib,".frmsf"
+     WRITE(fname,'(a,i3.3,a)')"./dat.orb-",ib,".frmsf"       
      OPEN(fo,FILE=TRIM(fname)) 
      WRITE(fo,*) dense(1:3)
      WRITE(fo,*) 1
