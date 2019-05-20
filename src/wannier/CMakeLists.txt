@@ -23,7 +23,7 @@ m_tetrahedron_20170325.F
 makekpts.f90 
 m_frmsf_wan.F90  
 m_wrt_frmsf.f90 
-m_wrt_mvmc.f90 
+m_wrt_model.f90 
 m_dmx.f90
 m_tetrainteg.F) 
 add_custom_target(wannier ALL)

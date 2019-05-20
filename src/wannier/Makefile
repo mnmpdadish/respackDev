@@ -34,21 +34,21 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 TARGET = calc_wannier 
 
 OBJECTS = m_rdinput.o m_fft3d_20150826.o m_bvector_20171208.o det.o inv.o inv_ge_LAPACK.o \
-	  diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_mvmc.o m_wrt_frmsf.o \
+	  diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_model.o m_wrt_frmsf.o \
 	  search_Rmin.o wannier_sub.o wannier.o m_frmsf_wan.o gencif.o m_gencif_sub.o \
           m_dos.o m_tetrahedron_20170325.o m_eigenstate.o \
           m_dmx.o m_tetrainteg.o 
 
 MOD_FILES = m_rdinput.mod fft_3d.mod m_bvector.mod m_frmsf_wan.mod m_gencif_sub.mod \
             m_dos.mod m_tetrahedron_20170325.mod m_eigenstate.mod \
-            m_wrt_mvmc.mod m_wrt_frmsf.mod \
+            m_wrt_model.mod m_wrt_frmsf.mod \
             m_dmx.mod m_tetrainteg.mod 
 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${LDFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
 wannier.o: wannier.F m_rdinput.o m_fft3d_20150826.o m_bvector_20171208.o det.o inv.o inv_ge_LAPACK.o \
-	   diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_mvmc.o m_wrt_frmsf.o \
+	   diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_model.o m_wrt_frmsf.o \
 	   search_Rmin.o wannier_sub.o m_frmsf_wan.o gencif.o m_gencif_sub.o \
            m_dos.o m_tetrahedron_20170325.o m_eigenstate.o \
            m_dmx.o m_tetrainteg.o 

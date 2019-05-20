@@ -1166,15 +1166,15 @@
       ierr=CHDIR("..") 
       call system("pwd") 
 !--
-!write mvmc 
-      ierr=CHDIR("./dir-mvmc") 
+!write model parameters 
+      ierr=CHDIR("./dir-model") 
       call system("pwd") 
       ie=calc_ifreq          
-      wcut_mvmc=wcut_mvmc/au 
+      !wcut_model=wcut_model/au 
       !
       !old: 20180604
       !
-      ! call wrt_mvmc(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,wcut_mvmc,
+      ! call wrt_model(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,wcut_model,
       !+     W_MAT(1,1,-Na1,-Na2,-Na3,ie)) 
       !
       !new: 20181127 
@@ -1201,7 +1201,7 @@
        stop 'SUM_WEIGHT/=NTK'
       endif 
       !
-      call wrt_mvmc(Na1,Na2,Na3,NWF,W_MAT(1,1,-Na1,-Na2,-Na3,ie),
+      call wrt_model(Na1,Na2,Na3,NWF,W_MAT(1,1,-Na1,-Na2,-Na3,ie),
      +     WEIGHT_R(-Na1,-Na2,-Na3)) 
       !
       ierr=CHDIR("..") 

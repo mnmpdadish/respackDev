@@ -6,7 +6,7 @@
       use m_dos, only: calculate_dos 
       use m_eigenstate, only: calculate_eigenstate
       use m_wrt_frmsf, only: wrt_frmsf 
-      use m_wrt_mvmc  
+      use m_wrt_model  
       use m_dmx, only: calculate_dmx 
       include "config.h"
       !--
@@ -2546,18 +2546,19 @@
 !--
 !(6) OUTPUT Hphi/mVMC DATA 
       write(6,*) 
-      write(6,'(a40)')'+++ write transfers in dir-mvmc +++'
+      write(6,'(a40)')'+++ write transfers in dir-model +++'
       write(6,*) 
-      call system('rm -rf dir-mvmc') 
-      call system('mkdir dir-mvmc') 
+      call system('rm -rf dir-model') 
+      call system('mkdir dir-model') 
       !
-      call wrt_mvmc_hr(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
+      call wrt_model_hr(Na1,Na2,Na3,n_occ,H_MAT_R(1,1,-Na1,-Na2,-Na3),
      +     WEIGHT_R(-Na1,-Na2,-Na3)) 
-      call wrt_mvmc_wcenter(n_occ,a1(1),a2(1),a3(1),wannier_center(1,1))
-      call wrt_mvmc_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,
+      call wrt_model_wcenter(n_occ,a1(1),a2(1),a3(1),
+     +     wannier_center(1,1))
+      call wrt_model_SK_BAND_DISP(Ndiv,N_sym_points,NSK_BAND_DISP,
      +     SK_BAND_DISP(1,1)) 
-      call wrt_mvmc_SK0(NTK,SK0(1,1)) 
-      call wrt_mvmc_ef(FermiEnergy) 
+      call wrt_model_SK0(NTK,SK0(1,1)) 
+      call wrt_model_ef(FermiEnergy) 
       !
       !ELECTRON NUMBER == 0.0 -> DMX IS EVALUATED WITH BAND-CALC EF
       !

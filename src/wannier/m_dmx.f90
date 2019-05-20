@@ -50,7 +50,7 @@ contains
     SK0(1,1),UNT(1,1,1),xow(1,1,1,1),pf(-Na1,-Na2,-Na3,1),WEIGHT_R(-Na1,-Na2,-Na3),dmx(1,1,-Na1,-Na2,-Na3)) 
     !
     !6. write density matrix
-    call wrt_mvmc_dr(NWF,Na1,Na2,Na3,dmx(1,1,-Na1,-Na2,-Na3))
+    call wrt_model_dr(NWF,Na1,Na2,Na3,dmx(1,1,-Na1,-Na2,-Na3))
     ! 
     deallocate(WEIGHT_R,pf,xow,lat_num_a1,lat_num_a2,lat_num_a3,dmx) 
     !
@@ -367,7 +367,7 @@ contains
     return 
   end subroutine make_dmx 
 
-  subroutine wrt_mvmc_dr(NWF,Na1,Na2,Na3,DR) 
+  subroutine wrt_model_dr(NWF,Na1,Na2,Na3,DR) 
     implicit none 
     integer,intent(in)::NWF,Na1,Na2,Na3 
     complex(8),intent(in)::DR(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)
@@ -380,8 +380,8 @@ contains
     !
     !OPEN(307,W,FILE='zvo_dr.dat') 
     !
-    OPEN(307,FILE='./dir-mvmc/zvo_dr.dat') 
-    write(307,'(a)')'wannier90 format for mvmcdry'
+    OPEN(307,FILE='./dir-model/zvo_dr.dat') 
+    write(307,'(a)')'wannier90 format for vmcdry.out or HPhi -sdry'
     write(307,'(i10)') NWF 
     write(307,'(i10)') N_element
     !
@@ -402,6 +402,6 @@ contains
     enddo!ia1 
     return
     !
-  end subroutine wrt_mvmc_dr 
+  end subroutine wrt_model_dr 
   !
 end module m_dmx 

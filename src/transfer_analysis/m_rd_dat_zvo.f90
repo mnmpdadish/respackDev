@@ -36,9 +36,9 @@ module m_rd_dat_zvo
     integer::i,ia1,ia2,ia3,ib,jb 
     real(8),parameter::au=27.21151d0
     !
-    !OPEN(300,R,FILE='./dir-mvmc/zvo_hr.dat') 
+    !OPEN(300,R,FILE='./dir-model/zvo_hr.dat') 
     !
-    OPEN(300,FILE='./dir-mvmc/zvo_hr.dat') 
+    OPEN(300,FILE='./dir-model/zvo_hr.dat') 
     rewind(300) 
     read(300,'(a)') dum_ch 
     read(300,'(i10)') NWF 
@@ -66,9 +66,9 @@ module m_rd_dat_zvo
     real(8),parameter::tpi=2.0d0*dacos(-1.0d0)
     integer::ib,i 
     !
-    !OPEN(303,R,FILE='./dir-mvmc/zvo_geom.dat') 
+    !OPEN(303,R,FILE='./dir-model/zvo_geom.dat') 
     !
-    OPEN(303,FILE='./dir-mvmc/zvo_geom.dat') 
+    OPEN(303,FILE='./dir-model/zvo_geom.dat') 
     read(303,'(3f15.10)')(a1(i),i=1,3) 
     read(303,'(3f15.10)')(a2(i),i=1,3) 
     read(303,'(3f15.10)')(a3(i),i=1,3) 
@@ -93,7 +93,7 @@ module m_rd_dat_zvo
     !
     !OPEN(304,R,FILE='zvo_bandkpts.dat') 
     !
-    OPEN(304,FILE='./dir-mvmc/zvo_bandkpts.dat') 
+    OPEN(304,FILE='./dir-model/zvo_bandkpts.dat') 
     read(304,'(3i10)') NSK_BAND_DISP,Ndiv,N_sym_points 
     allocate(SK_BAND_DISP(3,NSK_BAND_DISP));SK_BAND_DISP=0.0d0 
     do ik=1,NSK_BAND_DISP
@@ -107,7 +107,7 @@ module m_rd_dat_zvo
     !
     !OPEN(305,R,FILE='zvo_mkkpts.dat') 
     !
-    OPEN(305,FILE='./dir-mvmc/zvo_mkkpts.dat') 
+    OPEN(305,FILE='./dir-model/zvo_mkkpts.dat') 
     read(305,'(i10)') NTK 
     allocate(SK0(3,NTK));SK0=0.0d0 
     do ik=1,NTK 
@@ -122,7 +122,7 @@ module m_rd_dat_zvo
     !
     !OPEN(306,R,FILE='zvo_ef.dat') 
     !
-    OPEN(306,FILE='./dir-mvmc/zvo_ef.dat') 
+    OPEN(306,FILE='./dir-model/zvo_ef.dat') 
     read(306,'(f15.10)') FermiEnergy_bandcalc 
   end subroutine rd_dat_ef 
   !

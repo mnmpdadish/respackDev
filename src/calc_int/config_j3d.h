@@ -109,7 +109,7 @@
       real(8)::chead 
       real(8),allocatable::cheadw(:)!cheadw(ne)  
       complex(8)::pf,SUM_CMPX 
-!mvmc 
+!model 
       real(8)::SUM_REAL 
       real(8),allocatable::WEIGHT_R(:,:,:) 
 !local

@@ -23,7 +23,7 @@ PROGRAM main
   use m_frmsf, only: wrt_frmsf 
   include "config.h" 
   !
-  !read zvo(mvmc files) 
+  !read zvo files in dir-model 
   !
   call rd_dat_mkkpts 
   call rd_dat_hr 

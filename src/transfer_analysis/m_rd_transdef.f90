@@ -19,9 +19,9 @@ module m_rd_transdef
     integer::i,n,m
     real(8),parameter::au=27.21151d0
     !
-    !OPEN(400,R,FILE='./dir-mvmc/trans.def') 
+    !OPEN(400,R,FILE='./dir-model/trans.def') 
     !
-    OPEN(400,FILE='./dir-mvmc/trans.def') 
+    OPEN(400,FILE='./dir-model/trans.def') 
     rewind(400) 
     read(400,*) dum_ch
     read(400,*) dum_ch,NTransfer 
