@@ -14,7 +14,7 @@ contains
     !
     complex(8),intent(in)::VKS(NTB,NTB,NTK)
     real(8),allocatable::pdos(:,:)!pdos(ndosgrd,NTB) 
-    integer::flg_pdos
+    real(8)::flg_pdos
     !
     real(8)::emax!=maxval(EIG)
     real(8)::emin!=minval(EIG)
@@ -45,6 +45,7 @@ contains
     !
     flg_pdos=maxval(abs(VKS)) 
     if(flg_pdos/=0.0d0)then
+      write(6,'(a40,f15.8,a)')'flg_pdos/=0.0:',flg_pdos,': PDOS calculate:' 
       allocate(pdos(ndosgrd,NTB));pdos=0.0d0 
       call calc_pdos(NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),VKS(1,1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),pdos(1,1)) 
     endif 
@@ -372,36 +373,52 @@ contains
     real(8)::x,y,z
     integer::index_kpt(nkb1,nkb2,nkb3)    
     ! 
-    if(MOD(NTK,2)/=0)then 
-     !write(6,*)'i am in make_index for odd'
-     do ik=1,NTK 
-      x=SK0(1,ik)*dble(nkb1) 
-      y=SK0(2,ik)*dble(nkb2)
-      z=SK0(3,ik)*dble(nkb3)  
-      x=x+(dble(nkb1)-1.0d0)/2.0d0 
-      y=y+(dble(nkb2)-1.0d0)/2.0d0
-      z=z+(dble(nkb3)-1.0d0)/2.0d0 
-      ix=idnint(x)+1
-      iy=idnint(y)+1
-      iz=idnint(z)+1
-      index_kpt(ix,iy,iz)=ik
-     enddo 
-    else!20170316 
-     !write(6,*)'i am in make_index for even'
-     do ik=1,NTK 
-      x=SK0(1,ik)*dble(nkb1) 
-      y=SK0(2,ik)*dble(nkb2)
-      z=SK0(3,ik)*dble(nkb3)  
-      x=x+dble(nkb1)/2.0d0 
-      y=y+dble(nkb2)/2.0d0
-      z=z+dble(nkb3)/2.0d0 
-      ix=idnint(x)
-      iy=idnint(y)
-      iz=idnint(z)
-      index_kpt(ix,iy,iz)=ik
-     enddo 
-    endif 
+    !if(MOD(NTK,2)/=0)then 
+    ! !write(6,*)'i am in make_index for odd'
+    ! do ik=1,NTK 
+    !  x=SK0(1,ik)*dble(nkb1) 
+    !  y=SK0(2,ik)*dble(nkb2)
+    !  z=SK0(3,ik)*dble(nkb3)  
+    !  x=x+(dble(nkb1)-1.0d0)/2.0d0 
+    !  y=y+(dble(nkb2)-1.0d0)/2.0d0
+    !  z=z+(dble(nkb3)-1.0d0)/2.0d0 
+    !  ix=idnint(x)+1
+    !  iy=idnint(y)+1
+    !  iz=idnint(z)+1
+    !  index_kpt(ix,iy,iz)=ik
+    ! enddo 
+    !else!20170316 
+    ! !write(6,*)'i am in make_index for even'
+    ! do ik=1,NTK 
+    !  x=SK0(1,ik)*dble(nkb1) 
+    !  y=SK0(2,ik)*dble(nkb2)
+    !  z=SK0(3,ik)*dble(nkb3)  
+    !  x=x+dble(nkb1)/2.0d0 
+    !  y=y+dble(nkb2)/2.0d0
+    !  z=z+dble(nkb3)/2.0d0 
+    !  ix=idnint(x)
+    !  iy=idnint(y)
+    !  iz=idnint(z)
+    !  index_kpt(ix,iy,iz)=ik
+    ! enddo 
+    !endif 
+    !--
     !
+    !20190520 Kazuma Nakamura
+    !
+    do ik=1,NTK 
+     x=SK0(1,ik)*dble(nkb1) 
+     y=SK0(2,ik)*dble(nkb2)
+     z=SK0(3,ik)*dble(nkb3)  
+     x=x+(dble(nkb1)-dble(mod(nkb1,2)))/2.0d0 
+     y=y+(dble(nkb2)-dble(mod(nkb2,2)))/2.0d0 
+     z=z+(dble(nkb3)-dble(mod(nkb3,2)))/2.0d0 
+     ix=idnint(x)+mod(nkb1,2)
+     iy=idnint(y)+mod(nkb2,2)
+     iz=idnint(z)+mod(nkb3,2)
+     index_kpt(ix,iy,iz)=ik
+    enddo 
+    ! 
     return 
   end subroutine  
   !
