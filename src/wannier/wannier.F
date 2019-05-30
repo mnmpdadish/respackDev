@@ -1489,6 +1489,24 @@
 !$OMP END DO 
       deallocate(A_TMP) 
 !$OMP END PARALLEL 
+      WRITE(6,*) 
+      WRITE(6,*)'========================'
+      WRITE(6,*)'FIRST UNITARITY CHECK OF A_MAT'
+      WRITE(6,*)'========================'
+      WRITE(6,*)  
+      do ik=1,NTK 
+       do ib=1,n_occ   
+        do jb=1,n_occ   
+         SUM_CMPX=0.0D0            
+         do kb=1,n_occ       
+          SUM_CMPX=SUM_CMPX+CONJG(A_MAT(kb,ib,ik))*A_MAT(kb,jb,ik) 
+         enddo 
+         write(6,*) ib,jb,SUM_CMPX        
+        enddo  
+       enddo  
+       write(6,*)       
+      enddo!ik   
+
 !--
 !     do ik=1,NTK 
 !      WRITE(6,*)'ik=',ik 
@@ -2296,23 +2314,23 @@
 !--           
       ENDDO!##### SPREAD-MINIMIZATION ROOP #####         
 !--
-!      WRITE(6,*) 
-!      WRITE(6,*)'========================'
-!      WRITE(6,*)'UNITALITY CHECK OF A_MAT'
-!      WRITE(6,*)'========================'
-!      WRITE(6,*)  
-!      do ik=1,NTK 
-!       do ib=1,n_occ   
-!        do jb=1,n_occ   
-!         SUM_CMPX=0.0D0            
-!         do kb=1,n_occ       
-!          SUM_CMPX=SUM_CMPX+CONJG(A_MAT(kb,ib,ik))*A_MAT(kb,jb,ik) 
-!         enddo 
-!         write(6,*) ib,jb,SUM_CMPX        
-!        enddo  
-!       enddo  
-!       write(6,*)       
-!      enddo!ik        
+      WRITE(6,*) 
+      WRITE(6,*)'========================'
+      WRITE(6,*)'UNITALITY CHECK OF A_MAT'
+      WRITE(6,*)'========================'
+      WRITE(6,*)  
+      do ik=1,NTK 
+       do ib=1,n_occ   
+        do jb=1,n_occ   
+         SUM_CMPX=0.0D0            
+         do kb=1,n_occ       
+          SUM_CMPX=SUM_CMPX+CONJG(A_MAT(kb,ib,ik))*A_MAT(kb,jb,ik) 
+         enddo 
+         write(6,*) ib,jb,SUM_CMPX        
+        enddo  
+       enddo  
+       write(6,*)       
+      enddo!ik        
 !--
 !wannier center 
       allocate(wannier_center(3,n_occ));wannier_center(:,:)=0.0d0  
