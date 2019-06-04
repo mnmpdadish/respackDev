@@ -25,7 +25,7 @@ program convert101
   
   real(8) :: eFermi, celldm
   real(8) :: Ecut_for_psi, Etot
-  integer :: i, j, jj, num_k, num_b, ic
+  integer :: i, j, jj, num_k, num_b, ic,ig
   integer :: ncomp = 1 
   character(5) :: cwrk
   
@@ -234,9 +234,11 @@ program convert101
       endif
       !
       do j = 1, num_b
-       do ic = 1,ncomp ! changed the order or writting, for easier reading in chiqw. The reason is mainly to be more coherent with the usual order of indices C0_K(ig,ic,ib,ik)
-        write(102) evc(:,j,ic)
-       end do ! ic
+       !do ic = 1,ncomp ! changed the order or writting, for easier reading in chiqw. The reason is mainly to be more coherent with the usual order of indices C0_K(ig,ic,ib,ik)
+        !write(102) evc(:,j,ic)
+        write(102) (evc(:,j,ic),ic=1,ncomp)
+        
+       !end do ! ic
       end do ! j 
       
       deallocate(evc)

@@ -11,11 +11,11 @@ QEROOT=/home/maxime/install/espresso-5.4.0/
 #   QEROOT=/home/kxxxx/kxxxx00/src/QE/qe-6.1    
 
 # Intel compiler with intel MKL
-FC = ifort
-FFLAGS = -O2 -xHOST -g -traceback
-LINKER =  mpiifort 
-LDFLAGS = -liomp5 -lpthread
-LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+#FC = ifort
+#FFLAGS = -O2 -xHOST -g -traceback
+#LINKER =  mpiifort 
+#LDFLAGS = -liomp5 -lpthread
+#LAPACK = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
 # GNU
 FC = gfortran
 FFLAGS = -O2 -g -fbacktrace

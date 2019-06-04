@@ -340,13 +340,16 @@
       allocate(CIR(NTG,ncomp,NTB,Nk_irr));CIR=0.0d0  
       do ik=1,Nk_irr
        do ib=1,NBAND
-        do ic=1,ncomp
+!        do ic=1,ncomp
          if((ib.ge.NB_start).and.(ib.le.NB_end)) then  
-          read(102)(CIR(IG,ic,ib-NB_start+1,ik),IG=1,NGI(ik))
+          read(102)((CIR(IG,ic,ib-NB_start+1,ik),
+     +                        IG=1,NGI(ik)),ic=1,ncomp)
+
+          !read(102)(CIR(IG,ic,ib-NB_start+1,ik),IG=1,NGI(ik))
          else
           read(102) 
          endif
-        enddo!ic 
+!        enddo!ic 
        enddo!ib
       enddo!ik
       close(102)
