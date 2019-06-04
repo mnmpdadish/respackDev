@@ -443,7 +443,7 @@ def qe2respack(dirname, endian=sys.byteorder):
                     for ib in range(num_b):
                         n = struct.unpack(fmt, inp.read(4))[0]
                         dat = inp.read(n)
-                        print(ib,n)
+                        #print(ib,n)
                         #print(dat)
                         inp.read(4)
                         f.write(struct.pack(endian_fmt+'i', n))
