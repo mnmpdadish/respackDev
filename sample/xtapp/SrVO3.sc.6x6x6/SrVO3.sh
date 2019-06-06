@@ -13,7 +13,7 @@ set -x
 #vbpef2gp-lsda SrVO3.band 
 
 #interface 
-#./xtapp2respack.sh -b ./wfn2respack SrVO3
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv SrVO3
 
 #respack 
 #mpirun -np 1 calc_wannier < input.in > log.SrVO3-wannier

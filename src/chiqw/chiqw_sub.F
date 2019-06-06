@@ -369,58 +369,64 @@
       integer::ik,ix,iy,iz
       real(8)::x,y,z
       integer::index_kpt(nkb1,nkb2,nkb3)    
- 
-      if(MOD(NTK,2)/=0) then 
-!      write(6,*)'i am in make_index for odd'
-       do ik=1,NTK 
-        x=SK0(1,ik)*dble(nkb1) 
-        y=SK0(2,ik)*dble(nkb2)
-        z=SK0(3,ik)*dble(nkb3)  
-        x=x+(dble(nkb1)-1.0d0)/2.0d0 
-        y=y+(dble(nkb2)-1.0d0)/2.0d0
-        z=z+(dble(nkb3)-1.0d0)/2.0d0 
-        ix=idnint(x)+1
-        iy=idnint(y)+1
-        iz=idnint(z)+1
-        index_kpt(ix,iy,iz)=ik
-!        write(6,*) ix,iy,iz
-       enddo 
-      else!20170316 
-!      write(6,*)'i am in make_index for even'
-       do ik=1,NTK 
-!       x=SK0(1,ik)*2.0D0*dble(nkb1)+1.0D0  
-!       y=SK0(2,ik)*2.0D0*dble(nkb2)+1.0D0  
-!       z=SK0(3,ik)*2.0D0*dble(nkb3)+1.0D0  
-!       x=(x+dble(nkb1))/2.0D0 
-!       y=(y+dble(nkb2))/2.0D0 
-!       z=(z+dble(nkb3))/2.0D0 
-!       ix=idnint(x)
-!       iy=idnint(y)
-!       iz=idnint(z)
-        x=SK0(1,ik)*dble(nkb1) 
-        y=SK0(2,ik)*dble(nkb2)
-        z=SK0(3,ik)*dble(nkb3)  
-        x=x+dble(nkb1)/2.0d0 
-        y=y+dble(nkb2)/2.0d0
-        z=z+dble(nkb3)/2.0d0 
-        ix=idnint(x)
-        iy=idnint(y)
-        iz=idnint(z)
-        index_kpt(ix,iy,iz)=ik
-!       write(6,*) ix,iy,iz
-       enddo 
-      endif 
-!--
-!      do iz=1,nkb3 
-!       do iy=1,nkb2
-!        do ix=1,nkb1
-!         ik=index_kpt(ix,iy,iz)
-!         write(6,'(i8,3f15.10)') ik,SK0(:,ik)
-!        enddo
-!       enddo
-!      enddo
-!      write(6,*)'finish make_index_kpt'
-!--
+      ! 
+      !if(MOD(NTK,2)/=0) then 
+      ! write(6,*)'i am in make_index for odd'
+      ! do ik=1,NTK 
+      !  x=SK0(1,ik)*dble(nkb1) 
+      !  y=SK0(2,ik)*dble(nkb2)
+      !  z=SK0(3,ik)*dble(nkb3)  
+      !  x=x+(dble(nkb1)-1.0d0)/2.0d0 
+      !  y=y+(dble(nkb2)-1.0d0)/2.0d0
+      !  z=z+(dble(nkb3)-1.0d0)/2.0d0 
+      !  ix=idnint(x)+1
+      !  iy=idnint(y)+1
+      !  iz=idnint(z)+1
+      !  index_kpt(ix,iy,iz)=ik
+      ! enddo 
+      !else!20170316 
+      ! write(6,*)'i am in make_index for even'
+      ! do ik=1,NTK 
+      !  x=SK0(1,ik)*dble(nkb1) 
+      !  y=SK0(2,ik)*dble(nkb2)
+      !  z=SK0(3,ik)*dble(nkb3)  
+      !  x=x+dble(nkb1)/2.0d0 
+      !  y=y+dble(nkb2)/2.0d0
+      !  z=z+dble(nkb3)/2.0d0 
+      !  ix=idnint(x)
+      !  iy=idnint(y)
+      !  iz=idnint(z)
+      !  index_kpt(ix,iy,iz)=ik
+      ! enddo 
+      !endif 
+      !--
+      !
+      !20190520 Kazuma Nakamura
+      !
+      do ik=1,NTK 
+       x=SK0(1,ik)*dble(nkb1) 
+       y=SK0(2,ik)*dble(nkb2)
+       z=SK0(3,ik)*dble(nkb3)  
+       x=x+(dble(nkb1)-dble(mod(nkb1,2)))/2.0d0 
+       y=y+(dble(nkb2)-dble(mod(nkb2,2)))/2.0d0 
+       z=z+(dble(nkb3)-dble(mod(nkb3,2)))/2.0d0 
+       ix=idnint(x)+mod(nkb1,2)
+       iy=idnint(y)+mod(nkb2,2)
+       iz=idnint(z)+mod(nkb3,2)
+       index_kpt(ix,iy,iz)=ik
+      enddo 
+      ! 
+      !--
+      !do iz=1,nkb3 
+      ! do iy=1,nkb2
+      !  do ix=1,nkb1
+      !   ik=index_kpt(ix,iy,iz)
+      !   write(6,'(i8,3f15.10)') ik,SK0(:,ik)
+      !  enddo
+      ! enddo
+      !enddo
+      !--
+      !
       RETURN  
       END 
 !---
@@ -820,9 +826,9 @@
       real(8)::qgL(3),qgL2  
       integer,intent(out)::KG0(3,NTG)    
       integer,intent(out)::NG 
-      integer,parameter::NGL1=100!300
-      integer,parameter::NGL2=100!300 
-      integer,parameter::NGL3=100!300
+      integer,parameter::NGL1=150!100!300
+      integer,parameter::NGL2=150!100!300 
+      integer,parameter::NGL3=150!100!300
       igL=0
       do igL1=-NGL1,NGL1 
        do igL2=-NGL2,NGL2 

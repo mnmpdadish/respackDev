@@ -13,7 +13,7 @@ set -x
 #vbpef2gp-lsda Al.band 
 
 #interface 
-#./xtapp2respack.sh -b ./wfn2respack Al 
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv Al 
 
 #respack 
 #mpirun -np 1 calc_wannier < input.in > log.Al-wannier

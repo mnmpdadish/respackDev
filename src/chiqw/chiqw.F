@@ -14,7 +14,7 @@
       if(myrank_glb.eq.0)then 
        call read_input(nproc_glb)!20170926  
       endif 
-!--
+      !--
       call MPI_Bcast(N_CALC_BAND,1,MPI_INTEGER,0,comm_glb,ierr) 
       call MPI_Bcast(Ecut_for_eps,1,MPI_DOUBLE_PRECISION,0,
      +               comm_glb,ierr)
@@ -73,7 +73,7 @@
       call MPI_COMM_SPLIT(comm_glb,id_sub,myrank_glb,comm,ierr)
       call MPI_COMM_RANK(comm,myrank,ierr)
       call MPI_COMM_SIZE(comm,nproc,ierr)
-!--
+      !--
       call MPI_BARRIER(comm_glb,ierr)
       start_time=MPI_Wtime() 
       if(myrank_glb.eq.MPI_io_rank)then 
@@ -121,9 +121,9 @@
       flg_cRPA_ewin=0
       if(flg_cRPA==1)then 
        flg_cRPA_band=1!band-cRPA
-!      flg_cRPA_ewin=1!window-cRPA 
+       !flg_cRPA_ewin=1!window-cRPA 
       endif 
-!--
+      !--
       if(flg_cRPA_ewin==1)then 
        if(E_LOWER==E_UPPER)then 
         write(6,*)'ERROR: wrong setting energy window; stop' 
@@ -137,6 +137,7 @@
        endif 
        E_LOWER=E_LOWER/au 
        E_UPPER=E_UPPER/au 
+!--
 !20180110 
 !      else 
 !       E_LOWER=FermiEnergy-0.5d0/au 
@@ -181,7 +182,7 @@
        write(6,*)
        write(6,*)'VOLUME OF UNIT CELL=',VOLUME  
       endif 
-!---
+      !--
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,*) 
        write(6,*)'======================'
@@ -246,6 +247,7 @@
        enddo
        write(6,*)'finish read dat.symmetry'
       endif 
+!--
 !check 
 !do iop=1,nsymq
 !write(6,*) iop
@@ -288,7 +290,7 @@
 !      if(myrank_glb.eq.MPI_io_rank)then 
 !       write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
 !      endif 
-!---
+!--
 !OPEN(132,R,FILE='dat.nkm')20170406 
       OPEN(132,FILE='./dir-wfn/dat.nkm')!20170406 
       allocate(NGI(Nk_irr));NGI(:)=0
@@ -301,7 +303,7 @@
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,'(a10,i10)')'NTG=',NTG  
       endif 
-!---
+!--
 !OPEN(111,R,FILE='dat.eigenvalue') 
       OPEN(111,FILE='./dir-wfn/dat.eigenvalue') 
       rewind(111)
@@ -313,12 +315,13 @@
        enddo!ib 
       enddo!ik          
       close(111) 
-!--
+      !--
       if(N_CALC_BAND==0) N_CALC_BAND=NTB  
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,'(a15,i10)')'NTB=',NTB  
        write(6,'(a15,i10)')'N_CALC_BAND=',N_CALC_BAND 
       endif 
+!--
 !      call MPI_FINALIZE(ierr)
 !      stop
 !--
@@ -343,7 +346,7 @@
        enddo 
       enddo!ik 
       close(104)
-!--
+      !--
       allocate(LKGI(NTG,Nk_irr));LKGI=0.0d0 
       do ik=1,Nk_irr 
        do ig=1,NGI(ik) 
@@ -361,12 +364,12 @@
        LKGI(ig,ik)=ktmp(1)**2+ktmp(2)**2+ktmp(3)**2
        enddo!ig 
       enddo!ik 
-!--
+      !--
       Ecut_for_psi=maxval(LKGI(:,:))+1.0d-8!20170512 
       if(Ecut_for_eps==0.0d0)then!default
        Ecut_for_eps=Ecut_for_psi/10.0d0!20171010  
       endif 
-!--
+      !--
       if(myrank_glb.eq.MPI_io_rank)then 
        do ik=1,Nk_irr 
         write(6,*) maxval(LKGI(:,ik))
@@ -376,7 +379,7 @@
        write(6,*)'reset Ecut_for_psi=',Ecut_for_psi 
        write(6,*)'set Ecut_for_eps=',Ecut_for_eps 
       endif 
-!--
+      !--
       L1=maxval(abs(KGI(1,:,:)))+1
       L2=maxval(abs(KGI(2,:,:)))+1
       L3=maxval(abs(KGI(3,:,:)))+1
@@ -401,7 +404,7 @@
       !nwx2=algn235(2*m1) 
       !nwy2=algn235(2*m2) 
       !nwz2=algn235(2*m3) 
-      !
+      !--
       htmp=dsqrt(dot_product(a1,a1))
       h1(:)=a1(:)/htmp 
       htmp=dsqrt(dot_product(a2,a2))
@@ -412,15 +415,15 @@
       d2=abs(dot_product(b2,h2)) 
       d3=abs(dot_product(b3,h3)) 
       qwf=2.0d0*dsqrt(Ecut_for_psi) 
-      !
+      !--
       !nwx2=algn235(int(qwf/d1)+1,1) 
       !nwy2=algn235(int(qwf/d2)+1,1) 
       !nwz2=algn235(int(qwf/d3)+1,1) 
-      !
+      !--
       nwx2=algn235(int(qwf/d1)+1)!20180412 by Y.Nomura 
       nwy2=algn235(int(qwf/d2)+1)!20180412 by Y.Nomura 
       nwz2=algn235(int(qwf/d3)+1)!20180412 by Y.Nomura 
-      !
+      !--
       nfft1=nwx2+1
       nfft2=nwy2+1
       nfft3=nwz2+1
@@ -448,6 +451,7 @@
       allocate(numrot(NTK));numrot(:)=0
       allocate(trs(NTK));trs(:)=0
       allocate(RW(3,NTK));RW(:,:)=0
+!--
 !20161207 
 !      do ik=1,Nk_irr 
 !       SK0(:,ik)=SKI(:,ik) 
@@ -494,12 +498,12 @@
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=-1;RW(:,jk)=RWtmp(:)
 2000  enddo 
       enddo 
-!--
+      !--
       if(NTK/=jk)then 
        write(6,*)'ERROR;STOP;NTK should be jk'   
        write(6,*)'NTK=',NTK,'jk=',jk;STOP
       endif 
-!--   
+      !--   
       if (myrank_glb.eq.0) then 
        write(6,*) 
        write(6,*)'====='
@@ -510,7 +514,7 @@
         WRITE(6,'(I5,3F15.10)') ik,SK0(:,ik) 
        ENDDO 
       endif 
-!--
+      !--
       call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
@@ -521,6 +525,7 @@
       allocate(NB0(NTK));NB0(:)=0
       allocate(KG0(3,NTG,NTK));KG0(:,:,:)=0 
       allocate(KGtmp(3,NTG));KGtmp(:,:)=0 
+!--
 !20161207 
 !      do jk=1,Nk_irr 
 !       NG0(jk)=NGI(jk);NB0(jk)=NTB;KG0(:,:,jk)=KGI(:,:,jk) 
@@ -565,7 +570,7 @@
        endif 
       enddo 
       deallocate(KGtmp) 
-!--
+      !--
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,*) 
        write(6,*)'==========='
@@ -576,6 +581,7 @@
         write(6,'(2I20)') NB0(ik),NG0(ik) 
        enddo 
       endif 
+!--
 !20170418 
 !mkdir dir-eps/qxx
       if(myrank_glb.eq.0)then!master 
@@ -667,7 +673,7 @@
         enddo!ix 
         Nq_irr=iq  
        endif!flg_calc_type==2 
-!--
+       !--
        ierr=CHDIR("..") 
        call system('pwd') 
       endif!myrank_glb==0 
@@ -691,7 +697,7 @@
       allocate(SQ(3,nbufq)) 
       allocate(LG0(3,NTG,nbufq)) 
       allocate(NGQ(nbufq)) 
-!--
+      !--
       if(id_sub.lt.mod(Nq_irr,num_of_comm))then
        pnq=pnq+1
        bnq=pnq*id_sub+1 
@@ -701,7 +707,7 @@
      +    +(pnq)*(id_sub-mod(Nq_irr,num_of_comm))+1 
        enq=bnq+pnq-1
       endif
-!--
+      !--
       do iq=1,Nq_irr
        if((bnq.le.iq).and.(iq.le.enq))then 
         SQI(:,iq-bnq+1)=calc_qlist(:,iq) 
@@ -819,9 +825,9 @@
        endif 
        NGQ(iq)=NG_for_eps  
       enddo  
-!--
+      !--
       call MPI_BARRIER(comm_glb,ierr)
-!--
+      !--
       allocate(index_kpt(nkb1,nkb2,nkb3));index_kpt(:,:,:)=0     
       call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
 !--
@@ -842,22 +848,22 @@
       allocate(band_max(NTB));band_max(:)=0.0d0
       allocate(band_min(NTB));band_min(:)=0.0d0
       allocate(prob(NTB,NTK));prob(:,:)=0.0d0 
-!--
+      !--
       if(flg_cRPA==0)then 
        call judge_FermiInside(Nk_irr,NTB,E_EIGI(1,1),FermiEnergy,
      + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1))
       endif 
-!--
+      !--
       if(flg_cRPA==1.and.flg_cRPA_band==1)then 
        call judge_FermiInside(Nk_irr,NTB,E_EIGI(1,1),FermiEnergy,
      + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1))
       endif 
-!--
+      !--
       if(flg_cRPA==1.and.flg_cRPA_ewin==1)then 
        call judge_WindowInside(Nk_irr,NTB,E_EIGI(1,1),E_LOWER,E_UPPER,
      + WindowInside(1),Tindx(1),E_AVE(1),band_max(1),band_min(1)) 
       endif 
-!--
+      !--
       if (myrank_glb.eq.0) then 
        write(6,*) 
        write(6,*)'Winside'
@@ -865,21 +871,21 @@
        do ib=1,NTB
         write(6,*) ib,WindowInside(ib)
        enddo 
-!
+       !--
        write(6,*) 
        write(6,*)'Tindx'
        write(6,*) 
        do ib=1,NTB
         write(6,*) ib,Tindx(ib)
        enddo 
-!
+       !--
        write(6,*) 
        write(6,*)'bandMax and bandMin in eV'
        write(6,*) 
        do ib=1,NTB
         write(6,'(i5,2f15.10)') ib,band_max(ib)*au,band_min(ib)*au 
        enddo 
-!
+       !--
        write(6,*) 
        write(6,*)'E_AVE in eV'
        write(6,*) 
@@ -926,7 +932,7 @@
          prob(Ns(ik)+ib,ik)=SUM_CMPX 
         enddo!ib   
        enddo!ik        
-!-- 
+       !-- 
        if(myrank_glb.eq.0)then!master  
         WRITE(6,*) 
         WRITE(6,*)'========================'
@@ -971,7 +977,7 @@
        if(fs1==1) ip=ip+1
        if(fs1==2) iu=iu+1
       enddo 
-!
+      !--
       N_docc=id
       N_pocc=ip
       N_uocc=iu 
@@ -980,14 +986,14 @@
        write(6,*)'N_pocc=',N_pocc 
        write(6,*)'N_uocc=',N_uocc 
       endif 
-!
+      !--
       N_occ=N_docc+N_pocc
       N_vir=N_uocc+N_pocc  
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,*)'N_occ=',N_occ 
        write(6,*)'N_vir=',N_vir  
       endif 
-!
+      !--
       pnv=N_vir/nproc
       if(mod(N_vir,nproc).ne.0)then
        nbufv=pnv+1
@@ -1057,11 +1063,11 @@
       allocate(EO_AVE(1:nbufo));EO_AVE(:)=0.0d0 
       allocate(EV_AVE(1:nbufv));EV_AVE(:)=0.0d0 
       allocate(EV_AVE_new(1:nbufv));EV_AVE_new(:)=0.0d0 
-!--
+      !--
       allocate(P_OCC(1:nbufo,NTK));P_OCC(:,:)=0.0d0 
       allocate(P_VIR(1:nbufv,NTK));P_VIR(:,:)=0.0d0 
       allocate(P_VIR_new(1:nbufv,NTK));P_VIR_new(:,:)=0.0d0 
-!--
+      !--
       do i_band=1,pno!N_occ
        W_OCC(i_band)=WindowInside(bno-1+i_band)
        E_OCC(i_band,:)=E_EIGI(bno-1+i_band,:)
@@ -1076,7 +1082,7 @@
        EV_AVE(i_band)=E_AVE(N_docc+bnv-1+i_band) 
        P_VIR(i_band,:)=prob(N_docc+bnv-1+i_band,:)
       enddo 
-!--
+      !--
       call MPI_BARRIER(comm_glb,ierr)
       if(myrank_glb.eq.MPI_io_rank)then 
        write(6,*) 
@@ -1117,7 +1123,7 @@
        enddo 
       endif 
       flush(6) 
-!-- 
+      !-- 
       call MPI_BARRIER(comm_glb,ierr)
       allocate(OCC(NTG,ncomp,1:nbufo,Nk_irr));OCC(:,:,:,:)=0.0d0 
       allocate(VIR(NTG,ncomp,1:nbufv,Nk_irr));VIR(:,:,:,:)=0.0d0 
@@ -1147,24 +1153,26 @@
      +                dest,0,comm,status,ierr) 
        else
         do ib=1,pno
-         do ic=1,ncomp
-          read(102)(OCC(ig,ic,ib,ik),ig=1,NGI(ik))
-         enddo!ic
+         !do ic=1,ncomp
+         ! read(102)(OCC(ig,ic,ib,ik),ig=1,NGI(ik))
+           read(102)((OCC(ig,ic,ib,ik),ig=1,NGI(ik)),ic=1,ncomp)
+         !enddo!ic
         enddo!ib
         allocate(Otmp(NTG,ncomp,nbufo));Otmp(:,:,:)=0.0d0  
         do source=1,nproc-1
          write(6,*)'source=',source 
          call MPI_Recv(pnocld,1,MPI_INTEGER,source,0,comm,status,ierr) 
          do ib=1,pnocld 
-          do ic=1,ncomp
-           read(102)(Otmp(ig,ic,ib),ig=1,NGI(ik))
-          enddo 
+          !do ic=1,ncomp
+          ! read(102)(Otmp(ig,ic,ib),ig=1,NGI(ik))
+           read(102)((Otmp(ig,ic,ib),ig=1,NGI(ik)),ic=1,ncomp)
+          !enddo 
          enddo
          call MPI_Send(Otmp(1,1,1),ncomp*nbufo*NTG,MPI_DOUBLE_COMPLEX,
      +                 source,0,comm,ierr) 
         enddo!source 
         deallocate(Otmp) 
-        !
+        !--
         !20180412 M.Charlebois 
         !
         !It is better not to use backspace function
@@ -1177,39 +1185,41 @@
         read(102) ncomp
         do jk=1,ik-1
          do ib=1,NTB 
-          do ic=1,ncomp
+          !do ic=1,ncomp
            read(102) 
-          enddo!ic
+          !enddo!ic
          enddo!ib
         enddo!jk  
         
         do ib=1,N_docc
-         do ic=1,ncomp
+         !do ic=1,ncomp
           read(102) 
-         enddo!ic
+         !enddo!ic
         enddo!ib
         !
         do ib=1,pnv 
-         do ic=1,ncomp
-          read(102)(VIR(ig,ic,ib,ik),ig=1,NGI(ik))
-         enddo!ic
+         !do ic=1,ncomp
+          read(102)((VIR(ig,ic,ib,ik),ig=1,NGI(ik)),ic=1,ncomp)
+         ! read(102)(VIR(ig,ic,ib,ik),ig=1,NGI(ik))
+         !enddo!ic
         enddo!ib 
         allocate(Vtmp(NTG,ncomp,nbufv));Vtmp(:,:,:)=0.0d0  
         do source=1,nproc-1
          call MPI_Recv(pnvcld,1,MPI_INTEGER,source,0,comm,status,ierr) 
          do ib=1,pnvcld
-          do ic=1,ncomp
-           read(102)(Vtmp(ig,ic,ib),ig=1,NGI(ik))
-          enddo!ic
+          !do ic=1,ncomp
+          ! read(102)(Vtmp(ig,ic,ib),ig=1,NGI(ik))
+           read(102)((Vtmp(ig,ic,ib),ig=1,NGI(ik)),ic=1,ncomp)
+          !enddo!ic
          enddo!ib
          call MPI_Send(Vtmp(1,1,1),ncomp*nbufv*NTG,MPI_DOUBLE_COMPLEX,
      +                 source,0,comm,ierr)
         enddo!source
         deallocate(Vtmp)
         do ib=1,NTB-N_CALC_BAND
-         do ic=1,ncomp
+         !do ic=1,ncomp
           read(102)
-         enddo!ic
+         !enddo!ic
         enddo!ib
        endif
       enddo!ik
@@ -1277,6 +1287,7 @@
        ierr=CHDIR("..") 
        call system('pwd') 
       endif 
+!--
 !     call MPI_FINALIZE(ierr)
 !     stop
 !--
@@ -1288,7 +1299,7 @@
        WRITE(6,*)'====================='
        WRITE(6,*) 
       endif 
-!--
+      !--
       allocate(imt1(4*nkb1*nkb2*nkb3*6));imt1(:)=0    
 !--
 !     call ttrhdrn_mkidx(nkb1,nkb2,nkb3,imt1(1)) 
@@ -1343,7 +1354,6 @@
 !--
 !1:window-cRPA not default 
         if(fs1==1.and.fs2==1.and.flg_cRPA_ewin==1)cycle 
-!--
          ij=ij+1
          i_for_pair(ij)=ib  
          j_for_pair(ij)=jb  
@@ -1444,7 +1454,7 @@
      +                   e1_3D(1,1,1),e2_3D(1,1,1),
      +                   FermiEnergy,FermiEnergy,delt,dsgn,
      +                   nen,em(1),ca1(1),xow(1,1,1,1)) 
-!--
+        !--
         xow_1D(:,:)=0.0d0 
         do ikb3=1,nkb3
          do ikb2=1,nkb2
@@ -1456,7 +1466,7 @@
           enddo 
          enddo 
         enddo 
-!--
+        !--
         do ie=1,nen
          do ig=1,NG_for_eps
           do jg=1,NG_for_eps
@@ -1471,12 +1481,12 @@
           enddo 
          enddo 
         enddo 
-!--
+        !--
         iomp=omp_get_thread_num() 
         if(myrank.eq.0.and.iomp.eq.0)then 
          write(6,*)'#',i_band,j_band 
         endif 
-!--
+        !--
        enddo!ij
 !$OMP END DO
 !$OMP CRITICAL
@@ -1485,7 +1495,7 @@
        deallocate(pc0d,fftwk,wfunc,m_tmp,ism)
        deallocate(C0_K,C0_KQ,kpq,e1_1D,e2_1D,e1_3D,e2_3D,xow,xow_1D,ca1) 
 !$OMP END PARALLEL
-!---
+       !--
        if(myrank.eq.0)write(6,*)'#MPI start' 
        call MPI_BARRIER(comm,ierr)
        dest=modulo(myrank+1,nproc)
@@ -1533,7 +1543,7 @@
      +                   VIR_new(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)
        if(myrank.eq.0)write(6,*)'#MPI end' 
        enddo!irot 
-!--
+       !--
        call MPI_REDUCE(pchiqw,chiqw,NG_for_eps*NG_for_eps*nen,
      +      MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
 !--
@@ -1561,7 +1571,7 @@
         rewind(301)
         write(301,*) q1,q2,q3 
         close(301) 
-!--
+        !--
         allocate(epsqw(NG_for_eps,NG_for_eps,nen));epsqw(:,:,:)=0.0d0 
         allocate(eps_rpa(NG_for_eps,NG_for_eps));eps_rpa(:,:)=0.0d0 
         allocate(chi0(NG_for_eps,NG_for_eps));chi0(:,:)=0.0d0 
@@ -1577,7 +1587,7 @@
          write(file_num_eps_ie,'(a)')
      +   '#1:q+G [au], 2:Re(eps-1), 3:Im(eps-1)'
         enddo!ie 
-!--
+        !--
         do ie=1,nen 
          file_num_chi_ie=0!file_num_chi_base+ie-1
          file_num_eps_ie=file_num_eps_base+ie!-1 
@@ -1612,7 +1622,7 @@
         write(file_num_log,*)'#finish chi0 evaluation for',qnum!iq 
         write(file_num_log,*)'#' 
         close(file_num_log) 
-!--
+        !--
         deallocate(epsqw,eps_rpa,chi0)
         ierr=CHDIR("../..")!2017413  
         call system('pwd') 
@@ -1675,9 +1685,10 @@
 !--
 !1:window-cRPA not default
        if(fs1==1.and.fs2==1.and.flg_cRPA_ewin==1)cycle
-!--
+        !--
         fs1=T_VIR(ib)
         fs2=T_OCC(jb)
+        !--
         if((fs1==fs2).and.fs1.ne.0)then 
 !wpl calc 20130308
          ij_intra=ij_intra+1
@@ -1745,7 +1756,7 @@
         NLvm(:)=MAT_NLr_rNL(:,ib+(N_docc+bnv-1),jb+(bno-1),numirr(ik))
         !careful: the behavior of NLvm != 0.0 has not been tested with ncomp=2
         pk_1D(ik,:)=-ci*(vm(:)-NLvm(:)) 
-!--
+        !--
         fk_1D(ik)=1.0d0
         ikir=numirr(ik) 
         gk_1D(ik)=cmplx(E_OCC(jb,ikir)-FermiEnergy,-delt)
@@ -1763,11 +1774,11 @@
           enddo 
          enddo 
         enddo 
-!--
+        !--
         xo(:,:,:)=0.0d0 
         call ttrhdrn_simple(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),
      +                      fk_3D(1,1,1),gk_3D(1,1,1),xo(1,1,1))
-!--
+        !--
         do ikb3=1,nkb3
          do ikb2=1,nkb2
           do ikb1=1,nkb1
@@ -1820,7 +1831,7 @@
 !$OMP&                 pc0dgm,iomp,ikir,iop) 
        allocate(pc0dgm(NG_for_eps,NG_for_eps,nen,3));pc0dgm=(0.d0,0.d0) 
        allocate(ismgm(NTK,NG_for_eps,3))
-!--
+       !--
        allocate(m_tmp(NG_for_eps))
        allocate(fftwk(Nl123*2)) 
        allocate(wfunc(Nl123*2)) 
@@ -1869,7 +1880,7 @@
          call calc_VMab(NTK,NTG,ncomp,NG0(1),KG0(1,1,1),
      +                  C0_K(1,1),C0_KQ(1,1),ik, 
      +                  b1(1),b2(1),b3(1),vm(1))  
-!--
+         !--
          del_eps=E_VIR(ib,numirr(ikq))-E_OCC(jb,numirr(ik))
 !20140915 
          if(abs(del_eps)<delt)then 
@@ -1898,6 +1909,7 @@
          e1_1D(ik)=cmplx(E_OCC(jb,numirr(ik)),0.0d0) 
          e2_1D(ik)=cmplx(E_VIR(ib,numirr(ikq)),0.0d0) 
         enddo 
+!--
 !avoid degeneracy 20120916 
 !       do ik=1,NTK 
 !        if(abs(e1_1D(ik)-e2_1D(ik))<delt) then 
@@ -1931,7 +1943,7 @@
      +                   e1_3D(1,1,1),e2_3D(1,1,1),
      +                   FermiEnergy,FermiEnergy,delt,dsgn,
      +                   nen,em(1),ca1(1),xow(1,1,1,1)) 
-!--
+        !--
         xow_1D(:,:)=0.0d0 
         do ikb3=1,nkb3
          do ikb2=1,nkb2
@@ -1993,11 +2005,11 @@
 !         enddo!jg 
 !        enddo!ig 
 !       enddo!ie 
-!---
+!--
        iomp=omp_get_thread_num() 
        if(myrank.eq.0.and.iomp.eq.0)write(6,*)'#',ib,jb
-!      if(myrank.eq.0.and.iomp.eq.0)write(6,*)'av'!20170321  
-!---
+       !if(myrank.eq.0.and.iomp.eq.0)write(6,*)'av'!20170321  
+!--
       enddo!ij 
 !$OMP END DO
 !$OMP CRITICAL
@@ -2007,8 +2019,8 @@
       deallocate(C0_K,C0_KQ,kpq,e1_1D,e2_1D,e1_3D,e2_3D,xow,xow_1D,ca1) 
 !     deallocate(xow_1D_av,m_tmp_st,ism_st)!20170322
 !$OMP END PARALLEL
-!---
-       if(myrank.eq.0)write(6,*)'#MPI start' 
+      !--
+      if(myrank.eq.0)write(6,*)'#MPI start' 
        call MPI_BARRIER(comm,ierr)
        dest=modulo(myrank+1,nproc)
        source=modulo(myrank-1,nproc)
@@ -2067,7 +2079,7 @@
      +               VIR_new(1:NTG,1:ncomp,1:nbufv,1:Nk_irr)
        if(myrank.eq.0) write(6,*)'#MPI end' 
       enddo!irot 
-!--
+      !--
       call MPI_REDUCE(pchiqwgm,chiqwgm,NG_for_eps*NG_for_eps*nen*3,
      +     MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
       call MPI_REDUCE(pwpl,wpl,3,MPI_DOUBLE_COMPLEX,MPI_SUM,0,comm,ierr)
@@ -2080,7 +2092,7 @@
        wpl(:)=8.0d0*wpl(:)/VOLUME/dble(NTK) 
        wd(:)=dsqrt(dble(wpl(:))) 
        write(6,'(a10,3f15.10)')'wd in eV',wd*au 
-!--
+       !--
        ierr=CHDIR("./dir-eps") 
        call system('pwd') 
 !--
@@ -2098,11 +2110,11 @@
        call system('pwd') 
 !--
 !OPEN(301,W,FILE='dat.sq') 
-        OPEN(301,FILE='dat.sq') 
-        rewind(301)
-        write(301,*) q1,q2,q3 
-        close(301) 
-!--
+       OPEN(301,FILE='dat.sq') 
+       rewind(301)
+       write(301,*) q1,q2,q3 
+       close(301) 
+       !--
        allocate(epsqwgm(NG_for_eps,NG_for_eps,nen,3))
        epsqwgm(:,:,:,:)=0.0d0 
        allocate(eps_rpa(NG_for_eps,NG_for_eps));eps_rpa(:,:)=0.0d0 
@@ -2121,7 +2133,7 @@
      +   '#1:q+G [au], 2:Re(eps-1), 3:Im(eps-1)' 
         enddo!ie 
        enddo!ix
-!--
+       !--
        do ix=1,3
         file_num_eps_base=file_num_eps_base_start+(ix-1)*1000   
         do ie=1,nen 
@@ -2179,9 +2191,10 @@
       endif!myrank==0  
       deallocate(chiqwgm,pchiqwgm,i_for_pair,j_for_pair)
       deallocate(i_for_intra,j_for_intra) 
-!--
+      !--
       endif!q=0 or q/=0
       enddo!iq 
+!--
 !     CLOSE(file_num_chi)
 !     CLOSE(file_num_eps)
 !--
@@ -2192,7 +2205,7 @@
        call system('pwd') 
        write(6,*)'#TOTAL TIME=',diff_time 
       endif 
-!--
+      !--
       call MPI_FINALIZE(ierr)
       STOP 
       END              

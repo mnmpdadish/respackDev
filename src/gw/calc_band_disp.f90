@@ -1,5 +1,5 @@
-subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,SK_BAND_DISP,H_MAT_R,nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,&
-  kdata,E_BAND_DISP)  
+subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,SK_BAND_DISP,H_MAT_R,&
+  nkb1,nkb2,nkb3,a1,a2,a3,b1,b2,b3,kdata,E_BAND_DISP)  
   implicit none 
   !
   integer::Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ
@@ -48,9 +48,9 @@ subroutine calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,n_occ,
   do ia1=-Na1,Na1!-1         
    do ia2=-Na2,Na2!-1         
     do ia3=-Na3,Na3!-1         
-     if(abs(ia1)==Na1.and.mod(NTK,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia2)==Na2.and.mod(NTK,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
-     if(abs(ia3)==Na3.and.mod(NTK,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia1)==Na1.and.mod(nkb1,2)==0.and.Na1/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia2)==Na2.and.mod(nkb2,2)==0.and.Na2/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+     if(abs(ia3)==Na3.and.mod(nkb3,2)==0.and.Na3/=0) WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
      SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
     enddo
    enddo

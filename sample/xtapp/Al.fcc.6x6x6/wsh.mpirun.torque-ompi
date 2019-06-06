@@ -4,10 +4,10 @@
 cd   $PBS_O_WORKDIR
 echo $PBS_O_WORKDIR
 echo $PBS_NODEFILE
-cat  $PBS_NODEFILE | sort | uniq > $HOME/ooo
-NPROCS=`wc -l < $HOME/ooo`
+cat  $PBS_NODEFILE | sort | uniq > $PWD/ooo
+NPROCS=`wc -l < $PWD/ooo`
 echo $NPROCS
-cat $HOME/ooo
+cat $PWD/ooo
 echo $HOSTNAME
 echo =============================
 date
@@ -24,19 +24,19 @@ export MKL_NUM_THREADS
 #xtapp 
 #rm fort.10
 #ln -s Al.cg fort.10
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/inipot.ompi >> LOG.INIPOT 
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/cgmrpt.ompi >> LOG.CGMRPT 
-#./xtapp2respack.sh -b ./wfn2respack Al 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 1 ./inipot.ompi >> LOG.INIPOT 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 4 ./cgmrpt.ompi >> LOG.CGMRPT 
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv Al 
 #rm fort.10
 #ln -s Al.vb fort.10
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/inipot.ompi >> LOG.INIPOT.VBPEF  
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/vbpef.ompi >> LOG.VBPEF 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 1 ./inipot.ompi >> LOG.INIPOT.VBPEF  
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 4 ./vbpef.ompi >> LOG.VBPEF 
 
 #respack 
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_wannier < input.in >> LOG.WAN 
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 4 $PWD/calc_chiqw < input.in >> LOG.chiqw 
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_w3d < input.in >> LOG.W3d 
-#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $HOME/ooo -np 1 $PWD/calc_j3d < input.in >> LOG.J3d 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 1 ./calc_wannier < input.in >> LOG.WAN 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 4 ./calc_chiqw < input.in >> LOG.chiqw 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 1 ./calc_w3d < input.in >> LOG.W3d 
+#mpirun -x OMP_NUM_THREADS -x MKL_NUM_THREADS -x OMP_STACKSIZE -v -machinefile $PWD/ooo -np 1 ./calc_j3d < input.in >> LOG.J3d 
 
 echo ============================= >> out.sub
 date                               >> out.sub

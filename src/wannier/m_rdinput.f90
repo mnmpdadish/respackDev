@@ -24,15 +24,19 @@ real(8),public::Lower_inner_window!Lower inner energy window for wannier calc (e
 real(8),public::E_LOWER_inner!Lower inner energy window for wannier calc (eV)
 integer,public::flg_BMAT!0:BMAT=unit matrix, 1:BMAT from input 
 integer,public::flg_initial_guess_direc!0:use global coordinate, 1:use local coordinate  
-integer,public::reading_bmat_format!20170709 
-real(8),public::tcut_mvmc!Cutoff of transfer for mvmc 
+real(8),public::electron_number_wannier_space!electron number in wannier_space for density matrix 
+real(8),public::elec_num!electron number in wannier_space for density matrix 
+integer,public::flg_fermisurface!flag for fermisurface  
+logical,public::CALC_FERMISURFACE!flag for fermisurface  
+integer,public::flg_global_dos!flag for global dos 
+logical,public::CALC_GLOBAL_DOS!flag for global dos 
+!hidden parameters 
 integer,public::flg_vis_bloch!flag for visualization  of Bloch function
 logical,public::CALC_REAL_SPACE_BLOCH!flag for visualization of Bloch function 
+logical,public::CALC_BLOCH_VIS_RANGE!flag to calculate visualization range of Bloch function 
 real(8),public::calc_k(3)!k points to be calculated 
-!&param-vis_bloch 
-!integer,public::flg_vis_bloch!flag for visualization  of Bloch function
-!logical,public::CALC_REAL_SPACE_BLOCH!flag for visualization of Bloch function 
-!real(8),public::calc_k(3)!k points to be calculated 
+integer,public::reading_bmat_format!To specify bmat reading format  
+!
 !&param-interpolation   
 integer,public::N_sym_points!The number of k-point points in symmetry line
 integer,public::Ndiv!Separation between symmetry points  
@@ -75,11 +79,11 @@ integer,public,allocatable::wrt_list(:)!wrt_list(N_write_wannier)
 !--
 namelist/param_wannier/icell,N_wannier,N_initial_guess,EPS_SPILLAGE,DAMP,EPS_SPREAD,MAX_STEP_LENGTH,&
 Lower_energy_window,Upper_energy_window,set_inner_window,Upper_inner_window,Lower_inner_window,flg_BMAT,&
-tcut_mvmc,reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k 
+reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k,electron_number_wannier_space,&
+flg_fermisurface,flg_global_dos
 namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense!20170709  
 namelist/param_visualization/flg_vis_wannier,N_write_wannier,& 
 ix_vis_min,ix_vis_max,iy_vis_min,iy_vis_max,iz_vis_min,iz_vis_max
-!namelist/param_vis_bloch/flg_vis_bloch,calc_k 
 contains
 
 subroutine read_input
@@ -97,10 +101,13 @@ SET_INNER_WINDOW=.FALSE.
 UPPER_INNER_WINDOW=0.0d0 
 LOWER_INNER_WINDOW=0.0d0 
 FLG_BMAT=0
-TCUT_MVMC=1.0d-2
 READING_BMAT_FORMAT=0
 FLG_INITIAL_GUESS_DIREC=0
+electron_number_wannier_space=0.0d0 
+flg_fermisurface=0 
+flg_global_dos=0 
 flg_vis_bloch=0
+CALC_BLOCH_VIS_RANGE=.FALSE.
 calc_k(:)=0.0d0
 !---
 !open(999,file='input.in')
@@ -113,6 +120,7 @@ E_LOWER=Lower_energy_window
 E_UPPER=Upper_energy_window
 E_LOWER_inner=Lower_inner_window
 E_UPPER_inner=Upper_inner_window
+elec_num=electron_number_wannier_space 
 !--
 !check ENERGY WINDOW
 if(E_LOWER>=E_UPPER)then 
@@ -237,6 +245,12 @@ endif
 if(flg_vis_bloch==0) CALC_REAL_SPACE_BLOCH=.false.!default 
 if(flg_vis_bloch==1) CALC_REAL_SPACE_BLOCH=.true. 
 !--
+if(flg_fermisurface==0) CALC_FERMISURFACE=.false.!default 
+if(flg_fermisurface==1) CALC_FERMISURFACE=.true. 
+!--
+if(flg_global_dos==0) CALC_GLOBAL_DOS=.false.!default 
+if(flg_global_dos==1) CALC_GLOBAL_DOS=.true. 
+!--
 write(6,param_wannier) 
 do igs=1,nigs 
  write(6,'(a3,x,4f8.4,9f8.4)') vec_ini(igs) 
@@ -314,13 +328,6 @@ zmax=iz_vis_max
 write(6,param_visualization) 
 write(6,'(100i5)')(wrt_list(ix),ix=1,N_write_wannier) 
 write(6,*) 
-!--
-!flg_vis_bloch=0!default  
-!calc_k(:)=0.0d0!default 
-!read(5,nml=param_vis_bloch)
-!if(flg_vis_bloch==0) CALC_REAL_SPACE_BLOCH=.false.!default 
-!if(flg_vis_bloch==1) CALC_REAL_SPACE_BLOCH=.true. 
-!write(6,param_vis_bloch) 
 !--
 end subroutine
 end module

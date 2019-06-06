@@ -59,6 +59,7 @@
       real(8),allocatable::LKGI(:,:)           
       real(8),allocatable::E_EIGI(:,:)           
       real(8),allocatable::E_EIG(:,:)!E_EIG(NTB,NTK)           
+      complex(8),allocatable::V_EIG(:,:,:)!V_EIG(NTB,NTB,NTK)           
       complex(8),allocatable::CIR(:,:,:,:)!CIR(NTG,ncomp,NTB,Nk_irr)
       complex(8),allocatable::C0(:,:,:,:)!C0(NTG,ncomp,NTB,NTK)
       complex(8),allocatable::C0_BRA(:,:,:)!C0_BRA(0:NTG,ncomp,NTB)    

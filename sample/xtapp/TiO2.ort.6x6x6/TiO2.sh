@@ -13,7 +13,7 @@ set -x
 #vbpef2gp-lsda TiO2.band 
 
 #interface 
-#./xtapp2respack.sh -b ./wfn2respack TiO2 
+#./xtapp2respack.sh -b ./wfn2respack -s ./strconv TiO2 
 
 #respack 
 #mpirun -np 1 calc_wannier < input.in > log.TiO2-wannier

@@ -6,9 +6,9 @@ subroutine make_LG0(NTG,b1,b2,b3,Gcut_for_eps,Gcut_for_psi,q1,q2,q3,LG0,NG_for_e
   real(8)::b1(3),b2(3),b3(3) 
   real(8)::Gcut_for_eps,Gcut_for_psi  
   real(8)::q1,q2,q3,qgL2,qgL(3)
-  integer,parameter::NGL1=100 
-  integer,parameter::NGL2=100 
-  integer,parameter::NGL3=100 
+  integer,parameter::NGL1=150!100 
+  integer,parameter::NGL2=150!100 
+  integer,parameter::NGL3=150!100 
   !
   igL=0
   do igL1=-NGL1,NGL1 

@@ -1,12 +1,14 @@
 *.o
 *.mod
 *.swp
+*.orig
 
 calc_wannier
 calc_gw
 calc_j3d
 calc_w3d
 calc_chiqw
+calc_tr
 
 dir-*
 

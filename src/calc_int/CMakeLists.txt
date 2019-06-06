@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 2.8)
+if(${CMAKE_PROJECT_NAME} STREQUAL "Project")
+  message(FATAL_ERROR "cmake should be executed not for 'src' subdirectory, but for the top directory of RESPACK.")
+endif(${CMAKE_PROJECT_NAME} STREQUAL "Project")
+
+set(SOURCES_COMMON inv.F90 est_NTK.f90 est_nwx2.f90 calc_int_sub.F m_rdinput.f90 m_fft3d_20150826.f90)
+add_custom_target(int ALL)
+add_library(intcom STATIC ${SOURCES_COMMON})
+target_link_libraries(intcom ${LAPACK_LIBRARIES} m)
+add_executable(calc_w3d calc_intW.F wrt_model_w3d.f90)
+add_dependencies(int calc_w3d)
+target_link_libraries(calc_w3d  intcom )
+add_executable(calc_j3d calc_intJ.F wrt_model_j3d.f90)
+target_link_libraries(calc_j3d intcom )
+add_dependencies(int calc_j3d)
+
+install(TARGETS calc_w3d RUNTIME DESTINATION bin)
+install(TARGETS calc_j3d RUNTIME DESTINATION bin)

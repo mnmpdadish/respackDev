@@ -112,7 +112,7 @@
 !W_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne) 
       real(8)::phase 
       complex(8)::pf,SUM_CMPX
-!mvmc 
+!model 
       real(8)::SUM_REAL 
       real(8),allocatable::WEIGHT_R(:,:,:) 
 !local 
