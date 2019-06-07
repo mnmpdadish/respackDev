@@ -11,7 +11,7 @@ set(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})
 
 set(SOURCES_CHIQW est_NTK.f90 est_nwx2.f90 gen_grid.f90 inv.F90 invZGE.F90
 m_fft3d_20150826.f90 m_rdinput.f90 m_tetrahedron_20170325.F chiqw_sub.F
-wrt_optical_property.f90)
+wrt_optical_property.f90 SO3_to_SU2_rotation.f90)
 add_library(chiqw_com STATIC ${SOURCES_CHIQW} )
 target_link_libraries(chiqw_com ${LAPACK_LIBRARIES} m)
 

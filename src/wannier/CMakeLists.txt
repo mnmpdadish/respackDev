@@ -13,6 +13,7 @@ gencif.f90
 inv.F90 
 inv_ge_LAPACK.F90 
 search_Rmin.f90 
+SO3_to_SU2_rotation.f90
 m_bvector_20171208.f90 
 m_dos.f90 
 m_eigenstate.f90 

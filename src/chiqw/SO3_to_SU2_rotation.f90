@@ -36,11 +36,11 @@ subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
    !call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
    call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
       
-   write(6,*)
-   write(6,*)
-   write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
-   write(6,*)
-   write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+   !write(6,*)
+   !write(6,*)
+   !write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
+   !write(6,*)
+   !write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
    rinv_SO(:,:,iop)=SU2_matrix(:,:)
   enddo
   
@@ -57,7 +57,6 @@ subroutine SU2_rotation(nx,ny,nz,theta_2, SU2_matrix)
   real(8),intent(in)::theta_2
   complex(8),intent(inout):: SU2_matrix(2,2)
   
-  !real(8)::tol=1e-8
   complex(8)::ci=(0.0d0,1.0d0)
 
   !theta_2 = angles(kk)/2.0d0
@@ -81,7 +80,6 @@ subroutine SO3_rotation(nx,ny,nz,theta, SO3_matrix)
   real(8),intent(in)::theta
   real(8),intent(inout):: SO3_matrix(3,3)
   
-  !real(8)::tol=1e-8
   
   SO3_matrix(1,1) = (1.0d0 - cos(theta))*nx*nx + cos(theta)
   SO3_matrix(1,2) = (1.0d0 - cos(theta))*nx*ny - nz*sin(theta)
@@ -333,7 +331,7 @@ subroutine internal_check(SO3_matrix,SU2_matrix)
     endif
    end do
   end do
-  write(6,*) 'internal test passed: sigma*(R*n) == U*(sigma*n)*U^dag'
+  !write(6,*) 'internal test passed: sigma*(R*n) == U*(sigma*n)*U^dag'
   
   
   return
