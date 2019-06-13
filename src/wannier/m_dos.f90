@@ -24,8 +24,8 @@ contains
     real(8),allocatable::efline(:)!efline(ndosgrd)   
     !
     real(8),parameter::au=27.21151d0
-    !real(8),parameter::delt=0.005d0/au!Greens function delt in au 
-    real(8),parameter::delt=0.01d0/au!Greens function delt in au 
+    real(8),parameter::delt=0.005d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
     real(8),parameter::delw=2.0d0*delt!Grid width in au 

@@ -204,4 +204,10 @@
       character(len=2),allocatable::chemical_species(:)!chemical_species(nsi) 
       real(8),allocatable::asi(:,:)!asi(3,nsi) 
 !
+!20190611 
+!
+!SO3_to_SU2_Local 
+!      real(8),allocatable::local(:,:)!local(3,3)
+!      complex(8),allocatable::SU2(:,:)!SU2(2,2)
+!
 !end config.h 

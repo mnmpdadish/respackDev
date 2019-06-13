@@ -87,7 +87,16 @@ ix_vis_min,ix_vis_max,iy_vis_min,iy_vis_max,iz_vis_min,iz_vis_max
 contains
 
 subroutine read_input
+use m_SO3_to_SU2_Local, only: make_SU2_from_local_axis 
+implicit none
 integer::igs,ix,ik  
+!
+!20190611 
+!
+!SO3_to_SU2_Local 
+real(8),allocatable::local(:,:)!local(3,3)
+complex(8),allocatable::SU2(:,:)!SU2(2,2)
+!
 !--
 !&param_wannier
 !--
@@ -179,7 +188,6 @@ if(flg_initial_guess_direc==0)then!default 20170914
   vec_ini(igs)%lx(1)=1.0d0  
   vec_ini(igs)%ly(2)=1.0d0  
   vec_ini(igs)%lz(3)=1.0d0  
-
   vec_ini(igs)%s_up(:)=0.0d0  
   vec_ini(igs)%s_dn(:)=0.0d0  
   vec_ini(igs)%s_up(1)=1.0d0  
@@ -195,12 +203,28 @@ if(flg_initial_guess_direc==1)then! 20170914
    read(5,*)vec_ini(igs)%orb,vec_ini(igs)%a,vec_ini(igs)%x,vec_ini(igs)%y,vec_ini(igs)%z,&
            &vec_ini(igs)%lx,vec_ini(igs)%ly,vec_ini(igs)%lz
  enddo 
+ !
+ !20190613 Kazuma Nakamura
+ !
+ !do igs=1,nigs 
+ ! vec_ini(igs)%s_up(:)=0.0d0  
+ ! vec_ini(igs)%s_dn(:)=0.0d0  
+ ! vec_ini(igs)%s_up(1)=1.0d0  
+ ! vec_ini(igs)%s_dn(2)=1.0d0  
+ !enddo 
+ !
+ allocate(local(3,3));local=0.0d0 
+ allocate(SU2(2,2));SU2=0.0d0 
  do igs=1,nigs 
-  vec_ini(igs)%s_up(:)=0.0d0  
-  vec_ini(igs)%s_dn(:)=0.0d0  
-  vec_ini(igs)%s_up(1)=1.0d0  
-  vec_ini(igs)%s_dn(2)=1.0d0  
+   local(1,:)=vec_ini(igs)%lx(:)
+   local(2,:)=vec_ini(igs)%ly(:)
+   local(3,:)=vec_ini(igs)%lz(:)
+   call make_SU2_from_local_axis(3,3,local(1,1),SU2(1,1)) 
+   vec_ini(igs)%s_up(:)=SU2(:,1) 
+   vec_ini(igs)%s_dn(:)=SU2(:,2) 
  enddo 
+ deallocate(local,SU2) 
+ !
 endif 
 !--
 if(flg_initial_guess_direc==2)then 
@@ -253,7 +277,12 @@ if(flg_global_dos==1) CALC_GLOBAL_DOS=.true.
 !--
 write(6,param_wannier) 
 do igs=1,nigs 
- write(6,'(a3,x,4f8.4,9f8.4)') vec_ini(igs) 
+ !write(6,'(a3,x,4f8.4,9f8.4)') vec_ini(igs) 
+ !
+ !20190609 Kazuma Nakamura
+ !
+ write(6,'(a3,x,4f8.4,x,9f8.4,x,8f10.5)') vec_ini(igs) 
+ !
 enddo 
 do igs=1,nigs 
  write(6,'(100f10.5)')(B_MAT(igs,ix),ix=1,n_occ)

@@ -8,6 +8,8 @@
       use m_wrt_frmsf, only: wrt_frmsf 
       use m_wrt_model  
       use m_dmx, only: calculate_dmx 
+      !use m_SO3_to_SU2_Local, only: polar_decomposition 
+      !
       include "config.h"
       !--
       call read_input
@@ -20,16 +22,18 @@
       write(6,*)'E_UPPER in au',E_UPPER 
       write(6,*)'E_LOWER_inner in au',E_LOWER_inner 
       write(6,*)'E_UPPER_inner in au',E_UPPER_inner 
-!--
-      do ig=1,nigs 
-       write(6,*) vec_ini(ig)%lx
-       write(6,*) vec_ini(ig)%ly
-       write(6,*) vec_ini(ig)%lz
-       write(6,*) vec_ini(ig)%s_up
-       write(6,*) vec_ini(ig)%s_dn
-       write(6,*) 
-      enddo 
-!      stop
+      !
+      !20190609 Kazuma Nakamura 
+      !
+      !do ig=1,nigs 
+      ! write(6,*) vec_ini(ig)%lx
+      ! write(6,*) vec_ini(ig)%ly
+      ! write(6,*) vec_ini(ig)%lz
+      ! write(6,*) vec_ini(ig)%s_up
+      ! write(6,*) vec_ini(ig)%s_dn
+      ! write(6,*) 
+      !enddo 
+      !stop
 !--
 !      do ix=1,3 
 !       write(6,'(100f10.5)')(SK_sym_pts(ix,ik),ik=1,N_sym_points)
@@ -610,18 +614,16 @@
       do ik=1,NTK
        write(6,'(i5,3f15.10,i5)') ik,SK0(:,ik),trs(ik)  
       enddo
-       
-!--
-!     WRITE(6,*) 
-!     write(6,*)'====================='
-!     write(6,*)'WRITE ALL EIGENVALUES'
-!     write(6,*)'====================='
-!     WRITE(6,*) 
-!     do ik=1,NTK
-!      write(6,'(5F15.10)')(E_EIG(ib,ik),ib=1,NTB) 
-!     enddo 
-!--
-!
+      !-- 
+      !WRITE(6,*) 
+      !write(6,*)'====================='
+      !write(6,*)'WRITE ALL EIGENVALUES'
+      !write(6,*)'====================='
+      !WRITE(6,*) 
+      !do ik=1,NTK
+      ! write(6,'(5F15.10)')(E_EIG(ib,ik),ib=1,NTB) 
+      !enddo 
+      !--
 !=========================================================
 !=== CALCULATE THE NUMBER OF BANDS INSIDE OUTER WINDOW ===
 !=========================================================
@@ -1334,6 +1336,22 @@
        loc_s_up(:,ig)=vec_ini(ig)%s_up(:)
        loc_s_dn(:,ig)=vec_ini(ig)%s_dn(:)
       enddo 
+      !
+      !20190611 Kazuma Nakamura
+      !
+      !allocate(local(3,3));local=0.0d0 
+      !allocate(SU2(2,2));SU2=0.0d0 
+      !do ig=1,nigs 
+      ! local=0.0d0; SU2=0.0d0 
+      ! local(1,:)=loc_x(:,ig)
+      ! local(2,:)=loc_y(:,ig)
+      ! local(3,:)=loc_z(:,ig)
+      ! call polar_decomposition(3,3,local(1,1),SU2(1,1)) 
+      ! loc_s_up(:,ig)=SU2(:,1)
+      ! loc_s_dn(:,ig)=SU2(:,2) 
+      !enddo!ig   
+      !deallocate(local,SU2) 
+      !
 !--
 !20170406 
       allocate(LGAUSS(nigs));LGAUSS(:)=0 
