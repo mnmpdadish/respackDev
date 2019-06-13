@@ -2,9 +2,9 @@ module m_dmx
   implicit none
 contains
   !
-  subroutine calculate_dmx(NTB,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,FermiEnergy,a1,a2,a3,b1,b2,b3,SK0,EIG,UNT)
+  subroutine calculate_dmx(ncomp,NTB,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,FermiEnergy,a1,a2,a3,b1,b2,b3,SK0,EIG,UNT)
     implicit none 
-    integer,intent(in)::NTB,NWF,NTK,nkb1,nkb2,nkb3,Na1,Na2,Na3 
+    integer,intent(in)::ncomp,NTB,NWF,NTK,nkb1,nkb2,nkb3,Na1,Na2,Na3 
     real(8),intent(in)::FermiEnergy 
     real(8),intent(in)::a1(3),a2(3),a3(3)
     real(8),intent(in)::b1(3),b2(3),b3(3)
@@ -31,7 +31,7 @@ contains
     !2. xow(ib,ik) 
     !
     allocate(xow(NTB,nkb1,nkb2,nkb3)); xow=0.0d0 
-    call make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1(1),b2(1),b3(1),SK0(1,1),EIG(1,1),xow(1,1,1,1)) 
+    call make_xow(ncomp,nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1(1),b2(1),b3(1),SK0(1,1),EIG(1,1),xow(1,1,1,1)) 
     !
     !3. WEIGHT_R
     !
@@ -46,7 +46,7 @@ contains
     !5. density matrix 
     !
     allocate(dmx(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)); dmx=0.0d0   
-    call make_dmx(Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3,lat_num_a1(1),lat_num_a2(1),lat_num_a3(1),&
+    call make_dmx(ncomp,Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3,lat_num_a1(1),lat_num_a2(1),lat_num_a3(1),&
     SK0(1,1),UNT(1,1,1),xow(1,1,1,1),pf(-Na1,-Na2,-Na3,1),WEIGHT_R(-Na1,-Na2,-Na3),dmx(1,1,-Na1,-Na2,-Na3)) 
     !
     !6. write density matrix
@@ -79,10 +79,10 @@ contains
     return 
   end subroutine make_lat_num 
 
-  subroutine make_xow(nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1,b2,b3,SK0,E_EIG,xow) 
+  subroutine make_xow(ncomp,nkb1,nkb2,nkb3,NTB,NTK,FermiEnergy,b1,b2,b3,SK0,E_EIG,xow) 
     use m_tetrainteg
     implicit none 
-    integer,intent(in)::nkb1,nkb2,nkb3,NTB,NTK
+    integer,intent(in)::ncomp,nkb1,nkb2,nkb3,NTB,NTK
     real(8),intent(in)::FermiEnergy 
     real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::SK0(3,NTK) 
@@ -149,7 +149,7 @@ contains
      enddo 
     enddo 
     write(6,'(a40)')'+++ m_dmx: make_xow +++' 
-    write(6,'(a40,f15.8)')'(2/N)sum_{a,k}f(a,k)',2.0d0*SUM_REAL/dble(NTK) !2 is spin   
+    write(6,'(a40,f15.8)')'(2/N)sum_{a,k}f(a,k)',(2.0d0/dble(ncomp))*SUM_REAL/dble(NTK)!2 is spin   
     write(6,*) 
     return 
   end subroutine make_xow 
@@ -302,9 +302,9 @@ contains
     return
   end subroutine search_Rmin
   
-  subroutine make_dmx(Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3,lat_num_a1,lat_num_a2,lat_num_a3,SK0,UNT,xow,pf,WEIGHT_R,dmx) 
+  subroutine make_dmx(ncomp,Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3,lat_num_a1,lat_num_a2,lat_num_a3,SK0,UNT,xow,pf,WEIGHT_R,dmx) 
     implicit none
-    integer,intent(in)::Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3   
+    integer,intent(in)::ncomp,Na1,Na2,Na3,NR,NTB,NTK,NWF,nkb1,nkb2,nkb3   
     integer,intent(in)::lat_num_a1(NR),lat_num_a2(NR),lat_num_a3(NR)
     real(8),intent(in)::SK0(3,NTK) 
     real(8),intent(in)::WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)
@@ -359,7 +359,7 @@ contains
          enddo!ikb2
         enddo!ikb3
        enddo!ib  
-       dmx(iw,jw,ia1,ia2,ia3)=2.0d0*SUM_CMPX/dble(NTK) !2 is spin   
+       dmx(iw,jw,ia1,ia2,ia3)=(2.0d0/dble(ncomp))*SUM_CMPX/dble(NTK)!2 is spin   
       enddo!jw 
      enddo!iw 
     enddo!iR 

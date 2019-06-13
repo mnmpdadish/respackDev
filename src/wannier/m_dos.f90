@@ -2,9 +2,9 @@ module m_dos
   implicit none
 contains
   !
-  subroutine calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,electron_number,FermiEnergy,filename,b1,b2,b3,SK0,EIG,VKS)
+  subroutine calculate_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,electron_number,FermiEnergy,filename,b1,b2,b3,SK0,EIG,VKS)
     implicit none 
-    integer,intent(in)::NTB,NTK,nkb1,nkb2,nkb3
+    integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3
     real(8),intent(in)::electron_number
     real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::SK0(3,NTK)
@@ -39,7 +39,7 @@ contains
     !calc dos 
     !
     allocate(dos(ndosgrd));dos=0.0d0 
-    call calc_dos(NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
+    call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
     !
     !calc pdos 
     !
@@ -47,7 +47,7 @@ contains
     if(flg_pdos/=0.0d0)then
       write(6,'(a40,f15.8,a)')'flg_pdos/=0.0:',flg_pdos,': PDOS calculate:' 
       allocate(pdos(ndosgrd,NTB));pdos=0.0d0 
-      call calc_pdos(NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),VKS(1,1,1),SK0(1,1), &
+      call calc_pdos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),VKS(1,1,1),SK0(1,1), &
                      delt,dmnr,dmna,b1(1),b2(1),b3(1),pdos(1,1)) 
     endif 
     !
@@ -57,7 +57,7 @@ contains
      call est_ef(ndosgrd,delw,electron_number,dosgrd(1),dos(1),FermiEnergy) 
     endif 
     allocate(efline(ndosgrd));efline=0.0d0 
-    call make_efline(ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
+    call make_efline(ncomp,ndosgrd,FermiEnergy,delw,dosgrd(1),dos(1),efline(1)) 
     !
     !wrt dat.dos 
     !
@@ -155,9 +155,9 @@ contains
     return
   end subroutine 
   !
-  subroutine make_efline(ndosgrd,FermiEnergy,deltw,dosgrd,dos,efline) 
+  subroutine make_efline(ncomp,ndosgrd,FermiEnergy,deltw,dosgrd,dos,efline) 
     implicit none 
-    integer,intent(in)::ndosgrd
+    integer,intent(in)::ncomp,ndosgrd
     real(8),intent(in)::FermiEnergy,deltw
     real(8),intent(in)::dosgrd(ndosgrd) 
     real(8),intent(in)::dos(ndosgrd) 
@@ -198,7 +198,7 @@ contains
      SUM_REAL=SUM_REAL+deltw*(dos(ie)+dos(ie+1))/2.0d0  
      !write(6,'(2f15.10)') dosgrd(ie)*au,dos(ie)/au  
     enddo 
-    N0ttr=dos(ief)/2.0d0 !2 is spin
+    N0ttr=dos(ief)/(2.0d0/dble(ncomp))!2 is spin
     write(6,*)
     write(6,'(a40)')'+++ m_dos: est_efline +++'
     write(6,'(a40,f15.8)')'Integral dos(w) dw',SUM_REAL 
@@ -208,10 +208,10 @@ contains
     return
   end subroutine 
   !
-  subroutine calc_dos(NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,dos) 
+  subroutine calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,dos) 
     use m_tetrahedron
     implicit none
-    integer,intent(in)::NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
+    integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd) 
     real(8),intent(in)::E_EIG(NTB,NTK)           
     real(8),intent(in)::SK0(3,NTK)           
@@ -277,16 +277,16 @@ contains
        enddo 
       enddo 
      enddo 
-     dos(ie)=2.0d0*SUM_REAL/dble(NTK)!2 is spin 
+     dos(ie)=(2.0d0/dble(ncomp))*SUM_REAL/dble(NTK)!2 is spin 
     enddo 
     !
     return
   end subroutine calc_dos
   !
-  subroutine calc_pdos(NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,VKS,SK0,delt,dmnr,dmna,b1,b2,b3,pdos) 
+  subroutine calc_pdos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,VKS,SK0,delt,dmnr,dmna,b1,b2,b3,pdos) 
     use m_tetrahedron
     implicit none
-    integer,intent(in)::NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
+    integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd) 
     real(8),intent(in)::E_EIG(NTB,NTK)           
     real(8),intent(in)::SK0(3,NTK)           
@@ -359,7 +359,7 @@ contains
         enddo!ikb2 
        enddo!ikb3 
       enddo!jb  
-      pdos(ie,ib)=2.0d0*SUM_REAL/dble(NTK)!2 is spin 
+      pdos(ie,ib)=(2.0d0/dble(ncomp))*SUM_REAL/dble(NTK)!2 is spin 
      enddo!ib 
     enddo!ie 
     !

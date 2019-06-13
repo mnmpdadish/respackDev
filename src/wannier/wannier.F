@@ -498,8 +498,9 @@
          endif 
         enddo!jk  
         filename='./dir-wan/dat.dos.global'
-        call calculate_dos(NTB,NTK,nkb1,nkb2,nkb3,0.0d0,FermiEnergy,
-     +   filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
+        call calculate_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,0.0d0,
+     +  FermiEnergy,filename,b1(1),b2(1),b3(1),SK0(1,1),
+     +  E_EIG(1,1),V_EIG(1,1,1))
         deallocate(E_EIG,V_EIG)
       endif 
 !--
@@ -2666,7 +2667,7 @@
       !ELECTRON NUMBER == 0.0 -> DMX IS EVALUATED WITH BAND-CALC EF
       !
       if(elec_num==0.0d0)then 
-       call calculate_dmx(NTB,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
+       call calculate_dmx(ncomp,NTB,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
      +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
      +      E_EIG(1,1),UNT(1,1,1)) 
       endif 
@@ -2838,16 +2839,18 @@
       !ELECTRON NUMBER == 0.0 -> DOS IS EVALUATED WITH BAND-CALC EF
       !
       if(elec_num==0.0d0)then 
-       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
-     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
+       call calculate_dos(ncomp,NWF,NTK,nkb1,nkb2,nkb3,elec_num,
+     + FermiEnergy,filename,b1(1),b2(1),b3(1),SK0(1,1),
+     + E_EIG(1,1),V_EIG(1,1,1))
       endif 
       !
       !ELECTRON NUMBER /= 0.0 -> DOS & DMX ARE EVALUATED WITH RECALC EF
       !
       if(elec_num/=0.0d0)then  
-       call calculate_dos(NWF,NTK,nkb1,nkb2,nkb3,elec_num,FermiEnergy,
-     +      filename,b1(1),b2(1),b3(1),SK0(1,1),E_EIG(1,1),V_EIG(1,1,1))
-       call calculate_dmx(NWF,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
+       call calculate_dos(ncomp,NWF,NTK,nkb1,nkb2,nkb3,elec_num,
+     + FermiEnergy,filename,b1(1),b2(1),b3(1),SK0(1,1),
+     + E_EIG(1,1),V_EIG(1,1,1))
+       call calculate_dmx(ncomp,NWF,NTK,NWF,nkb1,nkb2,nkb3,Na1,Na2,Na3,!NWF=n_occ 
      +      FermiEnergy,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),
      +      E_EIG(1,1),V_EIG(1,1,1)) 
       endif 
