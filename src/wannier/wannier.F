@@ -2886,6 +2886,14 @@
      +                            (ymin)*nwy2:(ymax)*nwy2-1, 
      +                            (zmin)*nwz2:(zmax)*nwz2-1))
        !--
+       !
+       !20190615 Kazuma Nakamura
+       !
+       allocate(WR_spinor((xmin)*nwx2:(xmax)*nwx2-1,
+     +                    (ymin)*nwy2:(ymax)*nwy2-1, 
+     +                    (zmin)*nwz2:(zmax)*nwz2-1,ncomp))
+       !
+       !--
        !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
        ierr=CHDIR("./dir-wan") 
        call system('pwd') 
@@ -2933,7 +2941,7 @@
         if(ic==1) then
          write(filename,"('dat.wan-realspace-',i3.3,'.grd')") iw 
         else
-         write(filename,"('dat.wan-realspace-',i3.3,'_dn.grd')") iw          
+         write(filename,"('dat.wan-realspace-',i3.3,'_dn.grd')") iw 
         endif
         OPEN(116,FILE=filename) 
         REWIND(116)
@@ -2954,7 +2962,7 @@
      +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
         CLOSE(116)
-        
+        ! 
         SUM_REAL = 0.0d0
         do i1=(xmin)*na_grid,(xmax)*na_grid-1
          do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
@@ -2968,6 +2976,73 @@
         write(6,*) ix, SUM_REAL
        enddo!ix 
        enddo!ic
+       !
+       !20190615 Kazuma Nakamura
+       !
+       !WANNIER SPINOR ENSITY (only ncomp=2 case)
+       !
+       if(ncomp==2)then 
+        do ix=1,N_write_wannier!NWF 
+         iw=wrt_list(ix)!20170406  
+         WR_spinor=0.0d0 
+         do ic=1,ncomp
+          WANNIER_REALSPACE=0.0d0           
+!$OMP PARALLEL PRIVATE(ik,C0_I,wfunc,fftwk,pw) 
+          allocate(C0_I(NTG));C0_I=0.0D0 
+          allocate(fftwk(Nl123*2),stat=err) 
+          allocate(wfunc(Nl123*2),stat=err) 
+          allocate(pw((xmin)*nwx2:(xmax)*nwx2-1,
+     +                (ymin)*nwy2:(ymax)*nwy2-1, 
+     +                (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
+!$OMP DO 
+          do ik=1,NTK
+           C0_I(:)=C0WN(:,ic,iw,ik)!2019/03/26
+           call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),
+     +     NTG,nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
+     +     xmin,xmax,ymin,ymax,zmin,zmax,SK0(1,ik),
+     +     pw(xmin*nwx2,ymin*nwy2,zmin*nwz2)) 
+          enddo!ik         
+!$OMP END DO
+!$OMP CRITICAL
+          WANNIER_REALSPACE=WANNIER_REALSPACE+pw 
+!$OMP END CRITICAL
+          deallocate(C0_I,fftwk,wfunc,pw)
+!$OMP END PARALLEL
+          !--
+          !normalize 
+          WANNIER_REALSPACE=WANNIER_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
+          !--
+          !spinor 
+          WR_spinor(:,:,:,ic)=WANNIER_REALSPACE(:,:,:) 
+          !--
+          !OUTPUT by VESTA format 
+          !OPEN(116,W,FILE='dat.wan-density-xxx.grd')
+          write(filename,"('dat.wan-density-',i3.3,'.grd')") iw 
+          OPEN(116,FILE=filename) 
+          REWIND(116)
+          na_grid=nwx2 
+          nb_grid=nwy2
+          nc_grid=nwz2 
+          aa1=a1*dble(xmax-xmin)
+          aa2=a2*dble(ymax-ymin)
+          aa3=a3*dble(zmax-zmin)
+          call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
+          write(116,*)'Electron density'
+          write(116,'(6f15.10)')
+     +    a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
+          write(116,'(3I5)') 
+     +    (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
+          write(116,"(6g25.16)") 
+     +    (((dble(conjg(WR_spinor(i1,i2,i3,1))*WR_spinor(i1,i2,i3,1)
+     +           +conjg(WR_spinor(i1,i2,i3,2))*WR_spinor(i1,i2,i3,2)),
+     +    i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
+     +    i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
+     +    i1=(xmin)*na_grid,(xmax)*na_grid-1)
+          CLOSE(116)
+         enddo!ic
+        enddo!ix 
+        deallocate(WANNIER_REALSPACE,WR_spinor,C0WN) 
+       endif!ncomp==2
        !--
        !gencif 20180906  
        call gencif(a1(1),a2(1),a3(1),xmin,xmax,ymin,ymax,zmin,zmax,
