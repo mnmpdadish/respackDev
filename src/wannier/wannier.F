@@ -8,6 +8,7 @@
       use m_wrt_frmsf, only: wrt_frmsf 
       use m_wrt_model  
       use m_dmx, only: calculate_dmx 
+      use m_fat_band, only: calc_fat_band_for_3dmap
       !use m_SO3_to_SU2_Local, only: polar_decomposition 
       !
       include "config.h"
@@ -2755,8 +2756,9 @@
        endif!REVERSE                   
       enddo!ib                      
       close(114)
-
-
+      ! 
+      !OPEN(115,W,FILE='dat.iband_compact') 
+      !
       OPEN(115,FILE='./dir-wan/dat.iband_compact') 
       write(115,'(a)')'#Wannier interpolaed band'
       write(115,'(a)')'#1:k, 2:Energy [eV]' 
@@ -2770,8 +2772,9 @@
        write(115,fmt='(a)',advance='yes')                     
       enddo!ik        
       close(115)
-
-!OPEN(114,W,FILE='dat.iband') 
+      !
+      !OPEN(118,W,FILE='dat.ifatband') 
+      !
       OPEN(118,FILE='./dir-wan/dat.ifatband') 
       write(118,'(a)')'#Wannier interpolated band and weights'
       write(118,'(a)', advance='no')'#1:k, 2:Energy_n [eV],    ' 
@@ -2780,7 +2783,6 @@
      +                jb+2,':|U_', jb,'n|^2  '             
       enddo!jb
       write(118,fmt='(a)',advance='yes')                     
-
       REVERSE=.TRUE.        
       do ib=1,n_occ             
        if(REVERSE) then 
@@ -2811,9 +2813,32 @@
        endif!REVERSE                   
       enddo!ib                      
       close(118)
-
-
-
+      !
+      !20190603 Kazuma Nakamura 
+      !
+      !PLOT 3D FATBAND
+      !OPEN(119x,W,FILE='dat.ifatband_for_pm3d-xxx') 
+      ![NOTE] trnspose 
+      !(before) H_TMP_OUT(ib,jb):: ib: basis, jb: eigenvector
+      !( after) H_TMP_OUT(jb,ib):: jb: eigenvector, ib: basis 
+      !
+      if(CALC_3D_FATBAND)then 
+       do ik=1,NSK_BAND_DISP
+        H_TMP_IN=0.0d0           
+        do ib=1,n_occ!NWF
+         do jb=1,n_occ!NWF
+          H_TMP_IN(jb,ib)=H_TMP_OUT(ib,jb,ik) 
+         enddo
+        enddo
+        H_TMP_OUT(:,:,ik)=H_TMP_IN(:,:) 
+       enddo!ik           
+       !
+       filename='./dir-wan/dat.3dfatband.wan'
+       call calc_fat_band_for_3dmap(NWF,NSK_BAND_DISP,filename,
+     +      DIST_K(1),E_BAND_DISP(1,1),H_TMP_OUT(1,1,1))
+      endif 
+!--
+!(9) WRITE FERMISURFACE WITH WANNIER INTERPOLATION 
       IF(ALL(dense(1:3) /= 0)) THEN
          CALL wrt_frmsf_wan(Na1,Na2,Na3,nkb1,nkb2,nkb3,
      +                      a1,a2,a3,b1,b2,b3,FermiEnergy,
@@ -2855,7 +2880,7 @@
      +      E_EIG(1,1),V_EIG(1,1,1)) 
       endif 
       deallocate(E_EIG,V_EIG)
-
+      
 !==================================
 !=== VISUALIZE WANNIER FUNCTION ===
 !==================================
@@ -2863,9 +2888,9 @@
       if(CALC_REAL_SPACE_WANNIER)then 
        !--
        write(6,*) 
-      write(6,'(a40)')'============================='
-      write(6,'(a40)')' CALCULATE REALSPACE WANNIER '
-      write(6,'(a40)')'============================='
+       write(6,'(a40)')'============================='
+       write(6,'(a40)')' CALCULATE REALSPACE WANNIER '
+       write(6,'(a40)')'============================='
        write(6,*) 
        nfft1=nwx2+1;nfft2=nwy2+1;nfft3=nwz2+1
        Nl123=nfft1*nfft2*nfft3 

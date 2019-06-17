@@ -23,6 +23,7 @@ m_gencif_sub.f90
 m_rdinput.f90 
 m_tetrahedron_20170325.F 
 makekpts.f90 
+m_fat_band.f90   
 m_frmsf_wan.F90  
 m_wrt_frmsf.f90 
 m_wrt_model.f90 
