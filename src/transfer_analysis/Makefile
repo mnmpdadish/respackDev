@@ -17,9 +17,9 @@ FFLAGS = -O2 -qopenmp -xHost -g -traceback
 LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group 
 
 #GNU 
-FC = mpif90 
-FFLAGS = -O2 -fopenmp -g -fbacktrace 
-LIBBLAS = -llapack -lblas -fopenmp 
+#FC = mpif90 
+#FFLAGS = -O2 -fopenmp -g -fbacktrace 
+#LIBBLAS = -llapack -lblas -fopenmp 
 #--------------------------------------------------------------------
 .SUFFIXES:
 .SUFFIXES: .o .F90 .F .f90 .c

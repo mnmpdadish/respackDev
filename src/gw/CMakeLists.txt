@@ -33,6 +33,11 @@ sub_mkidx.f90
 sub_wfn.f90
 util.f90
 m_tetrahedron_20170325.F
+m_qp.f90 
+m_FR.f90 
+m_band.f90
+m_eigenstate.f90 
+m_bspline.f90  
 )
 
 add_custom_target(gw ALL)

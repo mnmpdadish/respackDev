@@ -88,7 +88,9 @@ real(8),allocatable::vxcr(:,:,:)!vxcr(nrx2,nry2,nrz2)
 !grid for GW
 !
 integer::nsgm
+integer::nsgmqp
 real(8),allocatable::sgmw(:)!sgmw(nsgm)  
+real(8),allocatable::sgmwqp(:)!sgmw(nsgmqp)  
 real(8)::bandmax,bandmin,diff_band_energy,chiqw_grd_size,emax,emin,ecmax,ecmin 
 !
 !XC 

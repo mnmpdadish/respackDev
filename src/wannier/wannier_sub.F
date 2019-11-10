@@ -665,9 +665,17 @@
      +   +int(rginvtmp(3,3))*k2 
 
        jg=packtmp(i3,j3,k3) 
-       phase=tpi*(dble(i1)*dble(pgtmp(1))
-     +           +dble(j1)*dble(pgtmp(2))
-     +           +dble(k1)*dble(pgtmp(3))) 
+       ! 
+       !20190918 Kazuma Nakamura
+       !
+       !phase=tpi*(dble(i1)*dble(pgtmp(1))
+       !          +dble(j1)*dble(pgtmp(2))
+       !          +dble(k1)*dble(pgtmp(3))) 
+       !
+       phase=tpi*(dble(i2)*dble(pgtmp(1))
+     +           +dble(j2)*dble(pgtmp(2))
+     +           +dble(k2)*dble(pgtmp(3))) 
+       !     
        pf=exp(-ci*phase/dble(nnp)) 
 
        if(ncomp==2) then 
@@ -701,9 +709,16 @@
      +   +int(rginvtmp(3,3))*k2 
 
        jg=packtmp(i3,j3,k3) 
-       phase=tpi*(dble(i1)*dble(pgtmp(1))
-     +           +dble(j1)*dble(pgtmp(2))
-     +           +dble(k1)*dble(pgtmp(3))) 
+       ! 
+       !20190918 Kazuma Nakamura
+       !
+       !phase=tpi*(dble(i1)*dble(pgtmp(1))
+       !          +dble(j1)*dble(pgtmp(2))
+       !          +dble(k1)*dble(pgtmp(3))) 
+       phase=tpi*(dble(i2)*dble(pgtmp(1))
+     +           +dble(j2)*dble(pgtmp(2))
+     +           +dble(k2)*dble(pgtmp(3))) 
+       !
        pf=exp(-ci*phase/dble(nnp)) 
        
        if(ncomp==2) then

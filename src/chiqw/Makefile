@@ -5,8 +5,8 @@
 # for Intel Linux and Intel Fortran Compiler 11.0 and above 
 #--------------------------------------------------------------------
 #intel
-#FC = mpiifort 
-#FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel 
+FC = mpiifort 
+FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel 
 
 #######
 #DEBUG#
@@ -20,7 +20,7 @@
 # libiomp5 and libpthread are not needed here, conflict with MKL on some system, better not use it.
 #
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
-#LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group 
+LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group 
 
 #openMPI 
 #FC = mpif90 
@@ -33,9 +33,9 @@
 #LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #GNU 
-FC = mpif90 
-FFLAGS = -O2 -fopenmp -g -fbacktrace 
-LIBBLAS = -llapack -lblas -fopenmp 
+#FC = mpif90 
+#FFLAGS = -O2 -fopenmp -g -fbacktrace 
+#LIBBLAS = -llapack -lblas -fopenmp 
 #--------------------------------------------------------------------
 .SUFFIXES:
 .SUFFIXES: .o .F90 .F .f90 .c

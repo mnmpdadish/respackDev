@@ -95,28 +95,40 @@ contains
     !
     OPEN(122,FILE='./dat.tr') 
     rewind(122)
-    write(122,'(a30,x,f10.5)')'#Threshold for transfer (eV):',threshold_e*au
-    write(122,'(a30,x,f10.5)')'#Threshold for distance (AA):',threshold_r 
-    write(122,'(a30,x,f10.5)')'#difference in transfers (eV):',diff_transfers*au  
-    write(122,'(a30)')'#i,j,ia1,ia2,ia3,tr,dist:'
+    write(122,'(a50,x,f10.5)')'#Threshold for transfer (eV):',threshold_e*au
+    write(122,'(a50,x,f10.5)')'#Threshold for distance (AA):',threshold_r 
+    write(122,'(a50,x,f10.5)')'#difference in transfers (eV):',diff_transfers*au  
+    write(122,'(a50)')'# i j ia1 ia2 ia3 ABS(tr) Re(tr) Im(tr) dist:'
     allocate(skip(Ntr)); skip=0
     do itr=1,Ntr 
-     tri=abs(dble(tr(itr)))  
+     !
+     !20190610 Kazuma Nakamura
+     !
+     !tri=abs(dble(tr(itr)))  
+     tri=abs(tr(itr))  
+     !
      if(tri<del_zero)cycle 
      if(skip(itr)==1)cycle 
      write(122,*) 
      write(122,'(a30)')'irreducible transfer:' 
      !write(122,'(5i5,2f15.7)') ib_map(itr),jb_map(itr),ia1_map(itr),ia2_map(itr),ia3_map(itr),dble(tr(itr))*au,dist(itr)
-     write(122,'(5i3,2f10.5)') ib_map(itr),jb_map(itr),ia1_map(itr),ia2_map(itr),ia3_map(itr),dble(tr(itr))*au,dist(itr)
+     !write(122,'(5i3,2f10.5)') ib_map(itr),jb_map(itr),ia1_map(itr),ia2_map(itr),ia3_map(itr),dble(tr(itr))*au,dist(itr)
+     write(122,'(5i3,3f10.5,x,f10.5)') ib_map(itr),jb_map(itr),ia1_map(itr),ia2_map(itr),ia3_map(itr),abs(tr(itr))*au,tr(itr)*au,dist(itr)
      write(122,*) 
      do jtr=1,Ntr 
-      trj=abs(dble(tr(jtr)))  
+      !
+      !20190610 Kazuma Nakamura
+      !
+      !trj=abs(dble(tr(jtr)))  
+      trj=abs(tr(jtr))  
+      !
       if(itr==jtr)cycle 
       if(skip(jtr)==1)cycle 
       if(trj<del_zero)cycle 
       if(abs(tri-trj)<diff_transfers)then 
        !write(122,'(5i5,2f15.7)') ib_map(jtr),jb_map(jtr),ia1_map(jtr),ia2_map(jtr),ia3_map(jtr),dble(tr(jtr))*au,dist(jtr)
-       write(122,'(5i3,2f10.5)') ib_map(jtr),jb_map(jtr),ia1_map(jtr),ia2_map(jtr),ia3_map(jtr),dble(tr(jtr))*au,dist(jtr)
+       !write(122,'(5i3,2f10.5)') ib_map(jtr),jb_map(jtr),ia1_map(jtr),ia2_map(jtr),ia3_map(jtr),dble(tr(jtr))*au,dist(jtr)
+       write(122,'(5i3,3f10.5,x,f10.5)') ib_map(jtr),jb_map(jtr),ia1_map(jtr),ia2_map(jtr),ia3_map(jtr),abs(tr(jtr))*au,tr(jtr)*au,dist(jtr)
        !write(122,'(2i10,2f15.7)') itr,jtr,dble(tr(itr))*au,dble(tr(jtr))*au  
        skip(jtr)=1
       endif 

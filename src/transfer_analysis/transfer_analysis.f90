@@ -164,6 +164,9 @@ PROGRAM main
     !
     !wrt fermi surface 
     !
+    if(kgd(1)==0.and.kgd(2)==0.and.kgd(3)==0)then 
+        kgd(1)=nkb1; kgd(2)=nkb2; kgd(3)=nkb3 
+    endif 
     call wrt_frmsf(NWF,kgd(1),Na1,Na2,Na3,nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),&
                    FermiEnergy_bandcalc,HR(1,1,-Na1,-Na2,-Na3)) 
     !

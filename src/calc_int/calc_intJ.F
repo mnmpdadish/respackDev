@@ -913,7 +913,7 @@
        allocate(cheadw(ne));cheadw(:)=0.0d0 
        do ie=1,ne 
         cheadw(ie)=(2.0D0/pi)*epsirr(NoG0,NoG0,ie,iqgm)*qsz 
-        write(6,*)'cheadw(HL) in eV=',cheadw(iw)*au   
+        write(6,*)'cheadw(HL) in eV=',cheadw(iw)*au!20190907 ie<-iw Kazuma Nakamura   
         write(6,*)'1/eps=',epsirr(NoG0,NoG0,ie,iqgm)
        enddo 
        do ie=1,ne 

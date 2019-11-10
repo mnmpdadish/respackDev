@@ -57,12 +57,12 @@ contains
     !
     !wrt dat.dos 
     !
-    call wrt_dos(threshold_transfer,ndosgrd,dosgrd(1),dos(1),efline(1)) 
+    call wrt_dos(threshold_transfer,ndosgrd,dosgrd(1),dos(1),efline(1),FermiEnergy)!20190917 Kazuma Nakamura 
     !
     !wrt dat.pdos 
     !
     if(flg_pdos/=0.0d0)then
-      call wrt_pdos(NWF,ndosgrd,dosgrd(1),pdos(1,1),efline(1)) 
+      call wrt_pdos(NWF,ndosgrd,dosgrd(1),pdos(1,1),efline(1),FermiEnergy)!20190917 Kazuma Nakamura 
     endif 
     !
     return
@@ -200,13 +200,14 @@ contains
     return
   end subroutine 
   !
-  subroutine wrt_dos(threshold_transfer,ndosgrd,dosgrd,dos,efline) 
+  subroutine wrt_dos(threshold_transfer,ndosgrd,dosgrd,dos,efline,FermiEnergy) 
     implicit none
     integer,intent(in)::ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd)
     real(8),intent(in)::dos(ndosgrd)
     real(8),intent(in)::efline(ndosgrd)
     real(8),intent(in)::threshold_transfer 
+    real(8),intent(in)::FermiEnergy 
     integer::ie 
     real(8),parameter::au=27.21151d0 
     !
@@ -215,6 +216,10 @@ contains
     OPEN(300,file='./dat.dos-total') 
     rewind(300) 
     write(300,'(a,x,f10.5)')'#Energy cutoff for transfer (eV):',threshold_transfer*au
+    !
+    !20190917 Kazuma Nakamura
+    !
+    write(300,'(a,x,f10.5)')'#Fermi Energy (eV):',FermiEnergy*au 
     do ie=1,ndosgrd
      write(300,'(3f15.10)') dosgrd(ie)*au,dos(ie)/au,efline(ie)  
     enddo!ie 
@@ -222,13 +227,14 @@ contains
     return
   end subroutine 
   !
-  subroutine wrt_pdos(NTB,ndosgrd,dosgrd,pdos,efline) 
+  subroutine wrt_pdos(NTB,ndosgrd,dosgrd,pdos,efline,FermiEnergy) 
     implicit none
     integer,intent(in)::NTB
     integer,intent(in)::ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd)
     real(8),intent(in)::pdos(ndosgrd,NTB)
     real(8),intent(in)::efline(ndosgrd)
+    real(8),intent(in)::FermiEnergy 
     character(99)::filename 
     integer::ie,ib 
     real(8),parameter::au=27.21151d0 
@@ -239,6 +245,7 @@ contains
      write(filename,'("./dat.dos-",i3.3)')ib
      OPEN(400,FILE=TRIM(filename)) 
      rewind(400)  
+     write(400,'(a,x,f10.5)')'#Fermi Energy (eV):',FermiEnergy*au 
      do ie=1,ndosgrd
       write(400,'(3f15.10)') dosgrd(ie)*au,pdos(ie,ib)/au,efline(ie)  
      enddo!ie 

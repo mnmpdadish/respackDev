@@ -695,6 +695,11 @@
        write(6,'(a20,i10)')'ik:',ik 
        !
        amax=1; bmax=1; cmax=1 
+       !
+       !20190831 Kazuma Nakamura
+       !
+       amin=1; bmin=1; cmin=1 
+       !
        if(CALC_BLOCH_VIS_RANGE)then 
         write(6,*) 
         write(6,'(a40)')'CALCULATE BLOCH VISUALIZATION RANGE'
@@ -2281,6 +2286,7 @@
        write(6,*)'OMEGA_I =',OMEGA_I 
        write(6,*)'OMEGA_OD=',OMEGA_OD
        write(6,*)'OMEGA_D =',OMEGA_D
+       write(6,*)'OMEGA_tot=',OMEGA(4) 
 !update M_MAT
        M_MAT(:,:,:,:)=OVERLAP(:,:,:,:)                      
 !update A_MAT
@@ -2289,31 +2295,35 @@
        SPREAD=OMEGA(4) 
        DEL_SPREAD=ABS(SPREAD-SPREAD_OLD) 
        SPREAD_OLD=OMEGA(4)               
-       write(6,'(a26,i8,2f20.10)')'I_STEP SPREAD DEL_SPREAD:', 
-     +                             I_STEP,SPREAD,DEL_SPREAD 
+       write(6,'(a26,i8,2f20.10)')'I_STEP SPREAD DEL_SPREAD:',
+     + I_STEP,SPREAD,DEL_SPREAD 
        write(6,*)  
        I_STEP=I_STEP+1
       endif
       !--           
       ENDDO!##### SPREAD-MINIMIZATION ROOP #####         
-!--
-!      WRITE(6,*) 
-!      WRITE(6,*)'========================'
-!      WRITE(6,*)'UNITALITY CHECK OF A_MAT'
-!      WRITE(6,*)'========================'
-!      WRITE(6,*)  
-!      do ik=1,NTK 
-!       do ib=1,n_occ   
-!        do jb=1,n_occ   
-!         SUM_CMPX=0.0D0            
-!         do kb=1,n_occ       
-!          SUM_CMPX=SUM_CMPX+CONJG(A_MAT(kb,ib,ik))*A_MAT(kb,jb,ik) 
-!         enddo 
-!         write(6,*) ib,jb,SUM_CMPX        
-!        enddo  
-!       enddo  
-!       write(6,*)       
-!      enddo!ik        
+      SPREAD=dsqrt(SPREAD)*bohr 
+      write(6,'(a26,f20.10)')'FINAL_SQRT_SPREAD in AA',SPREAD 
+       write(6,*)  
+      !
+      !WRITE(6,*) 
+      !WRITE(6,*)'========================'
+      !WRITE(6,*)'UNITALITY CHECK OF A_MAT'
+      !WRITE(6,*)'========================'
+      !WRITE(6,*)  
+      !do ik=1,NTK 
+      ! do ib=1,n_occ   
+      !  do jb=1,n_occ   
+      !   SUM_CMPX=0.0D0            
+      !   do kb=1,n_occ       
+      !    SUM_CMPX=SUM_CMPX+CONJG(A_MAT(kb,ib,ik))*A_MAT(kb,jb,ik) 
+      !   enddo 
+      !   write(6,*) ib,jb,SUM_CMPX        
+      !  enddo  
+      ! enddo  
+      ! write(6,*)       
+      !enddo!ik        
+      !
 !--
 !wannier center 
       allocate(wannier_center(3,n_occ));wannier_center(:,:)=0.0d0  
@@ -2982,7 +2992,8 @@
      +  a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
         write(116,'(3I5)') 
      +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
-        write(116,"(6g25.16)") (((imag(WANNIER_REALSPACE(i1,i2,i3)),
+        !write(116,"(6g25.16)") (((imag(WANNIER_REALSPACE(i1,i2,i3)),
+        write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
      +  i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
      +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +  i1=(xmin)*na_grid,(xmax)*na_grid-1)

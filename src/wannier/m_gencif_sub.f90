@@ -39,6 +39,7 @@ contains
     !
     !OUTPUT by cif format 
     !OPEN(file_num,W,FILE='dat.supercell-xxx.cif') 
+    write(6,*)'na,nb,nc=',na,nb,nc 
     write(filename,"('dat.supercell-',i3.3,'x',i3.3,'x',i3.3,'.cif')")na,nb,nc
     write(6,*)'filename',filename 
     OPEN(file_num,FILE=filename) 

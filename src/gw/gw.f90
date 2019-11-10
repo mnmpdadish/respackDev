@@ -6,6 +6,8 @@ use m_rd_input
 use m_rd_dat_wfn
 use m_rd_dat_wan 
 use m_rd_dat_eps 
+use m_qp, only: calculate_quasi_particle_band
+!
 include "config.h" 
 !
 !mpi 
@@ -366,9 +368,11 @@ if(myrank.eq.0)then
  ecmax=bandmax+diff_band_energy+chiqw_grd_size 
  ecmin=bandmin-diff_band_energy-chiqw_grd_size  
  !
- call estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm)
+ call estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm,nsgmqp)
  allocate(sgmw(nsgm));sgmw=0.0d0 
  call make_sgmw(ecmin,emin,emax,gw_grid_separation,nsgm,sgmw(1))
+ allocate(sgmwqp(nsgmqp));sgmwqp=0.0d0 
+ call make_sgmwqp(ecmin,emin,emax,gw_grid_separation,nsgmqp,sgmwqp(1))
  !
  write(6,*) 
  write(6,'(a40,x,i10)')'number of chiqw_grd =',Num_freq_grid 
@@ -1057,7 +1061,7 @@ if(calc_sc)then!.true.=default
  endif!myrank.eq.0
 endif!calc SC or not 
 !
-deallocate(SCirr) 
+!deallocate(SCirr) 
 !
 !######
 !  SX
@@ -1397,7 +1401,7 @@ if(myrank.eq.0)then
  enddo!ikir 
  close(154)
  !
- deallocate(SXirr) 
+ !deallocate(SXirr) 
  !
  !OPEN(155,FILE='./dat.sx_mat_r') 
  !
@@ -1574,7 +1578,7 @@ if(myrank.eq.0)then
  enddo!ikir 
  close(152)
  !
- deallocate(VXCirr) 
+ !deallocate(VXCirr) 
  !
  !OPEN(153,W,FILE='vxc_mat_r') 
  !
@@ -1744,6 +1748,20 @@ if(myrank.eq.0)then
  ierr=CHDIR("..") 
  call system('pwd') 
 endif!myrank.eq.0 
+!
+!#####################
+! quasi-particle band 
+!#####################
+!
+if(myrank.eq.0)then
+ call calculate_quasi_particle_band(& 
+  Nk_irr,NTK,Mb,NTB,NWF,Na1,Na2,Na3,nsgm,nsgmqp,FermiEnergy,shift_value,&
+  numirr(1),numMK(1),Nb(1),Ns(1),E_EIGI(1,1),sgmw(1),sgmwqp(1),& 
+  SCirr(1,1,1,1),SXirr(1,1,1),VXCirr(1,1,1),UNT(1,1,1),& 
+  NSK_BAND_DISP,nkb1,nkb2,nkb3,Ndiv,N_sym_points,& 
+  a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),SK_BAND_DISP(1,1))  
+ write(6,'(a50)')'##### FINISH QUASI-PARTICLE BAND #####'
+endif!myrank.eq.0
 !
 !##########
 !  FINISH 
