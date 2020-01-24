@@ -218,9 +218,17 @@ contains
      allocate(local(3,3));local=0.0d0 
      allocate(SU2(2,2));SU2=0.0d0 
      do igs=1,nigs 
-       local(1,:)=vec_ini(igs)%lx(:)
-       local(2,:)=vec_ini(igs)%ly(:)
-       local(3,:)=vec_ini(igs)%lz(:)
+       !
+       !20200120 Kazuma Nakamura
+       !
+       !local(1,:)=vec_ini(igs)%lx(:)
+       !local(2,:)=vec_ini(igs)%ly(:)
+       !local(3,:)=vec_ini(igs)%lz(:)
+       !
+       local(:,1)=vec_ini(igs)%lx(:)
+       local(:,2)=vec_ini(igs)%ly(:)
+       local(:,3)=vec_ini(igs)%lz(:)
+       !
        call make_SU2_from_local_axis(3,3,local(1,1),SU2(1,1)) 
        vec_ini(igs)%s_up(:)=SU2(:,1) 
        vec_ini(igs)%s_dn(:)=SU2(:,2) 

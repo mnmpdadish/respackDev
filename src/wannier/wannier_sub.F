@@ -1047,7 +1047,7 @@
      +                  loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
            if(jL==3.AND.jM>5) then
            C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)+
-     +                  loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)) 
+     +                   loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
 !           C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
 !     +                   loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
            endif

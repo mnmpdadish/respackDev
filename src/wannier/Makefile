@@ -13,7 +13,8 @@
 FC = ifort  
 FFLAGS = -O2 -qopenmp -xHost -g -traceback
 #FFLAGS = -O2 -openmp -xHost -g -traceback
-LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm 
+#LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm 
+LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread 
 
 #######
 #DEBUG#
