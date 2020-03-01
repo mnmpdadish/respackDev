@@ -142,7 +142,7 @@ contains
     SU2(2,1)= exp( ci*(alp-gmm)/2.0d0)*sin(bet/2.0d0) 
     SU2(2,2)= exp( ci*(alp+gmm)/2.0d0)*cos(bet/2.0d0) 
     !
-    SU2=CONJG(SU2)  
+    !SU2=CONJG(SU2)  
     !
     write(6,*) 
     write(6,'(a30)')'SU(2):'

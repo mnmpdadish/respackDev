@@ -40,8 +40,8 @@ module m_rdinput
   integer,public::N_sym_points!The number of k-point points in symmetry line
   integer,public::Ndiv!Separation between symmetry points  
   integer,public::reading_sk_format!20170709 
-  integer,public::flg_3d_fatband!flag for color plot of fat band 
-  logical,public::CALC_3D_FATBAND!flag for color plot of fat band 
+  !integer,public::flg_3d_fatband!flag for color plot of fat band 
+  !logical,public::CALC_3D_FATBAND!flag for color plot of fat band 
   !&param-visualization   
   integer,public::flg_vis_wannier!flag for visualization 
   logical,public::CALC_REAL_SPACE_WANNIER!flag for visualization 
@@ -82,8 +82,8 @@ module m_rdinput
   Lower_energy_window,Upper_energy_window,set_inner_window,Upper_inner_window,Lower_inner_window,flg_BMAT,&
   reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k,electron_number_wannier_space,&
   flg_fermisurface,flg_global_dos
-  namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense,&!20170709  
-  flg_3d_fatband
+  namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense !,&!20170709  
+  !flg_3d_fatband
   namelist/param_visualization/flg_vis_wannier,N_write_wannier,& 
   ix_vis_min,ix_vis_max,iy_vis_min,iy_vis_max,iz_vis_min,iz_vis_max
 contains
@@ -307,7 +307,7 @@ contains
     !
     !20190616 Kazuma Nakamura
     !
-    flg_3d_fatband=0 
+    !flg_3d_fatband=0 
     !--
     !read(999,nml=param_interpolation)
     read(5,nml=param_interpolation)
@@ -330,8 +330,8 @@ contains
     !
     !20190616 Kazuma Nakamura
     !
-    if(flg_3d_fatband==0) CALC_3D_FATBAND=.false.!default 
-    if(flg_3d_fatband==1) CALC_3D_FATBAND=.true. 
+    !if(flg_3d_fatband==0) CALC_3D_FATBAND=.false.!default 
+    !if(flg_3d_fatband==1) CALC_3D_FATBAND=.true. 
     !--
     write(6,param_interpolation) 
     do ik=1,N_sym_points 

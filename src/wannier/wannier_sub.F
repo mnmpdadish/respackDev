@@ -947,7 +947,12 @@
       real(8)::ALPHA_GAUSS(nigs)
       real(8)::NORM_GAUSS(nigs)
       real(8)::loc_x(3,nigs),loc_y(3,nigs),loc_z(3,nigs) 
-      complex(8)::loc_s_up(2,nigs),loc_s_dn(2,nigs) 
+      complex(8),intent(in)::loc_s_up(2,nigs),loc_s_dn(2,nigs) 
+      !
+      !20200208 Kazuma Nakamura
+      !
+      complex(8)::loc_s_up_conjg(2,nigs),loc_s_dn_conjg(2,nigs)     
+      !
       integer::LGAUSS(nigs),MGAUSS(nigs)
       integer::N_BAND,N_BAND_BTM 
       complex(8)::C0(NTG,ncomp,NTB)
@@ -974,9 +979,14 @@
       !write(6,*) loc_y 
       !write(6,*) loc_z 
       !
+      !20200207 Kazuma Nakamura
+      !
+      loc_s_up_conjg=CONJG(loc_s_up)
+      loc_s_dn_conjg=CONJG(loc_s_dn)
+      !
       A_TMP=0.0d0 
       do j_gauss=1,nigs
-!--
+       !--
        if(ncomp==2) then
         if( j_gauss <= nigs/2 ) then
          ic = 1
@@ -986,7 +996,7 @@
        else
         ic=1
        endif
-
+       !--
        VEC_KG(:,:)=0.0D0             
        PF1(:)=0.0D0 
        PF2(:)=0.0D0 
@@ -1031,27 +1041,32 @@
        do i_band=1,N_BAND 
         SUM_CMPX=0.0D0
         do ig=1,NG0 
-         if(ncomp==2) then
+         if(ncomp==2)then
           !if there is spin-orbit calculation, we rotate the orbitals
           !(in the spinor basis) with the 2x2 complex matrix inputed 
           !by using FLG_INITIAL_GUESS_DIREC = 2:
-          if( ic == 1 ) then
-           C0_MIX=CONJG(loc_s_up(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
-     +                  loc_s_up(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
+          if( ic == 1 )then
+           C0_MIX
+     +    =CONJG(loc_s_up_conjg(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)
+     +    +      loc_s_up_conjg(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
            if(jL==3.AND.jM>5) then
-           C0_MIX2=CONJG(loc_s_up(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)+
-     +                   loc_s_up(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
+            C0_MIX2
+     +     =CONJG(loc_s_up_conjg(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)
+     +     +      loc_s_up_conjg(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
            endif
           else
-           C0_MIX=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
-     +                  loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
+           C0_MIX
+     +    =CONJG(loc_s_dn_conjg(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)
+     +    +      loc_s_dn_conjg(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)) 
            if(jL==3.AND.jM>5) then
-           C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)+
-     +                   loc_s_dn(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
-!           C0_MIX2=CONJG(loc_s_dn(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)+
-!     +                   loc_s_dn(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
+            C0_MIX2
+     +     =CONJG(loc_s_dn_conjg(1,j_gauss)*C0(ig,2,i_band+N_BAND_BTM)
+     +     +      loc_s_dn_conjg(2,j_gauss)*C0(ig,1,i_band+N_BAND_BTM))
+!           C0_MIX2
+!    +     =CONJG(loc_s_dn_conjg(1,j_gauss)*C0(ig,1,i_band+N_BAND_BTM)
+!    +     +      loc_s_dn_conjg(2,j_gauss)*C0(ig,2,i_band+N_BAND_BTM))
            endif
-          end if
+          endif
          else
           C0_MIX=CONJG(C0(ig,1,i_band+N_BAND_BTM))
          endif

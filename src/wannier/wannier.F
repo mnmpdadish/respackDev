@@ -8,7 +8,7 @@
       use m_wrt_frmsf, only: wrt_frmsf 
       use m_wrt_model  
       use m_dmx, only: calculate_dmx 
-      use m_fat_band, only: calc_fat_band_for_3dmap
+      use m_fat_band, only: calc_fat_band 
       !use m_SO3_to_SU2_Local, only: polar_decomposition 
       !
       include "config.h"
@@ -2832,7 +2832,7 @@
       !(before) H_TMP_OUT(ib,jb):: ib: basis, jb: eigenvector
       !( after) H_TMP_OUT(jb,ib):: jb: eigenvector, ib: basis 
       !
-      if(CALC_3D_FATBAND)then 
+      if(.true.)then 
        do ik=1,NSK_BAND_DISP
         H_TMP_IN=0.0d0           
         do ib=1,n_occ!NWF
@@ -2843,9 +2843,14 @@
         H_TMP_OUT(:,:,ik)=H_TMP_IN(:,:) 
        enddo!ik           
        !
-       filename='./dir-wan/dat.3dfatband.wan'
-       call calc_fat_band_for_3dmap(NWF,NSK_BAND_DISP,filename,
-     +      DIST_K(1),E_BAND_DISP(1,1),H_TMP_OUT(1,1,1))
+       !20200131 Kazuma Nakamura 
+       !
+       !filename='./dir-wan/dat.3dfatband.wan'
+       !call calc_fat_band_for_3dmap(NWF,NSK_BAND_DISP,filename,DIST_K(1),E_BAND_DISP(1,1),H_TMP_OUT(1,1,1))
+       !
+       call calc_fat_band(NWF,NSK_BAND_DISP,DIST_K(1),E_BAND_DISP(1,1),
+     +                    H_TMP_OUT(1,1,1))
+       !
       endif 
 !--
 !(9) WRITE FERMISURFACE WITH WANNIER INTERPOLATION 
@@ -2927,7 +2932,6 @@
        allocate(WR_spinor((xmin)*nwx2:(xmax)*nwx2-1,
      +                    (ymin)*nwy2:(ymax)*nwy2-1, 
      +                    (zmin)*nwz2:(zmax)*nwz2-1,ncomp))
-       !
        !--
        !OPEN(113,R,FILE='dat.wan',FORM='unformatted') 
        ierr=CHDIR("./dir-wan") 
@@ -2942,75 +2946,85 @@
        write(6,*)'FINISH READING C0_WN'
 !--
        do ic=1,ncomp
-       do ix=1,N_write_wannier!NWF 
-        iw=wrt_list(ix)!20170406  
-        WANNIER_REALSPACE=0.0d0           
+        do ix=1,N_write_wannier!NWF 
+         iw=wrt_list(ix)!20170406  
+         WANNIER_REALSPACE=0.0d0           
 !$OMP PARALLEL PRIVATE(ik,C0_I,wfunc,fftwk,pw) 
-        allocate(C0_I(NTG));C0_I=0.0D0 
-        allocate(fftwk(Nl123*2),stat=err) 
-        allocate(wfunc(Nl123*2),stat=err) 
-        allocate(pw((xmin)*nwx2:(xmax)*nwx2-1,
-     +              (ymin)*nwy2:(ymax)*nwy2-1, 
-     +              (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
+         allocate(C0_I(NTG));C0_I=0.0D0 
+         allocate(fftwk(Nl123*2),stat=err) 
+         allocate(wfunc(Nl123*2),stat=err) 
+         allocate(pw((xmin)*nwx2:(xmax)*nwx2-1,
+     +               (ymin)*nwy2:(ymax)*nwy2-1, 
+     +               (zmin)*nwz2:(zmax)*nwz2-1));pw=0.0d0           
 !$OMP DO 
-        do ik=1,NTK
-         C0_I(:)=C0WN(:,ic,iw,ik) !! 2019/03/26
-         call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),
-     +    NTG,
-     +    nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
-     +    xmin,xmax,ymin,ymax,zmin,zmax,SK0(1,ik),
-     +    pw(xmin*nwx2,ymin*nwy2,zmin*nwz2)) 
-        enddo!ik         
+         do ik=1,NTK
+          C0_I(:)=C0WN(:,ic,iw,ik) !! 2019/03/26
+          call make_pw(C0_I(1),wfunc(1),fftwk(1),NG0(ik),KG0(1,1,ik),  
+     +     NTG,
+     +     nwx2,nwy2,nwz2,nfft1,nfft2,Nl123,fs,
+     +     xmin,xmax,ymin,ymax,zmin,zmax,SK0(1,ik),
+     +     pw(xmin*nwx2,ymin*nwy2,zmin*nwz2)) 
+         enddo!ik         
 !$OMP END DO
 !$OMP CRITICAL
-        WANNIER_REALSPACE=WANNIER_REALSPACE+pw 
+         WANNIER_REALSPACE=WANNIER_REALSPACE+pw 
 !$OMP END CRITICAL
-        deallocate(C0_I,fftwk,wfunc,pw)
+         deallocate(C0_I,fftwk,wfunc,pw)
 !$OMP END PARALLEL
-        !--
-        !normalize 
-        WANNIER_REALSPACE=WANNIER_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
-        !--
-        !OUTPUT by VESTA format 
-        !OPEN(116,W,FILE='dat.wan-realspace-xxx.grd')
-        if(ic==1) then
-         write(filename,"('dat.wan-realspace-',i3.3,'.grd')") iw 
-        else
-         write(filename,"('dat.wan-realspace-',i3.3,'_dn.grd')") iw 
-        endif
-        OPEN(116,FILE=filename) 
-        REWIND(116)
-        na_grid=nwx2 
-        nb_grid=nwy2
-        nc_grid=nwz2 
-        aa1=a1*dble(xmax-xmin)
-        aa2=a2*dble(ymax-ymin)
-        aa3=a3*dble(zmax-zmin)
-        call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
-        write(116,*)'Electron density'
-        write(116,'(6f15.10)')
-     +  a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
-        write(116,'(3I5)') 
-     +  (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
-        !write(116,"(6g25.16)") (((imag(WANNIER_REALSPACE(i1,i2,i3)),
-        write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
-     +  i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
-     +  i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
-     +  i1=(xmin)*na_grid,(xmax)*na_grid-1)
-        CLOSE(116)
-        ! 
-        SUM_REAL = 0.0d0
-        do i1=(xmin)*na_grid,(xmax)*na_grid-1
-         do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
-          do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
-           SUM_REAL = SUM_REAL + 
-     +     dble( WANNIER_REALSPACE(i1,i2,i3)* 
-     +     conjg(WANNIER_REALSPACE(i1,i2,i3)) )
-          enddo!i3
-         enddo!i2
-        enddo!i1
-        write(6,*) ix, SUM_REAL
-       enddo!ix 
+         !--
+         !normalize 
+         WANNIER_REALSPACE=WANNIER_REALSPACE/DBLE(NTK)/DSQRT(VOLUME)
+         !--
+         !OUTPUT by VESTA format 
+         !OPEN(116,W,FILE='dat.wan-realspace-xxx.grd')
+         if(ncomp==1)then 
+          write(filename,"('dat.wan-realspace-',i3.3,'.grd')")iw 
+         else
+          if(ic==1) then
+           write(filename,"('dat.wan-realspace-',i3.3,'_up.grd')")iw 
+          else
+           write(filename,"('dat.wan-realspace-',i3.3,'_dn.grd')")iw 
+          endif
+         endif 
+         !
+         OPEN(116,FILE=filename) 
+         REWIND(116)
+         na_grid=nwx2 
+         nb_grid=nwy2
+         nc_grid=nwz2 
+         aa1=a1*dble(xmax-xmin)
+         aa2=a2*dble(ymax-ymin)
+         aa3=a3*dble(zmax-zmin)
+         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
+         write(116,*)'Electron density'
+         write(116,'(6f15.10)')
+     +   a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
+         write(116,'(3I5)') 
+     +   (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
+         !write(116,"(6g25.16)") (((imag(WANNIER_REALSPACE(i1,i2,i3)),
+         write(116,"(6g25.16)") (((dble(WANNIER_REALSPACE(i1,i2,i3)),
+     +   i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
+     +   i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
+     +   i1=(xmin)*na_grid,(xmax)*na_grid-1)
+         CLOSE(116)
+         ! 
+         SUM_REAL = 0.0d0
+         do i1=(xmin)*na_grid,(xmax)*na_grid-1
+          do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
+           do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
+            SUM_REAL = SUM_REAL + 
+     +      dble( WANNIER_REALSPACE(i1,i2,i3)* 
+     +      conjg(WANNIER_REALSPACE(i1,i2,i3)) )
+           enddo!i3
+          enddo!i2
+         enddo!i1
+         if(ic==1)then
+          write(6,'(a,i5,a,f15.8)')'iw',ix,'up',SUM_REAL
+         else
+          write(6,'(a,i5,a,f15.8)')'iw',ix,'dn',SUM_REAL
+         endif  
+         !
+        enddo!ix 
        enddo!ic
        !
        !20190615 Kazuma Nakamura

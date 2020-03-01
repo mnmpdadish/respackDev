@@ -2,7 +2,66 @@ module m_fat_band
   implicit none
 contains
   !
-  subroutine calc_fat_band_for_3dmap(NWF,NSK_BAND_DISP,filename,DIST,EKS,VKS)
+  subroutine calc_fat_band(NWF,NSK_BAND_DISP,DIST,EKS,VKS)
+    implicit none 
+    integer,intent(in)::NWF,NSK_BAND_DISP  
+    real(8),intent(in)::DIST(NSK_BAND_DISP) 
+    real(8),intent(in)::EKS(NWF,NSK_BAND_DISP) 
+    complex(8),intent(in)::VKS(NWF,NWF,NSK_BAND_DISP)
+    !
+    character(99)::filename
+    if(.true.)then 
+      filename='./dir-wan/dat.iband.fat-'
+      call wrt_fat_band(NWF,NSK_BAND_DISP,filename,DIST,EKS,VKS)
+    endif 
+    if(.true.)then 
+      filename='./dir-wan/dat.iband.fat.pm3d-'
+      call calc_fat_band_pm3d(NWF,NSK_BAND_DISP,filename,DIST,EKS,VKS)
+    endif 
+    return
+  end subroutine calc_fat_band
+
+  subroutine wrt_fat_band(NWF,NSK_BAND_DISP,filename,DIST,EKS,VKS)
+    implicit none 
+    integer,intent(in)::NWF,NSK_BAND_DISP  
+    character(99),intent(in)::filename
+    real(8),intent(in)::DIST(NSK_BAND_DISP) 
+    real(8),intent(in)::EKS(NWF,NSK_BAND_DISP) 
+    complex(8),intent(in)::VKS(NWF,NWF,NSK_BAND_DISP)
+    !
+    integer::iw,ib,ik 
+    LOGICAL::REVERSE 
+    character(99)::fname 
+    real(8),parameter::au=27.21151d0 
+    !
+    !OPEN(400,W,file='./dir-wan/dat.iband.fat-ib')
+    !
+    do iw=1,NWF 
+     write(fname,'(a,i3.3)') trim(filename),iw 
+     OPEN(400,FILE=TRIM(fname)) 
+     write(400,'(a)')'#Wannier-interpolaed fat band'
+     write(400,'(a)')'#1:k, 2:Energy [eV], 3:|VKS(ib,iw,ik))|^2 ' 
+     REVERSE=.TRUE.        
+     do ib=1,NWF 
+      if(REVERSE)then 
+       do ik=1,NSK_BAND_DISP                     
+        write(400,'(3f20.10)') DIST(ik)/DIST(NSK_BAND_DISP),EKS(ib,ik)*au,abs(VKS(ib,iw,ik))**2
+       enddo!ik        
+       REVERSE=.FALSE.        
+      else         
+       do ik=NSK_BAND_DISP,1,-1          
+        write(400,'(3f20.10)') DIST(ik)/DIST(NSK_BAND_DISP),EKS(ib,ik)*au,abs(VKS(ib,iw,ik))**2
+       enddo!ik        
+       REVERSE=.TRUE.        
+      endif!REVERSE                   
+     enddo!ib 
+     close(400) 
+    enddo!iw 
+    !
+    return 
+  end subroutine   
+  
+  subroutine calc_fat_band_pm3d(NWF,NSK_BAND_DISP,filename,DIST,EKS,VKS)
     implicit none 
     integer,intent(in)::NWF,NSK_BAND_DISP  
     character(99),intent(in)::filename
@@ -21,7 +80,7 @@ contains
     real(8)::emin!=minval(EIG)
     integer::ndosgrd!=int(1.2d0*diff/dlt)+1
     real(8),allocatable::dosgrd(:)!dosgrd(ndosgrd) 
-    character(99)::fname,fname_arg 
+    character(99)::fname 
     ! 
     !dos-grid
     !
@@ -47,12 +106,13 @@ contains
     !
     !plt
     !
-    !OPEN(400,W,file='./dir-wan/dat.3dfatband.wan-ib')
+    !OPEN(400,W,file='./dir-wan/dat.iband.fat.pm3d-ib')
     !
     do iw=1,NWF 
-     fname_arg='-'
-     write(fname,'(a,a,i3.3)') trim(filename),trim(fname_arg),iw 
+     write(fname,'(a,i3.3)') trim(filename),iw 
      OPEN(400,FILE=TRIM(fname)) 
+     write(400,'(a)')'#Wannier-interpolaed fat band for pm3d'
+     write(400,'(a)')'#1:k, 2:Energy [eV], 3:AKW(ik,ie,iw)' 
      do ie=1,ndosgrd 
       do ik=1,NSK_BAND_DISP 
        if(AKW(ik,ie,iw)>=500.0d0) AKW(ik,ie,iw)=500.0d0 
