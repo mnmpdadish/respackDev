@@ -3007,22 +3007,6 @@
      +   i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
      +   i1=(xmin)*na_grid,(xmax)*na_grid-1)
          CLOSE(116)
-         ! 
-         SUM_REAL = 0.0d0
-         do i1=(xmin)*na_grid,(xmax)*na_grid-1
-          do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
-           do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
-            SUM_REAL = SUM_REAL + 
-     +      dble( WANNIER_REALSPACE(i1,i2,i3)* 
-     +      conjg(WANNIER_REALSPACE(i1,i2,i3)) )
-           enddo!i3
-          enddo!i2
-         enddo!i1
-         if(ic==1)then
-          write(6,'(a,i5,a,f15.8)')'iw',ix,'up',SUM_REAL
-         else
-          write(6,'(a,i5,a,f15.8)')'iw',ix,'dn',SUM_REAL
-         endif  
          !
         enddo!ix 
        enddo!ic
@@ -3065,30 +3049,59 @@
           !spinor 
           WR_spinor(:,:,:,ic)=WANNIER_REALSPACE(:,:,:) 
           !--
-          !OUTPUT by VESTA format 
-          !OPEN(116,W,FILE='dat.wan-density-xxx.grd')
-          write(filename,"('dat.wan-density-',i3.3,'.grd')") iw 
-          OPEN(116,FILE=filename) 
-          REWIND(116)
-          na_grid=nwx2 
-          nb_grid=nwy2
-          nc_grid=nwz2 
-          aa1=a1*dble(xmax-xmin)
-          aa2=a2*dble(ymax-ymin)
-          aa3=a3*dble(zmax-zmin)
-          call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
-          write(116,*)'Electron density'
-          write(116,'(6f15.10)')
-     +    a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
-          write(116,'(3I5)') 
-     +    (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
-          write(116,"(6g25.16)") 
-     +    (((dble(conjg(WR_spinor(i1,i2,i3,1))*WR_spinor(i1,i2,i3,1)
-     +           +conjg(WR_spinor(i1,i2,i3,2))*WR_spinor(i1,i2,i3,2)),
-     +    i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
-     +    i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
-     +    i1=(xmin)*na_grid,(xmax)*na_grid-1)
-          CLOSE(116)
+         enddo!ic
+         !
+         !OUTPUT by VESTA format 
+         !OPEN(116,W,FILE='dat.wan-density-xxx.grd')
+         !
+         write(filename,"('dat.wan-density-',i3.3,'.grd')") iw 
+         OPEN(116,FILE=filename) 
+         REWIND(116)
+         na_grid=nwx2 
+         nb_grid=nwy2
+         nc_grid=nwz2 
+         aa1=a1*dble(xmax-xmin)
+         aa2=a2*dble(ymax-ymin)
+         aa3=a3*dble(zmax-zmin)
+         call est_latparam(aa1(1),aa2(1),aa3(1),a,b,c,alp,bet,gmm) 
+         write(116,*)'Electron density'
+         write(116,'(6f15.10)')
+     +   a*bohr,b*bohr,c*bohr,alp,bet,gmm!bohr->angstrom
+         write(116,'(3I5)') 
+     +   (xmax-xmin)*na_grid,(ymax-ymin)*nb_grid,(zmax-zmin)*nc_grid 
+         write(116,"(6g25.16)") 
+     +   (((dble(conjg(WR_spinor(i1,i2,i3,1))*WR_spinor(i1,i2,i3,1)
+     +          +conjg(WR_spinor(i1,i2,i3,2))*WR_spinor(i1,i2,i3,2)),
+     +   i3=(zmin)*nc_grid,(zmax)*nc_grid-1),
+     +   i2=(ymin)*nb_grid,(ymax)*nb_grid-1),
+     +   i1=(xmin)*na_grid,(xmax)*na_grid-1)
+         CLOSE(116)
+         ! 
+         !20200304 Kazuma Nakamura 
+         !
+         do ic=1,ncomp
+          SUM_REAL = 0.0d0
+          do i1=(xmin)*na_grid,(xmax)*na_grid-1
+           do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
+            do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
+             SUM_REAL
+     +      =SUM_REAL 
+     +      + dble(WR_spinor(i1,i2,i3,ic) 
+     +      *conjg(WR_spinor(i1,i2,i3,ic)))
+            enddo!i3
+           enddo!i2
+          enddo!i1
+          !
+          !dV=NTK*VOLUME/NTK/nwx2/nwy2/nwz2 
+          !
+          SUM_REAL=SUM_REAL*VOLUME/dble(nwx2)/dble(nwy2)/dble(nwz2)    
+          !
+          if(ic==1)then
+           write(6,'(a5,i5,a5,f15.8)')'iw:',ix,'up:',SUM_REAL
+          else
+           write(6,'(a5,i5,a5,f15.8)')'iw:',ix,'dn:',SUM_REAL
+          endif  
+          !
          enddo!ic
         enddo!ix 
         deallocate(WANNIER_REALSPACE,WR_spinor,C0WN) 
