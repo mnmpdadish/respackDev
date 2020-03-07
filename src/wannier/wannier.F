@@ -3079,15 +3079,25 @@
          ! 
          !20200304 Kazuma Nakamura 
          !
-         do ic=1,ncomp
+         allocate(SU2inv(2,2));SU2inv=0.0d0 
+         SU2inv(:,1)=loc_s_up(:,iw)
+         SU2inv(:,2)=loc_s_dn(:,iw)
+         call invZGE(2,SU2inv(1,1)) 
+         !
+         do il=1,ncomp
           SUM_REAL = 0.0d0
           do i1=(xmin)*na_grid,(xmax)*na_grid-1
            do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
             do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
-             SUM_REAL
-     +      =SUM_REAL 
-     +      + dble(WR_spinor(i1,i2,i3,ic) 
-     +      *conjg(WR_spinor(i1,i2,i3,ic)))
+             !
+             SUM_CMPX=0.0d0 
+             do ic=1,ncomp 
+              SUM_CMPX=SUM_CMPX+SU2inv(il,ic)*WR_spinor(i1,i2,i3,ic)
+             enddo!ic   
+             SUM_REAL=SUM_REAL+conjg(SUM_CMPX)*SUM_CMPX 
+             !
+             !SUM_REAL=SUM_REAL+conjg(WR_spinor(i1,i2,i3,ic))*WR_spinor(i1,i2,i3,ic) 
+             !
             enddo!i3
            enddo!i2
           enddo!i1
@@ -3096,13 +3106,14 @@
           !
           SUM_REAL=SUM_REAL*VOLUME/dble(nwx2)/dble(nwy2)/dble(nwz2)    
           !
-          if(ic==1)then
-           write(6,'(a5,i5,a5,f15.8)')'iw:',ix,'up:',SUM_REAL
+          if(il==1)then
+           write(6,'(a5,i5,a5,f15.8)')'iw:',iw,'up:',SUM_REAL
           else
-           write(6,'(a5,i5,a5,f15.8)')'iw:',ix,'dn:',SUM_REAL
+           write(6,'(a5,i5,a5,f15.8)')'iw:',iw,'dn:',SUM_REAL
           endif  
           !
-         enddo!ic
+         enddo!il 
+         deallocate(SU2inv) 
         enddo!ix 
         deallocate(WANNIER_REALSPACE,WR_spinor,C0WN) 
        endif!ncomp==2

@@ -213,6 +213,7 @@
       !20190615 
       !
       !<<Wannier spinor>> 
+      complex(8),allocatable::SU2inv(:,:)!SU2inv(2,2)
       complex(8),ALLOCATABLE::WR_spinor(:,:,:,:) 
       !
 !end config.h 
