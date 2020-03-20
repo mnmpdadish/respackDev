@@ -30,12 +30,8 @@
          write(6,*)'E_UPPER in au',E_UPPER 
       endif
       !
-      E_LOWER=E_LOWER/au 
-      E_UPPER=E_UPPER/au 
       E_LOWER_inner=E_LOWER_inner/au 
       E_UPPER_inner=E_UPPER_inner/au 
-      write(6,*)'E_LOWER in au',E_LOWER 
-      write(6,*)'E_UPPER in au',E_UPPER 
       write(6,*)'E_LOWER_inner in au',E_LOWER_inner 
       write(6,*)'E_UPPER_inner in au',E_UPPER_inner 
       !
