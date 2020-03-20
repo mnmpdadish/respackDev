@@ -15,6 +15,21 @@
       !--
       call read_input
       NGAUSS=n_occ!TOTAL NUMBER OF WANNIER ORBITAL  
+      !
+      !20191216 Jean Moree
+      !
+      !E_LOWER=E_LOWER/au 
+      !E_UPPER=E_UPPER/au 
+      !write(6,*)'E_LOWER in au',E_LOWER 
+      !write(6,*)'E_UPPER in au',E_UPPER 
+      !
+      if(flg_specify_energywindow)then
+         E_LOWER=E_LOWER/au 
+         E_UPPER=E_UPPER/au 
+         write(6,*)'E_LOWER in au',E_LOWER 
+         write(6,*)'E_UPPER in au',E_UPPER 
+      endif
+      !
       E_LOWER=E_LOWER/au 
       E_UPPER=E_UPPER/au 
       E_LOWER_inner=E_LOWER_inner/au 
@@ -310,8 +325,24 @@
        enddo!ib
       enddo!ik          
       !--
-      call calc_NB_start_end(NK_irr,NBAND,E_EIGI(1,1),E_LOWER,E_UPPER,
-     +     NB_start,NB_end) 
+      !
+      !20191216 Jean Moree
+      !
+      ! call calc_NB_start_end(NK_irr,NBAND,E_EIGI(1,1),E_LOWER,E_UPPER,
+      !+     NB_start,NB_end) 
+      !
+      if(flg_specify_energywindow)then
+         call calc_NB_start_end(NK_irr,NBAND,E_EIGI(1,1),
+     +        E_LOWER,E_UPPER,NB_start,NB_end) 
+      !--    
+      endif
+      if(flg_specify_bandindices)then
+         write(6,'(3a)') "WARNING : ",
+     +        "flg_specify_bandindices=.true. : ",
+     +        "setting NB_start,NB_end to bandindex_min,bandindex_max"
+         NB_start=bandindex_min
+         NB_end=bandindex_max
+      endif
       !--
       NTB_glb=NBAND 
       NTB=NB_end-NB_start+1!TOTAL NUMBER OF CONSIDERED BAND in wannier  
@@ -632,16 +663,49 @@
 
       allocate(N_BAND(NTK));N_BAND(:)=0
       allocate(N_BAND_BTM(NTK));N_BAND_BTM(:)=0
-      do ik=1,NTK       
-       SUM_INT=0        
-       do ib=1,NTB        
-        IF(E_LOWER<=E_EIG(ib,ik).AND.E_EIG(ib,ik)<=E_UPPER)THEN    
-         SUM_INT=SUM_INT+1         
-         IF(SUM_INT==1) N_BAND_BTM(ik)=ib-1  
-        ENDIF        
-       enddo!ib 
-       N_BAND(ik)=SUM_INT 
-      enddo!ik       
+      !
+      !20191216 Jean Moree
+      !
+      !do ik=1,NTK       
+      ! SUM_INT=0        
+      ! do ib=1,NTB        
+      !  IF(E_LOWER<=E_EIG(ib,ik).AND.E_EIG(ib,ik)<=E_UPPER)THEN    
+      !   SUM_INT=SUM_INT+1         
+      !   IF(SUM_INT==1) N_BAND_BTM(ik)=ib-1  
+      !  ENDIF        
+      ! enddo!ib 
+      ! N_BAND(ik)=SUM_INT 
+      !enddo!ik       
+      !
+      write(6,*) 
+      write(6,'(2a)') "###STEP : ",
+     +     "Calculate number of bands inside outer window"
+      write(6,*) 
+      if(flg_specify_energywindow)then
+         do ik=1,NTK       
+            SUM_INT=0        
+            do ib=1,NTB        
+               IF(E_LOWER<=E_EIG(ib,ik).AND.E_EIG(ib,ik)<=E_UPPER)THEN  
+                  IF(SUM_INT==0) N_BAND_BTM(ik)=ib-1  
+                  SUM_INT=SUM_INT+1
+                  write(6,'(a,2i8,f8.4,a,2f8.4)') "ik,ib=",
+     +                 ik,ib,E_EIG(ib,ik),
+     +                 " inside  ",E_LOWER,E_UPPER
+               else           
+                  write(6,'(a,2i8,f8.4,a,2f8.4)') "ik,ib=",
+     +                 ik,ib,E_EIG(ib,ik),
+     +                 " outside ",E_LOWER,E_UPPER
+               ENDIF        
+            enddo!ib 
+            N_BAND(ik)=SUM_INT 
+         enddo!ik
+      endif
+      if(flg_specify_bandindices)then
+         do ik=1,NTK
+            N_BAND(ik)=NTB
+            N_BAND_BTM(ik)=0
+         enddo!ik 
+      endif
       !
       write(6,*) 
       write(6,*)'===================================='

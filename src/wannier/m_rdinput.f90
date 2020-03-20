@@ -29,7 +29,11 @@ module m_rdinput
   integer,public::flg_fermisurface!flag for fermisurface  
   logical,public::CALC_FERMISURFACE!flag for fermisurface  
   integer,public::flg_global_dos!flag for global dos 
-  logical,public::CALC_GLOBAL_DOS!flag for global dos 
+  logical,public::CALC_GLOBAL_DOS!flag for global dos
+  logical,public::flg_specify_energywindow!20191216 Jean Moree
+  logical,public::flg_specify_bandindices!20191216 Jean Moree
+  integer,public::bandindex_min!20191216 Jean Moree
+  integer,public::bandindex_max!20191216 Jean Moree
   !hidden parameters 
   integer,public::flg_vis_bloch!flag for visualization  of Bloch function
   logical,public::CALC_REAL_SPACE_BLOCH!flag for visualization of Bloch function 
@@ -81,7 +85,8 @@ module m_rdinput
   namelist/param_wannier/icell,N_wannier,N_initial_guess,EPS_SPILLAGE,DAMP,EPS_SPREAD,MAX_STEP_LENGTH,&
   Lower_energy_window,Upper_energy_window,set_inner_window,Upper_inner_window,Lower_inner_window,flg_BMAT,&
   reading_bmat_format,flg_initial_guess_direc,flg_vis_bloch,calc_k,electron_number_wannier_space,&
-  flg_fermisurface,flg_global_dos
+  flg_fermisurface,flg_global_dos,& 
+  flg_specify_energywindow,flg_specify_bandindices,bandindex_min,bandindex_max!20191216 Jean Moree
   namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense !,&!20170709  
   !flg_3d_fatband
   namelist/param_visualization/flg_vis_wannier,N_write_wannier,& 
@@ -120,6 +125,10 @@ contains
     flg_vis_bloch=0
     CALC_BLOCH_VIS_RANGE=.FALSE.
     calc_k(:)=0.0d0
+    flg_specify_energywindow=.true.!20191216 Jean Moree
+    flg_specify_bandindices=.false.!20191216 Jean Moree
+    bandindex_min=0!20191216 Jean Moree
+    bandindex_max=0!20191216 Jean Moree
     !---
     !open(999,file='input.in')
     !read(999,nml=param_wannier)
@@ -132,14 +141,37 @@ contains
     E_LOWER_inner=Lower_inner_window
     E_UPPER_inner=Upper_inner_window
     elec_num=electron_number_wannier_space 
-    !--
+    !
+    !20191216 Jean Moree
+    !
+    if((flg_specify_energywindow.and.flg_specify_bandindices).or.(.not.flg_specify_energywindow.and..not.flg_specify_bandindices))then
+       write(6,'(2a)')"###ERROR : ","flg_specify_energywindow and flg_specify_bandindices have the same values. One should be .true., the other .false."
+       stop
+    endif
+    !if(flg_specify_bandindices.and.set_inner_window)then
+    !    write(6,'(a)')"###ERROR : ","flg_specify_bandindices=true : not compatible with set_inner_window=.true. for now."
+    !    stop
+    !endif
+    !
+    !20191216 Jean Moree
+    !
     !check ENERGY WINDOW
-    if(E_LOWER>=E_UPPER)then 
+    if(flg_specify_energywindow.and.E_LOWER>=E_UPPER)then 
      write(6,'(a)')'wrong input: energy windows; stop'
      write(6,'(a)')'Lower_energy_window >= Upper_energy_window: WRONG'
      write(6,'(a,2f20.9)')'Lower_energy_window, Upper_energy_window',Lower_energy_window,Upper_energy_window
      stop
-    endif 
+    endif
+    !
+    !20191216 Jean Moree
+    !
+    !check band indices
+    if(flg_specify_bandindices)then
+       if(bandindex_min==0.or.bandindex_min==0.or.bandindex_min>bandindex_max)then
+          write(6,'(2a)')"###ERROR : ","flg_specify_bandindices=true, but bandindex_min/bandindex_max not specified correctly"
+          stop
+       endif
+    endif
     !--
     !default set_inner_window==F
     !if(set_inner_window.eqv..true..and.E_UPPER_inner==0.0d0.and.E_LOWER_inner==0.0d0)then!20171212 
