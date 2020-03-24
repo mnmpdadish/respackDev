@@ -104,6 +104,16 @@
       complex(8),allocatable::J_MAT(:,:,:,:,:,:)
 !X_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
 !J_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne) 
+      !
+      !20200314 Kazuma Nakamura
+      !
+      complex(8),allocatable::gfunc(:,:,:)!gfunc(NWF,NWF,NTQ)
+      complex(8),allocatable::gfuncw(:,:,:,:)!gfuncw(NWF,NWF,NTQ,ne)
+      complex(8),allocatable::Y_MAT(:,:,:,:,:)
+      complex(8),allocatable::K_MAT(:,:,:,:,:,:)
+!Y_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
+!K_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne) 
+      !
       integer::iqgm,NoG0,shift_G(3)
       integer::file_num 
       real(8)::qsz 

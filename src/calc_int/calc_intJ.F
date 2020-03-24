@@ -126,7 +126,7 @@
       ENDDO 
       CLOSE(104)
       write(6,*)'finish kgi'
-!--
+      !--
       allocate(LKGI(NTG,Nk_irr));LKGI=0.0d0 
       do ik=1,Nk_irr 
        do ig=1,NGI(ik) 
@@ -149,7 +149,7 @@
       write(6,*) maxval(LKGI(:,:))
       Ecut_for_psi=maxval(LKGI(:,:))+1.0d-8
       write(6,*)'Ecut_for_psi=',Ecut_for_psi 
-!--
+      !--
       L1=maxval(abs(KGI(1,:,:)))+1;write(6,*) 'L1=',L1 
       L2=maxval(abs(KGI(2,:,:)))+1;write(6,*) 'L2=',L2 
       L3=maxval(abs(KGI(3,:,:)))+1;write(6,*) 'L3=',L3 
@@ -259,21 +259,21 @@
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=-1;RW(:,jk)=RWtmp(:)
 2000  enddo 
       enddo 
-!--
+      !--
       if(NTK/=jk)then 
        write(6,*)'ERROR; STOP; NTK should be jk'   
        write(6,*)'NTK=',NTK,'jk=',jk; STOP
       endif 
-!--   
-       write(6,*)
-       write(6,*)'====='
-       write(6,*)' SK0 '
-       write(6,*)'====='
-       write(6,*)
-       do ik=1,NTK
-        write(6,'(I5,3F15.10)') ik,SK0(:,ik) 
-       enddo 
-!--
+      !--   
+      write(6,*)
+      write(6,*)'====='
+      write(6,*)' SK0 '
+      write(6,*)'====='
+      write(6,*)
+      do ik=1,NTK
+       write(6,'(I5,3F15.10)') ik,SK0(:,ik) 
+      enddo 
+      !--
       call est_nkbi(NTK,SK0(1,1),nkb1,nkb2,nkb3)  
       write(6,*) 
       write(6,'(a24,4i10)')'nkb1,nkb2,nkb3,NTK=',nkb1,nkb2,nkb3,NTK  
@@ -325,7 +325,7 @@
         KG0(:,:,jk)=-KGtmp(:,:) 
        endif 
       enddo 
-!--
+      !--
       write(6,*)
       write(6,*)'====='
       write(6,*)' NG0 '
@@ -341,7 +341,7 @@
       read(113) NWF 
       allocate(C0(NTG,ncomp,NWF,NTK));C0(:,:,:,:)=0.0D0 
       do ik=1,NTK 
-!       read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
+       !read(113)((C0(ig,iw,ik),ig=1,NG0(ik)),iw=1,NWF)           
        read(113)(((C0(ig,ic,iw,ik),ig=1,NG0(ik)),iw=1,NWF),
      +            ic=1,ncomp)
       enddo
@@ -446,7 +446,7 @@
       allocate(numrotq(NTQ));numrotq(:)=0
       allocate(trsq(NTQ));trsq(:)=0
       allocate(RWq(3,NTQ));RWq(:,:)=0      
-!--
+      !--
       do iq=1,Nq_irr 
        SQ(:,iq)=SQI(:,iq) 
        numirrq(iq)=iq;numrotq(iq)=1;trsq(iq)=1;RWq(1:3,iq)=0
@@ -490,12 +490,12 @@
        numirrq(jk)=iq;numrotq(jk)=iop;trsq(jk)=-1;RWq(:,jk)=RWtmp(:)
 2100  enddo 
       enddo 
-!--
+      !--
       if(NTQ/=jk)then 
        write(6,*)'ERROR;STOP;NTQ should be jk'   
        write(6,*)'NTQ=',NTQ,'jk=',jk;STOP
       endif 
-!--
+      !--
       write(6,*)
       write(6,*)'============'
       write(6,*)' SQ and SK0 '
@@ -549,7 +549,7 @@
         LG0(:,:,iq)=-KGtmp(:,:) 
        endif 
       enddo 
-!--
+      !--
       Lq1=maxval(abs(LG0(1,:,:)))+1; write(6,*)'Lq1=',Lq1 
       Lq2=maxval(abs(LG0(2,:,:)))+1; write(6,*)'Lq2=',Lq2 
       Lq3=maxval(abs(LG0(3,:,:)))+1; write(6,*)'Lq3=',Lq3 
@@ -561,7 +561,7 @@
         packingq(i1,j1,k1,iq)=ig 
        enddo 
       enddo 
-!-- 
+      !-- 
       NTGQ=maxval(NGQ_eps(:))!TOTAL NUMBER OF G VECTORS FOR EPSILON
       write(6,*)'NTGQ=',NTGQ  
 !--
@@ -569,7 +569,7 @@
       allocate(epstmp(NTGQ,NTGQ,ne));epstmp(:,:,:)=0.0D0!real8
       allocate(epstmpgm(NTGQ,NTGQ,ne,3));epstmpgm(:,:,:,:)=0.0D0!real8
       allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr));epsirr(:,:,:,:)=0.0D0!real4 
-!--
+      !--
       ierr=CHDIR("./dir-eps") 
       call system('pwd') 
       do iq=1,Nq_irr 
@@ -622,21 +622,35 @@
       WRITE(6,*)'====================================='
       WRITE(6,*)'=== INTERACTION CALCULATION START ==='
       WRITE(6,*)'====================================='
-!--
-!make J_MAT(iw,jw,R)
-!--
-       allocate(func(NWF,NWF,NTQ));func(:,:,:)=0.0d0 
-       allocate(X_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
-       X_MAT(:,:,:,:,:)=0.0D0 
-       allocate(funcw(NWF,NWF,NTQ,ne));funcw(:,:,:,:)=0.0d0 
-       allocate(J_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne)) 
-       J_MAT(:,:,:,:,:,:)=0.0D0 
-!--
+      !--
+      !make J_MAT(iw,jw,R)
+      !--
+      allocate(func(NWF,NWF,NTQ));func(:,:,:)=0.0d0 
+      allocate(X_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
+      X_MAT(:,:,:,:,:)=0.0D0 
+      allocate(funcw(NWF,NWF,NTQ,ne));funcw(:,:,:,:)=0.0d0 
+      allocate(J_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne)) 
+      J_MAT(:,:,:,:,:,:)=0.0D0 
+      !
+      !20200314 Kazuma Nakamura 
+      !
+      !--
+      !make K_MAT(iw,jw,R)
+      !--
+      allocate(gfunc(NWF,NWF,NTQ));gfunc(:,:,:)=0.0d0 
+      allocate(Y_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)) 
+      Y_MAT(:,:,:,:,:)=0.0D0 
+      allocate(gfuncw(NWF,NWF,NTQ,ne));gfuncw(:,:,:,:)=0.0d0 
+      allocate(K_MAT(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,ne)) 
+      K_MAT(:,:,:,:,:,:)=0.0D0 
+      !--
       do ia1=ix_intJ_min,ix_intJ_max
        do ia2=iy_intJ_min,iy_intJ_max
         do ia3=iz_intJ_min,iz_intJ_max
          do iq=1,NTQ 
+!--
 !q/=0 
+!--
           q1=SQ(1,iq);q2=SQ(2,iq);q3=SQ(3,iq)
           if(q1.ne.0.0d0.or.q2.ne.0.0d0.or.q3.ne.0.0d0) then 
            NG_for_eps=NGQ_eps(iq)
@@ -692,56 +706,108 @@
 !$OMP END PARALLEL 
            rho(:,:,:)=rho(:,:,:)/dble(NTK)
            deallocate(length_qg)
+           !--
+           do iw=1,NWF 
+            do jw=1,NWF 
+             SUM_CMPX=0.0D0 
+             do igL=1,NG_for_psi  
+               SUM_CMPX
+     +        =SUM_CMPX
+     +        +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
+             enddo 
+             func(iw,jw,iq)=SUM_CMPX 
+            enddo!jw 
+           enddo!iw 
+           !
+           !20200314 Kazuma Nakamura 
+           !
+           !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
+           !
+           do iw=1,NWF 
+            do jw=1,NWF 
+             SUM_CMPX=0.0D0 
+             do igL=1,NG_for_psi  
+               SUM_CMPX
+     +        =SUM_CMPX
+     +        +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw))
+             enddo 
+             gfunc(iw,jw,iq)=SUM_CMPX 
+            enddo!jw 
+           enddo!iw 
+           !--
+           allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
+           allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
+           iqir=numirrq(iq)
+           iop=numrotq(iq)
+           packtmp(:,:,:)=packingq(:,:,:,iqir) 
+           call make_eps(NTG,NTGQ,ne,trsq(iq),NGQ_eps(iq),
+     +      LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
+     +      nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
+     +      epsirr(1,1,1,iqir),epsmk(1,1,1)) 
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP DO 
+           do ie=1,ne 
             do iw=1,NWF 
              do jw=1,NWF 
               SUM_CMPX=0.0D0 
-              do igL=1,NG_for_psi  
+              do igL=1,NG_for_eps 
+               do jgL=1,NG_for_eps 
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw)
+     +         *epsmk(igL,jgL,ie)
+     +         *CONJG(rho(jgL,iw,jw)) 
+               enddo!jgL
+              enddo!igL
+              do igL=NG_for_eps+1,NG_for_psi  
                 SUM_CMPX
      +         =SUM_CMPX
      +         +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-              enddo 
-              func(iw,jw,iq)=SUM_CMPX 
-             enddo!jw 
-            enddo!iw 
-            allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
-            allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
-            iqir=numirrq(iq)
-            iop=numrotq(iq)
-            packtmp(:,:,:)=packingq(:,:,:,iqir) 
-            call make_eps(NTG,NTGQ,ne,trsq(iq),NGQ_eps(iq),
-     +       LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
-     +       nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
-     +       epsirr(1,1,1,iqir),epsmk(1,1,1)) 
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
-!$OMP DO 
-            do ie=1,ne 
-             do iw=1,NWF 
-              do jw=1,NWF 
-               SUM_CMPX=0.0D0 
-               do igL=1,NG_for_eps 
-                do jgL=1,NG_for_eps 
-                 SUM_CMPX
-     +          =SUM_CMPX
-     +          +rho(igL,iw,jw)
-     +          *epsmk(igL,jgL,ie)
-     +          *CONJG(rho(jgL,iw,jw)) 
-                enddo!jgL
-               enddo!igL
-               do igL=NG_for_eps+1,NG_for_psi  
-                 SUM_CMPX
-     +          =SUM_CMPX
-     +          +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-               enddo!igL
-               funcw(iw,jw,iq,ie)=SUM_CMPX 
-              enddo!jw
-             enddo!iw
-            enddo!ie
+              enddo!igL
+              funcw(iw,jw,iq,ie)=SUM_CMPX 
+             enddo!jw
+            enddo!iw
+           enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
-            deallocate(epsmk,packtmp)  
-            deallocate(rho)  
-            write(6,*)'finish iq=',iq 
+           !
+           !20200314 Kazuma Nakamura 
+           !
+           !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
+           !
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP DO 
+           do ie=1,ne 
+            do iw=1,NWF 
+             do jw=1,NWF 
+              SUM_CMPX=0.0D0 
+              do igL=1,NG_for_eps 
+               do jgL=1,NG_for_eps 
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw)
+     +         *epsmk(igL,jgL,ie)
+     +         *CONJG(rho(jgL,jw,iw)) 
+               enddo!jgL
+              enddo!igL
+              do igL=NG_for_eps+1,NG_for_psi  
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
+              enddo!igL
+              gfuncw(iw,jw,iq,ie)=SUM_CMPX 
+             enddo!jw
+            enddo!iw
+           enddo!ie
+!$OMP END DO 
+!$OMP END PARALLEL 
+           !--
+           deallocate(epsmk,packtmp)  
+           deallocate(rho)  
+           write(6,*)'finish iq=',iq 
+!--
 !q=0 
+!--
           elseif(q1==0.0d0.and.q2==0.0d0.and.q3==0.0d0)then 
            write(6,'(a,x,3f10.5)')'q1,q2,q3',q1,q2,q3 
            NG_for_eps=NGQ_eps(iq)
@@ -796,9 +862,9 @@
            enddo!ik 
 !$OMP END DO 
 !$OMP CRITICAL 
-        rho(:,:,:)=rho(:,:,:)+prho(:,:,:) 
+           rho(:,:,:)=rho(:,:,:)+prho(:,:,:) 
 !$OMP END CRITICAL 
-        deallocate(prho,rho_tmp,fftwk,wfunc,C0_K,C0_KQ) 
+           deallocate(prho,rho_tmp,fftwk,wfunc,C0_K,C0_KQ) 
 !$OMP END PARALLEL 
            do iw=1,NWF 
             do jw=1,NWF 
@@ -813,86 +879,166 @@
             enddo!jw
            enddo!iw
            deallocate(length_qg)
-!--
-            do iw=1,NWF 
-             do jw=1,NWF 
+           !--
+           do iw=1,NWF 
+            do jw=1,NWF 
+             SUM_CMPX=0.0D0 
+             do igL=1,NG_for_psi  
+              SUM_CMPX
+     +       =SUM_CMPX
+     +       +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
+             enddo 
+             func(iw,jw,iq)=SUM_CMPX 
+            enddo 
+           enddo 
+           !
+           !20200314 Kazuma Nakamura
+           !
+           !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
+           !
+           do iw=1,NWF 
+            do jw=1,NWF 
+             SUM_CMPX=0.0D0 
+             do igL=1,NG_for_psi  
+              SUM_CMPX
+     +       =SUM_CMPX
+     +       +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
+             enddo 
+             gfunc(iw,jw,iq)=SUM_CMPX 
+            enddo 
+           enddo 
+           !--
+           allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
+           allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
+           iqir=numirrq(iq)
+           iop=numrotq(iq)
+           packtmp(:,:,:)=packingq(:,:,:,iqir) 
+           call make_eps(NTG,NTGQ,ne,trsq(iq),NGQ_eps(iq),
+     +      LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
+     +      nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
+     +      epsirr(1,1,1,iqir),epsmk(1,1,1)) 
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP DO 
+           do ie=1,ne
+            do iw=1,NWF
+             do jw=1,NWF
               SUM_CMPX=0.0D0 
-              do igL=1,NG_for_psi  
+              do igL=1,NG_for_eps 
+               do jgL=1,NG_for_eps 
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw)
+     +         *epsirr(igL,jgL,ie,iq)
+     +         *CONJG(rho(jgL,iw,jw)) 
+               enddo!jgL
+              enddo!igL
+              do igL=NG_for_eps+1,NG_for_psi  
                SUM_CMPX
      +        =SUM_CMPX
      +        +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-              enddo 
-              func(iw,jw,iq)=SUM_CMPX 
-             enddo 
-            enddo 
-            allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
-            allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
-            iqir=numirrq(iq)
-            iop=numrotq(iq)
-            packtmp(:,:,:)=packingq(:,:,:,iqir) 
-            call make_eps(NTG,NTGQ,ne,trsq(iq),NGQ_eps(iq),
-     +       LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
-     +       nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
-     +       epsirr(1,1,1,iqir),epsmk(1,1,1)) 
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
-!$OMP DO 
-            do ie=1,ne
-             do iw=1,NWF
-              do jw=1,NWF
-               SUM_CMPX=0.0D0 
-               do igL=1,NG_for_eps 
-                do jgL=1,NG_for_eps 
-                 SUM_CMPX
-     +          =SUM_CMPX
-     +          +rho(igL,iw,jw)
-     +          *epsirr(igL,jgL,ie,iq)
-     +          *CONJG(rho(jgL,iw,jw)) 
-                enddo!jgL
-               enddo!igL
-               do igL=NG_for_eps+1,NG_for_psi  
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-               enddo!igL
-               funcw(iw,jw,iq,ie)=SUM_CMPX 
-              enddo!jw
-             enddo!iw
-            enddo!ie
+              enddo!igL
+              funcw(iw,jw,iq,ie)=SUM_CMPX 
+             enddo!jw
+            enddo!iw
+           enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
-            deallocate(epsmk,packtmp)  
-            deallocate(rho)  
-            write(6,*)'finish iq=',iq 
+           !
+           !20200314 Kazuma Nakamura
+           !
+           !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
+           !
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP DO 
+           do ie=1,ne
+            do iw=1,NWF
+             do jw=1,NWF
+              SUM_CMPX=0.0D0 
+              do igL=1,NG_for_eps 
+               do jgL=1,NG_for_eps 
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw)
+     +         *epsirr(igL,jgL,ie,iq)
+     +         *CONJG(rho(jgL,jw,iw)) 
+               enddo!jgL
+              enddo!igL
+              do igL=NG_for_eps+1,NG_for_psi  
+               SUM_CMPX
+     +        =SUM_CMPX
+     +        +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
+              enddo!igL
+              gfuncw(iw,jw,iq,ie)=SUM_CMPX 
+             enddo!jw
+            enddo!iw
+           enddo!ie
+!$OMP END DO 
+!$OMP END PARALLEL 
+           !--
+           deallocate(epsmk,packtmp)  
+           deallocate(rho)  
+           write(6,*)'finish iq=',iq 
           endif!q=0.or.q/=0
          enddo!iq 
-!--
-          do iw=1,NWF 
+         !--
+         do iw=1,NWF 
+          do jw=1,NWF 
+           SUM_CMPX=0.0D0  
+           do iq=1,NTQ 
+            SUM_CMPX=SUM_CMPX+func(iw,jw,iq) 
+           enddo 
+           X_MAT(iw,jw,ia1,ia2,ia3)
+     +    =2.0D0*tpi*SUM_CMPX/VOLUME/DBLE(NTQ) 
+           write(6,'(a15,i3,i3,2f15.8)')
+     +     'FINISH iw,jw',iw,jw,X_MAT(iw,jw,ia1,ia2,ia3) 
+          enddo!jw 
+         enddo!iw 
+         !--
+         do ie=1,ne
+          do iw=1,NWF
            do jw=1,NWF 
             SUM_CMPX=0.0D0  
             do iq=1,NTQ 
-             SUM_CMPX=SUM_CMPX+func(iw,jw,iq) 
+             SUM_CMPX=SUM_CMPX+funcw(iw,jw,iq,ie) 
             enddo 
-            X_MAT(iw,jw,ia1,ia2,ia3)
+            J_MAT(iw,jw,ia1,ia2,ia3,ie)
      +     =2.0D0*tpi*SUM_CMPX/VOLUME/DBLE(NTQ) 
             write(6,'(a15,i3,i3,2f15.8)')
-     +      'FINISH iw,jw',iw,jw,X_MAT(iw,jw,ia1,ia2,ia3) 
-           enddo!jw 
+     +     'FINISH iw,jw',iw,jw,J_MAT(iw,jw,ia1,ia2,ia3,ie) 
+           enddo!jw
           enddo!iw 
-          do ie=1,ne
-           do iw=1,NWF
-            do jw=1,NWF 
-             SUM_CMPX=0.0D0  
-             do iq=1,NTQ 
-              SUM_CMPX=SUM_CMPX+funcw(iw,jw,iq,ie) 
-             enddo 
-             J_MAT(iw,jw,ia1,ia2,ia3,ie)
-     +      =2.0D0*tpi*SUM_CMPX/VOLUME/DBLE(NTQ) 
-             write(6,'(a15,i3,i3,2f15.8)')
-     +      'FINISH iw,jw',iw,jw,J_MAT(iw,jw,ia1,ia2,ia3,ie) 
-            enddo!jw
-           enddo!iw 
-          enddo!ie
-!--
+         enddo!ie
+         !
+         !20200314 Kazuma Nakamura
+         !
+         do iw=1,NWF 
+          do jw=1,NWF 
+           SUM_CMPX=0.0D0  
+           do iq=1,NTQ 
+            SUM_CMPX=SUM_CMPX+gfunc(iw,jw,iq) 
+           enddo 
+           Y_MAT(iw,jw,ia1,ia2,ia3)
+     +    =2.0D0*tpi*SUM_CMPX/VOLUME/DBLE(NTQ) 
+           write(6,'(a15,i3,i3,2f15.8)')
+     +     'FINISH iw,jw',iw,jw,Y_MAT(iw,jw,ia1,ia2,ia3) 
+          enddo!jw 
+         enddo!iw 
+         !--
+         do ie=1,ne
+          do iw=1,NWF
+           do jw=1,NWF 
+            SUM_CMPX=0.0D0  
+            do iq=1,NTQ 
+             SUM_CMPX=SUM_CMPX+gfuncw(iw,jw,iq,ie) 
+            enddo 
+            K_MAT(iw,jw,ia1,ia2,ia3,ie)
+     +     =2.0D0*tpi*SUM_CMPX/VOLUME/DBLE(NTQ) 
+            write(6,'(a15,i3,i3,2f15.8)')
+     +     'FINISH iw,jw',iw,jw,K_MAT(iw,jw,ia1,ia2,ia3,ie) 
+           enddo!jw
+          enddo!iw 
+         enddo!ie
+         !--
         enddo!ia3      
        enddo!ia2 
       enddo!ia1      
@@ -907,22 +1053,40 @@
       write(6,*)'2*qsz/pi=',(2.0d0/pi)*qsz
        chead=(2.0D0/pi)*qsz 
        write(6,*)'chead(HL) in eV=',chead*au    
+       !--
        do iw=1,NWF 
         X_MAT(iw,iw,0,0,0)=X_MAT(iw,iw,0,0,0)+chead       
        enddo 
+       !
+       !20200314 Kazuma Nakamura
+       !
+       do iw=1,NWF 
+        Y_MAT(iw,iw,0,0,0)=Y_MAT(iw,iw,0,0,0)+chead       
+       enddo 
+       !--
        allocate(cheadw(ne));cheadw(:)=0.0d0 
        do ie=1,ne 
         cheadw(ie)=(2.0D0/pi)*epsirr(NoG0,NoG0,ie,iqgm)*qsz 
         write(6,*)'cheadw(HL) in eV=',cheadw(iw)*au!20190907 ie<-iw Kazuma Nakamura   
         write(6,*)'1/eps=',epsirr(NoG0,NoG0,ie,iqgm)
        enddo 
+       !--
        do ie=1,ne 
         do iw=1,NWF 
          J_MAT(iw,iw,0,0,0,ie)=J_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
         enddo 
        enddo 
+       !
+       !20200314 Kazuma Nakamura
+       !
+       do ie=1,ne 
+        do iw=1,NWF 
+         K_MAT(iw,iw,0,0,0,ie)=K_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
+        enddo 
+       enddo 
 !--
-!write
+!write Xmat & Jmat
+!--
        write(6,*)'# '
        write(6,*)'#-------------'
        write(6,*)'# X_MAT(bare) '
@@ -966,7 +1130,7 @@
         enddo 
        enddo 
        close(206) 
-!--
+       !--
        ie=calc_ifreq          
        write(6,*)'# '
        write(6,*)'#-------------------------'
@@ -1054,14 +1218,6 @@
       ierr=CHDIR("./dir-model") 
       call system("pwd") 
       ie=calc_ifreq          
-      !jcut_model=jcut_model/au 
-      !
-      !old: 20180604
-      !
-      ! call wrt_model(nkb1,nkb2,nkb3,NTK,Na1,Na2,Na3,NWF,jcut_model,
-      !+     J_MAT(1,1,-Na1,-Na2,-Na3,ie)) 
-      !
-      !new: 20181127 
       !
       !WEIGHT_R 20170317 by Y.Nomura 
       !
@@ -1085,13 +1241,156 @@
        stop 'SUM_WEIGHT/=NTK'
       endif 
       !
-      call wrt_model(Na1,Na2,Na3,NWF,J_MAT(1,1,-Na1,-Na2,-Na3,ie),
+      call wrt_model_jmat(Na1,Na2,Na3,NWF,J_MAT(1,1,-Na1,-Na2,-Na3,ie),
      + WEIGHT_R(-Na1,-Na2,-Na3)) 
-      !
+      deallocate(WEIGHT_R)
+      !--
       ierr=CHDIR("..") 
       call system("pwd") 
-      ! 
-      deallocate(C0,epsirr) 
+!--
+!write Ymat & Kmat
+!--
+       write(6,*)'# '
+       write(6,*)'#-------------'
+       write(6,*)'# Y_MAT(bare) '
+       write(6,*)'#-------------'
+       write(6,*)'# '
+       do ia1=ix_intJ_min,ix_intJ_max
+        do ia2=iy_intJ_min,iy_intJ_max
+         do ia3=iz_intJ_min,iz_intJ_max
+          write(6,*) ia1,ia2,ia3           
+          do iw=1,NWF
+           write(6,'(100F12.5)')
+     +     (dble(Y_MAT(iw,jw,ia1,ia2,ia3))*au,jw=1,NWF)
+          enddo 
+          write(6,*) 
+         enddo 
+        enddo 
+       enddo 
+!--
+!OPEN(206,W,FILE='dat.Ymat')
+       call system('rm -rf dir-intK') 
+       call system('mkdir dir-intK') 
+       ierr=CHDIR("./dir-intK") 
+       call system("pwd") 
+       OPEN(206,FILE='dat.Ymat') 
+       rewind(206)
+       write(206,'(a)')'#Bare exchamge: Y' 
+       write(206,'(a)')'#1:R1, 2:R2, 3:R3 (lattice vector)'
+       write(206,'(a)')'#1:i, 2:j, 3:Re(Y_ij) [eV], 4:Im(Y_ij) [eV]' 
+       do ia1=ix_intJ_min,ix_intJ_max
+        do ia2=iy_intJ_min,iy_intJ_max
+         do ia3=iz_intJ_min,iz_intJ_max
+          write(206,*) ia1,ia2,ia3           
+          do iw=1,NWF
+           do jw=1,NWF
+            write(206,'(i5,i5,2f20.10)')
+     +      iw,jw,Y_MAT(iw,jw,ia1,ia2,ia3)*au 
+           enddo!jw 
+          enddo!iw 
+          write(206,*) 
+         enddo 
+        enddo 
+       enddo 
+       close(206) 
+       !--
+       ie=calc_ifreq          
+       write(6,*)'# '
+       write(6,*)'#-------------------------'
+       write(6,*)'# K_MAT(omega=calc_ifreq) '
+       write(6,*)'#-------------------------'
+       write(6,*)'# '
+       do ia1=ix_intJ_min,ix_intJ_max
+        do ia2=iy_intJ_min,iy_intJ_max
+         do ia3=iz_intJ_min,iz_intJ_max
+          write(6,*) ia1,ia2,ia3           
+          do iw=1,NWF
+           write(6,'(100F12.5)')
+     +     (dble(K_MAT(iw,jw,ia1,ia2,ia3,ie))*au,jw=1,NWF)
+          enddo 
+          write(6,*) 
+         enddo 
+        enddo 
+       enddo 
+!--
+!OPEN(207,W,FILE='dat.Kmat')
+       ie=calc_ifreq          
+       OPEN(207,FILE='dat.Kmat') 
+       rewind(207)
+       write(207,'(a)')'#Screened exchamge: K at omega=calc_ifreq' 
+       write(207,'(a)')'#1:R1, 2:R2, 3:R3 (lattice vector)'
+       write(207,'(a)')'#1:i, 2:j, 3:Re(K_ij) [eV], 4:Im(K_ij) [eV]' 
+       do ia1=ix_intJ_min,ix_intJ_max
+        do ia2=iy_intJ_min,iy_intJ_max
+         do ia3=iz_intJ_min,iz_intJ_max
+          write(207,*) ia1,ia2,ia3           
+          do iw=1,NWF
+           do jw=1,NWF
+            write(207,'(i5,i5,2f20.10)') 
+     +      iw,jw,K_MAT(iw,jw,ia1,ia2,ia3,ie)*au
+           enddo!jw 
+          enddo!iw 
+          write(207,*) 
+         enddo 
+        enddo 
+       enddo 
+       close(207) 
+!--
+!OPEN(3000,W,FILE='./dir-intJ/dat.KvsE')
+      do iw=1,NWF
+       do jw=iw,NWF 
+        write(filename,'("dat.KvsE.",i3.3,"-",i3.3)') iw,jw  
+        file_num=3000+(iw-1)*NWF+(jw-1)  
+        OPEN(file_num,FILE=filename) 
+        rewind(file_num) 
+        write(file_num,'(a)')
+     +  '#Omega dependence of screened exchange K' 
+        write(file_num,'(a)')
+     +  '#Re(w) [eV], Im(w) [eV], Re[K(w)] [eV], Im[K(w)] [eV]'
+        do ie=1,ne
+         write(file_num,'(4F12.5)') em(ie)*au,K_MAT(iw,jw,0,0,0,ie)*au 
+        enddo 
+        close(file_num) 
+       enddo
+      enddo
+      ierr=CHDIR("..") 
+      call system("pwd") 
+!--
+!write model_parameter  
+      ierr=CHDIR("./dir-model") 
+      call system("pwd") 
+      ie=calc_ifreq          
       !
+      !WEIGHT_R 20170317 by Y.Nomura 
+      !
+      allocate(WEIGHT_R(-Na1:Na1,-Na2:Na2,-Na3:Na3)); WEIGHT_R=1.0d0
+      SUM_REAL=0.0d0 
+      do ia1=-Na1,Na1
+       do ia2=-Na2,Na2
+        do ia3=-Na3,Na3
+         if(abs(ia1)==Na1.and.mod(nkb1,2)==0.and.Na1/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         if(abs(ia2)==Na2.and.mod(nkb2,2)==0.and.Na2/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         if(abs(ia3)==Na3.and.mod(nkb3,2)==0.and.Na3/=0) 
+     +    WEIGHT_R(ia1,ia2,ia3)=WEIGHT_R(ia1,ia2,ia3)*0.5d0 
+         SUM_REAL=SUM_REAL+WEIGHT_R(ia1,ia2,ia3)
+        enddo!ia3
+       enddo!ia2
+      enddo!ia1 
+      write(6,'(a20,f15.8,i8)')'SUM_WEIGHT,NTK',SUM_REAL,NTK  
+      if(abs(SUM_REAL-dble(NTK))>1.0d-6)then 
+       stop 'SUM_WEIGHT/=NTK'
+      endif 
+      !
+      call wrt_model_kmat(Na1,Na2,Na3,NWF,K_MAT(1,1,-Na1,-Na2,-Na3,ie),
+     + WEIGHT_R(-Na1,-Na2,-Na3)) 
+      deallocate(WEIGHT_R)
+      !--
+      ierr=CHDIR("..") 
+      call system("pwd") 
+      !-- 
+      deallocate(C0,epsirr) 
+      !--
       STOP
       END           
