@@ -192,6 +192,9 @@
        write(6,*) 
       enddo
       write(6,*)'finish read dat.symmetry'
+      !
+      !stop
+      !
 !--
 !OPEN(101,R,FILE='dat.sample-k') 
       OPEN(101,FILE='./dir-wfn/dat.sample-k') 

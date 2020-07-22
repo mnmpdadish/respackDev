@@ -18,6 +18,9 @@ contains
     integer::iloc,jloc,ixyz
     integer::ialp,ibet,igmm
     !
+    real(8)::DET
+    real(8)::tmp(m,n),tmp_det(m,n) 
+    !
     real(8),parameter::pi=dacos(-1.0d0)
     complex(8),parameter::ci=(0.0D0,1.0D0) 
     !
@@ -30,9 +33,36 @@ contains
     ! write(6,'(3f15.10)')(axis(i,j),j=1,n)
     !enddo
     !
+    !0. Evaluate det(axis) 
+    !
+    tmp_det=axis
+    call calcdet_real(3,tmp_det(1,1),DET) 
+    ! 
+    !write(6,'(a30,f15.10)')'Determinant of axis=',DET
+    !
+    tmp=axis
+    !
+    !write(6,*) 
+    !write(6,'(a20)')'axis(before):'
+    !write(6,*) 
+    !do i=1,m
+    ! write(6,'(3f15.10)')(tmp(i,j),j=1,m)
+    !enddo 
+    !
+    if(DET<0.0d0)then
+     tmp=-axis
+    endif 
+    !
+    !write(6,*) 
+    !write(6,'(a20)')'axis(after):'
+    !write(6,*) 
+    !do i=1,m
+    ! write(6,'(3f15.10)')(tmp(i,j),j=1,m)
+    !enddo 
+    !
     !1. SVD: axis=U*S*VT
     !
-    call dgesvd('A', 'A', m, n, axis(1,1), m, S(1), U(1,1), m, VT(1,1), n, work(1), lwork, info)
+    call dgesvd('A', 'A', m, n, tmp(1,1), m, S(1), U(1,1), m, VT(1,1), n, work(1), lwork, info)
     !
     !write(6,*) 
     !write(6,'(a20)')'axis(after):'
@@ -99,6 +129,33 @@ contains
     !  bet=0.0d0 
     !  gmm=0.0d0
     !endif 
+    !--
+    !
+    !20200719 Kazuma Nakamura; Gimbal Lock
+    !
+    if(abs(P(1,3))<1.0d-5.and.abs(P(3,1))<1.0d-5)then
+     do ialp=1,2
+      do ibet=1,2
+       do igmm=1,1
+        alp=atan(P(2,1)/P(1,1))+dble(ialp-1)*pi 
+        bet=0.0d0+dble(ibet-1)*pi  
+        gmm=0.0d0 
+        !
+        SO3(:,:)=0.0d0 
+        call make_SO3_matrix(alp,bet,gmm,SO3) 
+        !
+        sum_real=0.0d0 
+        do ixyz=1,3
+         do iloc=1,3
+          sum_real=sum_real+abs(SO3(ixyz,iloc)-P(ixyz,iloc))
+         enddo
+        enddo
+        !write(6,*)sum_real 
+        if(sum_real<1.0d-5)goto 999 
+       enddo
+      enddo
+     enddo
+    endif 
     !
     !20200123 Kazuma Nakamura 
     !
@@ -142,7 +199,7 @@ contains
     SU2(2,1)= exp( ci*(alp-gmm)/2.0d0)*sin(bet/2.0d0) 
     SU2(2,2)= exp( ci*(alp+gmm)/2.0d0)*cos(bet/2.0d0) 
     !
-    !SU2=CONJG(SU2)  
+    !(comment out!) SU2=CONJG(SU2)  
     !
     write(6,*) 
     write(6,'(a30)')'SU(2):'

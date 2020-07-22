@@ -1,26 +1,26 @@
 subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
+  use m_SO3_to_SU2_Local, only: make_SU2_from_local_axis 
   implicit none
   real(8), intent(in)::b1(3),b2(3),b3(3)
   integer, intent(in)::nsymq
   integer, intent(in)::rg(3,3,nsymq)
   complex(8),intent(inout)::rinv_SO(2,2,nsymq) 
-
+  !
   integer:: ii,jj,kk,ll, iop
   real(8)::mat_b(3,3)
   real(8)::mat_b_inv(3,3)
   real(8)::SO3_matrix(3,3)
   complex(8)::SU2_matrix(2,2)
-  
-  
+  ! 
   do ii = 1, 3 
     mat_b(ii,1)=b1(ii)
     mat_b(ii,2)=b2(ii)
     mat_b(ii,3)=b3(ii)
   end do
-      
+  !    
   mat_b_inv=mat_b
   call invmat(3,mat_b_inv(1,1))
-  
+  ! 
   do iop=1,nsymq
    do ii = 1, 3 
     do jj = 1, 3 
@@ -32,19 +32,32 @@ subroutine SO3_to_SU2_rotation(b1,b2,b3,nsymq,rg,rinv_SO)
      end do
     end do
    end do
-   
+   ! 
    !call SO3_to_SU2_rotation(SO3_matrix(1,1), SU2_matrix(1,1))
+   !
+   !Maxime Code 
+   !
+   SU2_matrix=0.0d0 
    call from_SO3_matrix_to_SU2_matrix(SO3_matrix,SU2_matrix)
-      
-   !write(6,*)
-   !write(6,*)
-   !write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
-   !write(6,*)
-   !write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+   ! 
+   write(6,*)
+   write(6,*)'Maxime'
+   write(6,fmt='(3(1x,F10.5,"      ",1x))') ((SO3_matrix(ii,jj), jj = 1,3), ii = 1,3)
+   write(6,*)
+   write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+   !
+   !Kazuma Nakamura 20200717 
+   !
+   SU2_matrix=0.0d0 
+   call make_SU2_from_local_axis(3,3,SO3_matrix(1,1),SU2_matrix(1,1)) 
+   !    
+   write(6,*)
+   write(6,*)'KN'
+   write(6,fmt='(2(1x,F20.2,SP,F20.2,"i   ",1x))') ((SU2_matrix(ii,jj), jj = 1,2), ii = 1,2)
+   !
    rinv_SO(:,:,iop)=SU2_matrix(:,:)
   enddo
-  
-  
+  ! 
   return
 end subroutine
 

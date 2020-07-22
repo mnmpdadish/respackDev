@@ -80,6 +80,10 @@ m_dmx.o: m_dmx.f90 m_tetrainteg.o
 
 m_rdinput.o: m_rdinput.f90 m_SO3_to_SU2_Local.o 
 
+m_SO3_to_SU2_Local.o: m_SO3_to_SU2_Local.f90 det.o 
+
+SO3_to_SU2_rotation.o: SO3_to_SU2_rotation.f90 m_SO3_to_SU2_Local.o 
+
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 
 #--------------------------------------------------------------------
