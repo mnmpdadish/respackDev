@@ -10,6 +10,7 @@
       use m_dmx, only: calculate_dmx 
       use m_fat_band, only: calc_fat_band 
       !use m_SO3_to_SU2_Local, only: polar_decomposition 
+      use m_spinvector, only: calc_spinvector 
       !
       include "config.h"
       !--
@@ -2474,12 +2475,23 @@
       write(6,*)'FINISH READING C0_WN'
       ierr=CHDIR("..") 
       call system('pwd') 
+      !
+      !Kazuma Nakamura 20200729
+      !
+      write(6,*) 
+      write(6,*)'CALC SPIN-VECTOR (ncomp==2 only)'
+      write(6,*) 
+      call calc_spinvector(NTG,ncomp,NWF,NTK,NG0(1),C0WN(1,1,1,1),
+     +     a1(1),a2(1),a3(1))
+      write(6,*) 
+      write(6,*)'FINISH CALC SPIN-VECTOR (ncomp==2 only)'
+      write(6,*) 
 !--
 !OPEN(150,W,FILE='dat.umat')
       OPEN(150,FILE='./dir-wan/dat.umat') 
       rewind(150) 
       Mb=maxval(N_BAND) 
-      write(6,*)"Mb=",Mb 
+      !write(6,*)"Mb=",Mb 
       write(150,*) n_occ!20170331(n_occ=NWF) 
       allocate(UNT(Mb,n_occ,NTK));UNT(:,:,:)=0.0d0 
       !do ic=1,ncomp 
