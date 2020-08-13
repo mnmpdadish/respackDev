@@ -1224,7 +1224,7 @@
        do ie=1,ne 
         do ic=1,ncomp
          do jc=1,ncomp
-          do iw=1,NWF 
+          do iw=1,NWF/ncomp 
            i=iw+(NWF/ncomp)*(ic-1) 
            j=iw+(NWF/ncomp)*(jc-1) 
            !K_MAT(iw,iw,0,0,0,ie)=K_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
