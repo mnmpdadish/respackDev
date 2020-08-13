@@ -648,9 +648,9 @@
        do ia2=iy_intJ_min,iy_intJ_max
         do ia3=iz_intJ_min,iz_intJ_max
          do iq=1,NTQ 
-!--
-!q/=0 
-!--
+          !--
+          !q/=0 
+          !--
           q1=SQ(1,iq);q2=SQ(2,iq);q3=SQ(3,iq)
           if(q1.ne.0.0d0.or.q2.ne.0.0d0.or.q3.ne.0.0d0) then 
            NG_for_eps=NGQ_eps(iq)
@@ -668,35 +668,65 @@
             qgL1=dsqrt(qgL2) 
             length_qg(igL)=qgL1
            enddo!igL 
-           allocate(rho(NG_for_psi,NWF,NWF));rho(:,:,:)=0.0D0 
+           !
+           !20200812 Kazuma Nakamura
+           !
+           !allocate(rho(NG_for_psi,NWF,NWF));rho(:,:,:)=0.0D0 
+           allocate(rho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp))
+           rho(:,:,:,:)=0.0D0       
+           !
 !$OMP PARALLEL PRIVATE(ik,iw,jw,igL,pf,shift_G,ikq,C0_K,C0_KQ,
-!$OMP&  rho_tmp,wfunc,fftwk,prho)
+!$OMP&  rho_tmp,wfunc,fftwk,prho,ic,i,j)
            allocate(rho_tmp(NG_for_psi));rho_tmp(:)=0.0d0 
-           allocate(prho(NG_for_psi,NWF,NWF));prho(:,:,:)=0.0D0 
+           !
+           !20200812 Kazuma Nakamura
+           !
+           !allocate(prho(NG_for_psi,NWF,NWF));prho(:,:,:)=0.0D0 
+           allocate(prho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp))
+           prho(:,:,:,:)=0.0D0 
+           !
            allocate(fftwk(Nl123*2));fftwk(:)=0.0d0  
            allocate(wfunc(Nl123*2));wfunc(:)=0.0d0 
            allocate(C0_K(NTG,ncomp));C0_K(:,:)=0.0d0     
            allocate(C0_KQ(NTG,ncomp));C0_KQ(:,:)=0.0d0     
 !$OMP DO 
            do ik=1,NTK 
-            do iw=1,NWF 
-             do jw=1,NWF 
-              pf=exp(-ci*tpi*(SK0(1,ik)*dble(ia1)
-     +                       +SK0(2,ik)*dble(ia2)
-     +                       +SK0(3,ik)*dble(ia3))) 
-              shift_G(:)=0
-              call search_kq(NTK,SK0,q1,q2,q3,ik,ikq,shift_G(1))
-              C0_K(:,:)=C0(:,:,jw,ik) 
-              C0_KQ(:,:)=C0(:,:,iw,ikq) 
-              rho_tmp(:)=0.0D0 
-              call calc_InterStateMatrix(NTK,NTG,ncomp,NG0(1),
-     +               KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
-     +               ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2, 
-     +               Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),NG_for_psi,
-     +               shift_G(1),rho_tmp(1))
-              prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf/length_qg(:)   
-             enddo!jw 
-            enddo!iw 
+            do ic=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               pf=exp(-ci*tpi*(SK0(1,ik)*dble(ia1)
+     +                        +SK0(2,ik)*dble(ia2)
+     +                        +SK0(3,ik)*dble(ia3))) 
+               shift_G(:)=0
+               call search_kq(NTK,SK0,q1,q2,q3,ik,ikq,shift_G(1))
+               !
+               !20200812 Kazuma Nakamura
+               !
+               !C0_K(:,:)=C0(:,:,jw,ik) 
+               !C0_KQ(:,:)=C0(:,:,iw,ikq) 
+               !
+               j=jw+(ic-1)*(NWF/ncomp) 
+               i=iw+(ic-1)*(NWF/ncomp) 
+               C0_K(:,:)=C0(:,:,j,ik) 
+               C0_KQ(:,:)=C0(:,:,i,ikq) 
+               !
+               rho_tmp(:)=0.0D0 
+               call calc_InterStateMatrix(NTK,NTG,ncomp,NG0(1),
+     +                KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
+     +                ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2, 
+     +                Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),NG_for_psi,
+     +                shift_G(1),rho_tmp(1))
+               !--
+               !20200812 Kazuma Nakamura
+               !
+               !prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf/length_qg(:)   
+               !
+               prho(:,iw,jw,ic)
+     +        =prho(:,iw,jw,ic)+rho_tmp(:)*pf/length_qg(:)   
+               !
+              enddo!jw 
+             enddo!iw 
+            enddo!ic 
            enddo!ik 
 !$OMP END DO 
 !$OMP CRITICAL 
@@ -704,36 +734,56 @@
 !$OMP END CRITICAL 
            deallocate(prho,fftwk,wfunc,rho_tmp,C0_K,C0_KQ) 
 !$OMP END PARALLEL 
-           rho(:,:,:)=rho(:,:,:)/dble(NTK)
+           !--
+           !20200812 Kazuma Nakamura
+           !
+           !rho(:,:,:)=rho(:,:,:)/dble(NTK)
+           rho(:,:,:,:)=rho(:,:,:,:)/dble(NTK)
+           !
            deallocate(length_qg)
            !--
-           do iw=1,NWF 
-            do jw=1,NWF 
-             SUM_CMPX=0.0D0 
-             do igL=1,NG_for_psi  
-               SUM_CMPX
-     +        =SUM_CMPX
-     +        +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-             enddo 
-             func(iw,jw,iq)=SUM_CMPX 
-            enddo!jw 
-           enddo!iw 
            !
-           !20200314 Kazuma Nakamura 
+           !20200812 Kazuma Nakamura
+           !
+           do ic=1,ncomp !20200812 Kazuma Nakamura
+            do jc=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               SUM_CMPX=0.0D0 
+               do igL=1,NG_for_psi  
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw,ic)*CONJG(rho(igL,iw,jw,jc)) !20200812 Kazuma Nakamura
+               enddo 
+               func(i,j,iq)=SUM_CMPX !20200812 Kazuma Nakamura
+              enddo!jw 
+             enddo!iw 
+            enddo!jc 
+           enddo!ic 
+           !
+           !20200812,20200314 Kazuma Nakamura 
            !
            !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
            !
-           do iw=1,NWF 
-            do jw=1,NWF 
-             SUM_CMPX=0.0D0 
-             do igL=1,NG_for_psi  
-               SUM_CMPX
-     +        =SUM_CMPX
-     +        +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw))
-             enddo 
-             gfunc(iw,jw,iq)=SUM_CMPX 
-            enddo!jw 
-           enddo!iw 
+           do ic=1,ncomp !20200812 Kazuma Nakamura
+            do jc=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               SUM_CMPX=0.0D0 
+               do igL=1,NG_for_psi  
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw,ic)*CONJG(rho(igL,jw,iw,jc)) !20200812 Kazuma Nakamura
+               enddo 
+               gfunc(i,j,iq)=SUM_CMPX !20200812 Kazuma Nakamura  
+              enddo!jw 
+             enddo!iw 
+            enddo!jc 
+           enddo!ic 
            !--
            allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
            allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
@@ -744,70 +794,82 @@
      +      LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
      +      nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
      +      epsirr(1,1,1,iqir),epsmk(1,1,1)) 
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL,ic,jc,i,j)
 !$OMP DO 
-           do ie=1,ne 
-            do iw=1,NWF 
-             do jw=1,NWF 
-              SUM_CMPX=0.0D0 
-              do igL=1,NG_for_eps 
-               do jgL=1,NG_for_eps 
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)
-     +         *epsmk(igL,jgL,ie)
-     +         *CONJG(rho(jgL,iw,jw)) 
-               enddo!jgL
-              enddo!igL
-              do igL=NG_for_eps+1,NG_for_psi  
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-              enddo!igL
-              funcw(iw,jw,iq,ie)=SUM_CMPX 
-             enddo!jw
-            enddo!iw
-           enddo!ie
+            do ie=1,ne 
+             do ic=1,ncomp !20200812 Kazuma Nakamura
+              do jc=1,ncomp !20200812 Kazuma Nakamura
+               do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+                do jw=1,NWF/ncomp !20200812 Kazuma Nakamura 
+                 i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                 j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                 SUM_CMPX=0.0D0 
+                 do igL=1,NG_for_eps 
+                  do jgL=1,NG_for_eps 
+                   SUM_CMPX
+     +            =SUM_CMPX
+     +            +rho(igL,iw,jw,ic) !20200812 Kazuma Nakamura
+     +            *epsmk(igL,jgL,ie)
+     +            *CONJG(rho(jgL,iw,jw,jc)) !20200812 Kazuma Nakamura
+                  enddo!jgL
+                 enddo!igL
+                 do igL=NG_for_eps+1,NG_for_psi  
+                  SUM_CMPX
+     +           =SUM_CMPX
+     +           +rho(igL,iw,jw,ic)*CONJG(rho(igL,iw,jw,jc)) !20200812 Kazuma Nakamura
+                 enddo!igL
+                 funcw(i,j,iq,ie)=SUM_CMPX !20200812 Kazuma Nakamura  
+                enddo!jw
+               enddo!iw
+              enddo!jc
+             enddo!ic
+            enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
-           !
-           !20200314 Kazuma Nakamura 
-           !
-           !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
-           !
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+            !
+            !20200812,20200314 Kazuma Nakamura 
+            !
+            !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
+            !
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL,ic,jc,i,j)
 !$OMP DO 
-           do ie=1,ne 
-            do iw=1,NWF 
-             do jw=1,NWF 
-              SUM_CMPX=0.0D0 
-              do igL=1,NG_for_eps 
-               do jgL=1,NG_for_eps 
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)
-     +         *epsmk(igL,jgL,ie)
-     +         *CONJG(rho(jgL,jw,iw)) 
-               enddo!jgL
-              enddo!igL
-              do igL=NG_for_eps+1,NG_for_psi  
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
-              enddo!igL
-              gfuncw(iw,jw,iq,ie)=SUM_CMPX 
-             enddo!jw
-            enddo!iw
-           enddo!ie
+            do ie=1,ne 
+             do ic=1,ncomp !20200812 Kazuma Nakamura
+              do jc=1,ncomp !20200812 Kazuma Nakamura
+               do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+                do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+                 i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                 j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                 SUM_CMPX=0.0D0 
+                 do igL=1,NG_for_eps 
+                  do jgL=1,NG_for_eps 
+                   SUM_CMPX
+     +            =SUM_CMPX
+     +            +rho(igL,iw,jw,ic) !20200812 Kazuma Nakamura
+     +            *epsmk(igL,jgL,ie)
+     +            *CONJG(rho(jgL,jw,iw,jc)) !20200812 Kazuma Nakamura
+                  enddo!jgL
+                 enddo!igL
+                 do igL=NG_for_eps+1,NG_for_psi  
+                  SUM_CMPX
+     +           =SUM_CMPX
+     +           +rho(igL,iw,jw,ic)*CONJG(rho(igL,jw,iw,jc)) !20200812 Kazuma Nakamura
+                 enddo!igL
+                 gfuncw(i,j,iq,ie)=SUM_CMPX !20200812 Kazuma Nakamura  
+                enddo!jw
+               enddo!iw
+              enddo!jc
+             enddo!ic
+            enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
            !--
            deallocate(epsmk,packtmp)  
            deallocate(rho)  
            write(6,*)'finish iq=',iq 
-!--
-!q=0 
-!--
+          !--
+          !q=0 
+          !--
           elseif(q1==0.0d0.and.q2==0.0d0.and.q3==0.0d0)then 
            write(6,'(a,x,3f10.5)')'q1,q2,q3',q1,q2,q3 
            NG_for_eps=NGQ_eps(iq)
@@ -828,10 +890,22 @@
              length_qg(igL)=qgL1
             endif  
            enddo!igL 
-           allocate(rho(NG_for_psi,NWF,NWF));rho(:,:,:)=0.0D0 
+           !
+           !20200812 Kazuma Nakamura
+           !
+           !allocate(rho(NG_for_psi,NWF,NWF));rho(:,:,:)=0.0D0 
+           allocate(rho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp))
+           rho(:,:,:,:)=0.0D0 
+           !
 !$OMP PARALLEL PRIVATE(ik,iw,jw,pf,ikq,shift_G,rho_tmp,C0_K,C0_KQ,
-!$OMP&  wfunc,fftwk,prho)
-           allocate(prho(NG_for_psi,NWF,NWF));prho(:,:,:)=0.0D0 
+!$OMP&  wfunc,fftwk,prho,ic,i,j)
+           !
+           !20200812 Kazuma Nakamura
+           !
+           !allocate(prho(NG_for_psi,NWF,NWF));prho(:,:,:)=0.0D0 
+           allocate(prho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp))
+           prho(:,:,:,:)=0.0D0 
+           !
            allocate(rho_tmp(NG_for_psi));rho_tmp(:)=0.0d0 
            allocate(fftwk(Nl123*2));fftwk(:)=0.0d0  
            allocate(wfunc(Nl123*2));wfunc(:)=0.0d0 
@@ -839,74 +913,105 @@
            allocate(C0_KQ(NTG,ncomp));C0_KQ(:,:)=0.0d0  
 !$OMP DO 
            do ik=1,NTK 
-            do iw=1,NWF 
-             do jw=1,NWF
-              pf=exp(-ci*tpi*(SK0(1,ik)*dble(ia1)
-     +                       +SK0(2,ik)*dble(ia2)
-     +                       +SK0(3,ik)*dble(ia3))) 
-              ikq=ik 
-              shift_G(:)=0 
-              rho_tmp(:)=0.0D0 
-              C0_K(:,:)=C0(:,:,jw,ik) 
-              C0_KQ(:,:)=C0(:,:,iw,ikq) 
-              rho_tmp(:)=0.0D0 
-              call calc_InterStateMatrix(NTK,NTG,ncomp,
-     +               NG0(1),KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
-     +               ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2,
-     +               Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),
-     +               NG_for_psi,shift_G(1),rho_tmp(1))
-              rho_tmp(NoG0)=0.0D0 
-              prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf  
-             enddo!jw
-            enddo!iw
+            do ic=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               pf=exp(-ci*tpi*(SK0(1,ik)*dble(ia1)
+     +                        +SK0(2,ik)*dble(ia2)
+     +                        +SK0(3,ik)*dble(ia3))) 
+               ikq=ik 
+               shift_G(:)=0 
+               rho_tmp(:)=0.0D0 
+               !
+               !20200812 Kazuma Nakamura
+               !
+               !C0_K(:,:)=C0(:,:,jw,ik) 
+               !C0_KQ(:,:)=C0(:,:,iw,ikq) 
+               !
+               j=jw+(ic-1)*(NWF/ncomp) 
+               i=iw+(ic-1)*(NWF/ncomp) 
+               C0_K(:,:)=C0(:,:,j,ik) 
+               C0_KQ(:,:)=C0(:,:,i,ikq) 
+               !
+               rho_tmp(:)=0.0D0 
+               call calc_InterStateMatrix(NTK,NTG,ncomp,
+     +                NG0(1),KG0(1,1,1),C0_K(1,1),C0_KQ(1,1),
+     +                ik,ikq,nwx2,nwy2,nwz2,nfft1,nfft2,
+     +                Nl123,wfunc(1),fftwk(1),fs,LG0(1,1,iq),
+     +                NG_for_psi,shift_G(1),rho_tmp(1))
+               rho_tmp(NoG0)=0.0D0 
+               !
+               !20200812 Kazuma Nakamura
+               !
+               !prho(:,iw,jw)=prho(:,iw,jw)+rho_tmp(:)*pf  
+               prho(:,iw,jw,ic)=prho(:,iw,jw,ic)+rho_tmp(:)*pf  
+               !
+              enddo!jw
+             enddo!iw
+            enddo!ic
            enddo!ik 
 !$OMP END DO 
 !$OMP CRITICAL 
-           rho(:,:,:)=rho(:,:,:)+prho(:,:,:) 
+           rho=rho+prho 
 !$OMP END CRITICAL 
            deallocate(prho,rho_tmp,fftwk,wfunc,C0_K,C0_KQ) 
 !$OMP END PARALLEL 
-           do iw=1,NWF 
-            do jw=1,NWF 
-             do igL=1,NG_for_psi  
-              if(igL/=NoG0) then 
-               rho(igL,iw,jw)=rho(igL,iw,jw)/length_qg(igL)/dble(NTK)  
-              else 
-               rho(igL,iw,jw)=rho(igL,iw,jw)/dble(NTK)  
-              endif 
-             enddo!igL 
-             write(6,*)'rho(NoG0,iw,jw)=',rho(NoG0,iw,jw) 
-            enddo!jw
-           enddo!iw
+           do ic=1,ncomp !20200812 Kazuma Nakamura
+            do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+             do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do igL=1,NG_for_psi  
+               if(igL/=NoG0)then 
+                rho(igL,iw,jw,ic)
+     +         =rho(igL,iw,jw,ic)/length_qg(igL)/dble(NTK) !20200812 Kazuma Nakamura  
+               else 
+                rho(igL,iw,jw,ic)=rho(igL,iw,jw,ic)/dble(NTK) !20200812 Kazuma Nakamura
+               endif 
+              enddo!igL 
+              write(6,*)'rho(NoG0,iw,jw,ic)=',rho(NoG0,iw,jw,ic) !20200812 Kazuma Nakamura 
+             enddo!jw
+            enddo!iw
+           enddo!ic 
            deallocate(length_qg)
            !--
-           do iw=1,NWF 
-            do jw=1,NWF 
-             SUM_CMPX=0.0D0 
-             do igL=1,NG_for_psi  
-              SUM_CMPX
-     +       =SUM_CMPX
-     +       +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-             enddo 
-             func(iw,jw,iq)=SUM_CMPX 
-            enddo 
-           enddo 
+           do ic=1,ncomp !20200812 Kazuma Nakamura
+            do jc=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               SUM_CMPX=0.0D0 
+               do igL=1,NG_for_psi  
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw,ic)*CONJG(rho(igL,iw,jw,ic)) !20200812 Kazuma Nakamura 
+               enddo!igL 
+               func(i,j,iq)=SUM_CMPX !20200812 Kazuma Nakamura  
+              enddo!jw 
+             enddo!iw 
+            enddo!jc
+           enddo!ic
            !
-           !20200314 Kazuma Nakamura
+           !20200812,20200314 Kazuma Nakamura
            !
            !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
            !
-           do iw=1,NWF 
-            do jw=1,NWF 
-             SUM_CMPX=0.0D0 
-             do igL=1,NG_for_psi  
-              SUM_CMPX
-     +       =SUM_CMPX
-     +       +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
-             enddo 
-             gfunc(iw,jw,iq)=SUM_CMPX 
-            enddo 
-           enddo 
+           do ic=1,ncomp !20200812 Kazuma Nakamura
+            do jc=1,ncomp !20200812 Kazuma Nakamura
+             do iw=1,NWF/ncomp !20200812 Kazuma Nakamura 
+              do jw=1,NWF/ncomp !20200812 Kazuma Nakamura 
+               i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+               SUM_CMPX=0.0D0 
+               do igL=1,NG_for_psi  
+                SUM_CMPX
+     +         =SUM_CMPX
+     +         +rho(igL,iw,jw,ic)*CONJG(rho(igL,jw,iw,jc)) !20200812 Kazuma Nakamura
+               enddo!igL
+               gfunc(i,j,iq)=SUM_CMPX !20200812 Kazuma Nakamura 
+              enddo!jw 
+             enddo!iw 
+            enddo!jc 
+           enddo!ic 
            !--
            allocate(epsmk(NTGQ,NTGQ,ne));epsmk(:,:,:)=0.0d0 
            allocate(packtmp(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3)) 
@@ -917,60 +1022,72 @@
      +      LG0(1,1,iq),RWq(1,iq),rginv(1,1,iop),pg(1,iop),
      +      nnp,Lq1,Lq2,Lq3,packtmp(-Lq1,-Lq2,-Lq3),
      +      epsirr(1,1,1,iqir),epsmk(1,1,1)) 
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL,ic,jc,i,j)
 !$OMP DO 
            do ie=1,ne
-            do iw=1,NWF
-             do jw=1,NWF
-              SUM_CMPX=0.0D0 
-              do igL=1,NG_for_eps 
-               do jgL=1,NG_for_eps 
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)
-     +         *epsirr(igL,jgL,ie,iq)
-     +         *CONJG(rho(jgL,iw,jw)) 
-               enddo!jgL
-              enddo!igL
-              do igL=NG_for_eps+1,NG_for_psi  
-               SUM_CMPX
-     +        =SUM_CMPX
-     +        +rho(igL,iw,jw)*CONJG(rho(igL,iw,jw)) 
-              enddo!igL
-              funcw(iw,jw,iq,ie)=SUM_CMPX 
-             enddo!jw
-            enddo!iw
+            do ic=1,ncomp !20200812 Kazuma Nakamura
+             do jc=1,ncomp !20200812 Kazuma Nakamura
+              do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+                i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                SUM_CMPX=0.0D0 
+                do igL=1,NG_for_eps 
+                 do jgL=1,NG_for_eps 
+                  SUM_CMPX
+     +           =SUM_CMPX
+     +           +rho(igL,iw,jw,ic) !20200812 Kazuma Nakamura
+     +           *epsirr(igL,jgL,ie,iq)
+     +           *CONJG(rho(jgL,iw,jw,jc))  !20200812 Kazuma Nakamura
+                 enddo!jgL
+                enddo!igL
+                do igL=NG_for_eps+1,NG_for_psi  
+                 SUM_CMPX
+     +          =SUM_CMPX
+     +          +rho(igL,iw,jw,ic)*CONJG(rho(igL,iw,jw,jc)) !20200812 Kazuma Nakamura
+                enddo!igL
+                funcw(i,j,iq,ie)=SUM_CMPX !20200812 Kazuma Nakamura 
+               enddo!jw
+              enddo!iw
+             enddo!jc 
+            enddo!ic 
            enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
            !
-           !20200314 Kazuma Nakamura
+           !20200812,20200314 Kazuma Nakamura
            !
            !THIS METHOD CAN BE USED ONLY FOR THE CASE OF R=0
            !
-!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL)
+!$OMP PARALLEL PRIVATE(ie,iw,jw,SUM_CMPX,igL,jgL,ic,jc,i,j)
 !$OMP DO 
            do ie=1,ne
-            do iw=1,NWF
-             do jw=1,NWF
-              SUM_CMPX=0.0D0 
-              do igL=1,NG_for_eps 
-               do jgL=1,NG_for_eps 
-                SUM_CMPX
-     +         =SUM_CMPX
-     +         +rho(igL,iw,jw)
-     +         *epsirr(igL,jgL,ie,iq)
-     +         *CONJG(rho(jgL,jw,iw)) 
-               enddo!jgL
-              enddo!igL
-              do igL=NG_for_eps+1,NG_for_psi  
-               SUM_CMPX
-     +        =SUM_CMPX
-     +        +rho(igL,iw,jw)*CONJG(rho(igL,jw,iw)) 
-              enddo!igL
-              gfuncw(iw,jw,iq,ie)=SUM_CMPX 
-             enddo!jw
-            enddo!iw
+            do ic=1,ncomp !20200812 Kazuma Nakamura
+             do jc=1,ncomp !20200812 Kazuma Nakamura
+              do iw=1,NWF/ncomp !20200812 Kazuma Nakamura
+               do jw=1,NWF/ncomp !20200812 Kazuma Nakamura
+                i=iw+(ic-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                j=jw+(jc-1)*(NWF/ncomp) !20200812 Kazuma Nakamura
+                SUM_CMPX=0.0D0 
+                do igL=1,NG_for_eps 
+                 do jgL=1,NG_for_eps 
+                  SUM_CMPX
+     +           =SUM_CMPX
+     +           +rho(igL,iw,jw,ic) !20200812 Kazuma Nakamura
+     +           *epsirr(igL,jgL,ie,iq)
+     +           *CONJG(rho(jgL,jw,iw,jc)) !20200812 Kazuma Nakamura
+                 enddo!jgL
+                enddo!igL
+                do igL=NG_for_eps+1,NG_for_psi  
+                 SUM_CMPX
+     +          =SUM_CMPX
+     +          +rho(igL,iw,jw,ic)*CONJG(rho(igL,jw,iw,jc)) !20200812 Kazuma Nakamura 
+                enddo!igL
+                gfuncw(i,j,iq,ie)=SUM_CMPX 
+               enddo!jw
+              enddo!iw
+             enddo!jc
+            enddo!ic 
            enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
@@ -1053,16 +1170,32 @@
       write(6,*)'2*qsz/pi=',(2.0d0/pi)*qsz
        chead=(2.0D0/pi)*qsz 
        write(6,*)'chead(HL) in eV=',chead*au    
-       !--
-       do iw=1,NWF 
-        X_MAT(iw,iw,0,0,0)=X_MAT(iw,iw,0,0,0)+chead       
-       enddo 
        !
-       !20200314 Kazuma Nakamura
+       !20200812 Kazuma Nakamura 
        !
-       do iw=1,NWF 
-        Y_MAT(iw,iw,0,0,0)=Y_MAT(iw,iw,0,0,0)+chead       
-       enddo 
+       do ic=1,ncomp
+        do jc=1,ncomp
+         do iw=1,NWF/ncomp 
+          i=iw+(NWF/ncomp)*(ic-1) 
+          j=iw+(NWF/ncomp)*(jc-1) 
+          !X_MAT(iw,iw,0,0,0)=X_MAT(iw,iw,0,0,0)+chead       
+          X_MAT(i,j,0,0,0)=X_MAT(i,j,0,0,0)+chead       
+         enddo!iw
+        enddo!jc 
+       enddo!ic  
+       !
+       !20200812,20200314 Kazuma Nakamura
+       !
+       do ic=1,ncomp
+        do jc=1,ncomp
+         do iw=1,NWF/ncomp 
+          i=iw+(NWF/ncomp)*(ic-1) 
+          j=iw+(NWF/ncomp)*(jc-1) 
+          !Y_MAT(iw,iw,0,0,0)=Y_MAT(iw,iw,0,0,0)+chead       
+          Y_MAT(i,j,0,0,0)=Y_MAT(i,j,0,0,0)+chead       
+         enddo!iw
+        enddo!jc 
+       enddo!ic 
        !--
        allocate(cheadw(ne));cheadw(:)=0.0d0 
        do ie=1,ne 
@@ -1070,20 +1203,36 @@
         write(6,*)'cheadw(HL) in eV=',cheadw(iw)*au!20190907 ie<-iw Kazuma Nakamura   
         write(6,*)'1/eps=',epsirr(NoG0,NoG0,ie,iqgm)
        enddo 
-       !--
-       do ie=1,ne 
-        do iw=1,NWF 
-         J_MAT(iw,iw,0,0,0,ie)=J_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
-        enddo 
-       enddo 
        !
-       !20200314 Kazuma Nakamura
+       !20200812 Kazuma Nakamura
        !
        do ie=1,ne 
-        do iw=1,NWF 
-         K_MAT(iw,iw,0,0,0,ie)=K_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
-        enddo 
-       enddo 
+        do ic=1,ncomp
+         do jc=1,ncomp
+          do iw=1,NWF/ncomp 
+           i=iw+(NWF/ncomp)*(ic-1) 
+           j=iw+(NWF/ncomp)*(jc-1) 
+           !J_MAT(iw,iw,0,0,0,ie)=J_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
+           J_MAT(i,j,0,0,0,ie)=J_MAT(i,j,0,0,0,ie)+cheadw(ie)      
+          enddo!iw
+         enddo!jc 
+        enddo!ic 
+       enddo!ie  
+       !
+       !20200812,20200314 Kazuma Nakamura
+       !
+       do ie=1,ne 
+        do ic=1,ncomp
+         do jc=1,ncomp
+          do iw=1,NWF 
+           i=iw+(NWF/ncomp)*(ic-1) 
+           j=iw+(NWF/ncomp)*(jc-1) 
+           !K_MAT(iw,iw,0,0,0,ie)=K_MAT(iw,iw,0,0,0,ie)+cheadw(ie)      
+           K_MAT(i,j,0,0,0,ie)=K_MAT(i,j,0,0,0,ie)+cheadw(ie)      
+          enddo!iw
+         enddo!jc 
+        enddo!ic
+       enddo!ie  
 !--
 !write Xmat & Jmat
 !--

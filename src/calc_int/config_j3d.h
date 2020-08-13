@@ -60,7 +60,7 @@
       real(8),allocatable::coord(:,:)!coord(3,NWF)  
       complex(8),allocatable::C0(:,:,:,:)!C0(NTG,ncomp,NWF,NTK)
       integer::NWF 
-      integer::ncomp,ic
+      integer::ncomp,ic,jc
 !sqirr 
       real(8),allocatable::SQI(:,:)  
       integer::Nq_irr 
@@ -95,8 +95,13 @@
       complex(8),allocatable::C0_K(:,:)!C0_K(NTG,ncomp)    
       complex(8),allocatable::C0_KQ(:,:)!C0_KQ(NTG,ncomp)    
       complex(8),ALLOCATABLE::rho_tmp(:) 
-      complex(8),ALLOCATABLE::rho(:,:,:)!prho(NG_for_psi,NWF,NWF) 
-      complex(8),allocatable::prho(:,:,:)!prho(NG_for_psi,NWF,NWF) 
+      !
+      !20200812 Kazuma Nakamura
+      !
+      !complex(8),ALLOCATABLE::rho(:,:,:)!prho(NG_for_psi,NWF,NWF) 
+      !complex(8),allocatable::prho(:,:,:)!prho(NG_for_psi,NWF,NWF) 
+      complex(8),ALLOCATABLE::rho(:,:,:,:)!prho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp) 
+      complex(8),allocatable::prho(:,:,:,:)!prho(NG_for_psi,NWF/ncomp,NWF/ncomp,ncomp) 
       complex(4),allocatable::epsmk(:,:,:) 
       complex(8),allocatable::func(:,:,:)!func(NWF,NWF,NTQ)
       complex(8),allocatable::funcw(:,:,:,:)!funcw(NWF,NWF,NTQ,ne)
