@@ -240,16 +240,18 @@ contains
      !
      !20190613 Kazuma Nakamura
      !
-     !do igs=1,nigs 
-     ! vec_ini(igs)%s_up(:)=0.0d0  
-     ! vec_ini(igs)%s_dn(:)=0.0d0  
-     ! vec_ini(igs)%s_up(1)=1.0d0  
-     ! vec_ini(igs)%s_dn(2)=1.0d0  
-     !enddo 
+     if(.true.)then
+      do igs=1,nigs 
+       vec_ini(igs)%s_up(:)=0.0d0  
+       vec_ini(igs)%s_dn(:)=0.0d0  
+       vec_ini(igs)%s_up(1)=1.0d0  
+       vec_ini(igs)%s_dn(2)=1.0d0  
+      enddo 
      !
-     allocate(local(3,3));local=0.0d0 
-     allocate(SU2(2,2));SU2=0.0d0 
-     do igs=1,nigs 
+     else
+      allocate(local(3,3));local=0.0d0 
+      allocate(SU2(2,2));SU2=0.0d0 
+      do igs=1,nigs 
        !
        !20200120 Kazuma Nakamura
        !
@@ -264,8 +266,9 @@ contains
        call make_SU2_from_local_axis(3,3,local(1,1),SU2(1,1)) 
        vec_ini(igs)%s_up(:)=SU2(:,1) 
        vec_ini(igs)%s_dn(:)=SU2(:,2) 
-     enddo 
-     deallocate(local,SU2) 
+      enddo!igs 
+      deallocate(local,SU2) 
+     endif 
      !
     endif 
     !--

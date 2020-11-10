@@ -44,6 +44,8 @@
       integer,allocatable::RW(:,:)!RW(3,NTK)
       real(8),allocatable::rginv(:,:,:)!rginv(3,3,nsymq) 
       complex(8),allocatable::rinv_SO(:,:,:)!rinv_SO(2,2,nsymq) 
+      integer,allocatable::numMK(:)!numMK(Nk_irr)!20201101 
+      integer::initial_flg!20201101 
       
       integer::ik,jk,iik,iop,i,j,k,l,ib,jb,kb,llb 
       integer::ig,jg,kg,lg,j1,k1,iw 

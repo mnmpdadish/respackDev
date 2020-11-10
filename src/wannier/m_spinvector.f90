@@ -75,12 +75,12 @@ contains
      !write spinvector 
      !
      call wrt_spinvector(NWF,sveclat(1,1)) 
+     deallocate(rho,amat,amatinv,svec,sveclat) 
      !
     else
      write(6,'(a40)')'ncomp=1: Skip spin-vector calculation.'
     endif 
     !
-    deallocate(rho,amat,amatinv,svec,sveclat) 
     !
     return
   end subroutine calc_spinvector 

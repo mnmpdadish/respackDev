@@ -11,6 +11,7 @@
       use m_fat_band, only: calc_fat_band 
       !use m_SO3_to_SU2_Local, only: polar_decomposition 
       use m_spinvector, only: calc_spinvector 
+      use m_self, only: calculate_self 
       !
       include "config.h"
       !--
@@ -399,6 +400,7 @@
       allocate(numrot(NTK));numrot(:)=0
       allocate(trs(NTK));trs(:)=0
       allocate(RW(3,NTK));RW(:,:)=0
+      allocate(numMK(Nk_irr));numMK=0!20201101 
 !--
 !      do ik=1,Nk_irr 
 !       SK0(:,ik)=SKI(:,ik) 
@@ -411,6 +413,9 @@
        !write(6,*)'--' 
        !write(6,'(a8,i8,3f15.10)')'ik=',ik,SKI(:,ik)  
        !write(6,*)'--' 
+       !
+       initial_flg=0!20201101 
+       !
       do iop=1,Nsymq
 !sym
        ktmp(:)=0.0d0;RWtmp(:)=0  
@@ -437,6 +442,14 @@
        SK0(:,jk)=ktmp(:)
        !if(iop==1) is_irr(jk)=1
        numirr(jk)=ik;numrot(jk)=iop;trs(jk)=1;RW(:,jk)=RWtmp(:)
+       !
+       !20201101 
+       !
+       if(initial_flg.eq.0)then
+        numMK(ik)=jk
+        initial_flg=1 
+       endif 
+       !
 !time-reversal
 !1000   goto 2000
 1000   ktmp(:)=0.0d0;RWtmp(:)=0  
@@ -529,12 +542,28 @@
           E_EIG(:,jk)=E_EIGI(:,ik) 
          endif 
         enddo!jk  
+!--
         filename='./dir-wan/dat.dos.global'
         call calculate_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,0.0d0,
-     +  FermiEnergy,filename,b1(1),b2(1),b3(1),SK0(1,1),
-     +  E_EIG(1,1),V_EIG(1,1,1))
+     +   FermiEnergy,filename,b1(1),b2(1),b3(1),SK0(1,1),
+     +   E_EIG(1,1),V_EIG(1,1,1))
+!--
+!        filename='./dir-wan/dat.self.global'
+!        call calculate_self(ncomp,NTB,NTK,nkb1,nkb2,nkb3,NK_irr,
+!     +   numirr(1),numMK(1),FermiEnergy,filename,b1(1),b2(1),b3(1),
+!     +   SK0(1,1),E_EIGI(1,1))
+!--
         deallocate(E_EIG,V_EIG)
-      endif 
+        !--
+        write(6,*) 
+        write(6,*)'==========================='
+        write(6,*)'===  FINIDH GLOBAL DOS  ==='
+        write(6,*)'!!! We stop calculation !!!'
+        write(6,*)'==========================='
+        write(6,*) 
+        stop
+        !--
+      endif!CALC_GLOBAL_DOS 
 !--
 !--
 !gen(C0,E_EIG,NG0,NB0,KG0) 

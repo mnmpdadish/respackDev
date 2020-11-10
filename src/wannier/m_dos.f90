@@ -15,20 +15,33 @@ contains
     complex(8),intent(in)::VKS(NTB,NTB,NTK)
     real(8),allocatable::pdos(:,:)!pdos(ndosgrd,NTB) 
     real(8)::flg_pdos
+    integer::flg_causal 
     !
     real(8)::emax!=maxval(EIG)
     real(8)::emin!=minval(EIG)
     integer::ndosgrd!=int(2.0d0*diff/dlt)+1
     real(8),allocatable::dosgrd(:)!dosgrd(ndosgrd) 
     real(8),allocatable::dos(:)!dos(ndosgrd) 
+    real(8),allocatable::dos_i(:)!dos_i(ndosgrd) 
+    real(8),allocatable::dos_r(:)!dos_r(ndosgrd) 
     real(8),allocatable::efline(:)!efline(ndosgrd)   
     !
     real(8),parameter::au=27.21151d0
-    real(8),parameter::delt=0.005d0/au!Greens function delt in au 
-    !real(8),parameter::delt=0.01d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.00001d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.0001d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.001d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.005d0/au!Greens function delt in au 
+    real(8),parameter::delt=0.01d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.02d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.05d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.1d0/au!Greens function delt in au 
     real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
-    real(8),parameter::delw=2.0d0*delt!Grid width in au 
+    !real(8),parameter::delw=0.001d0/au!2.0d0*delt!Grid width in au 
+    !real(8),parameter::delw=0.005d0/au!2.0d0*delt!Grid width in au 
+    real(8),parameter::delw=0.01d0/au!2.0d0*delt!Grid width in au 
+    !real(8),parameter::delw=0.1d0/au!2.0d0*delt!Grid width in au 
+    !real(8),parameter::delw=2.0d0*delt!Grid width in au 
     ! 
     !dos-grid
     !
@@ -39,7 +52,10 @@ contains
     !calc dos 
     !
     allocate(dos(ndosgrd));dos=0.0d0 
-    call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos(1)) 
+    allocate(dos_r(ndosgrd));dos_r=0.0d0 
+    allocate(dos_i(ndosgrd));dos_r=0.0d0 
+    call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),FermiEnergy,dos(1));flg_causal=0  
+    !call calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1;dos=dos_i
     !
     !calc pdos 
     !
@@ -61,12 +77,18 @@ contains
     !
     !wrt dat.dos 
     !
-    call wrt_dos(filename,ndosgrd,dosgrd(1),dos(1),efline(1)) 
+    call wrt_dos(filename,ndosgrd,dosgrd(1),dos(1),efline(1),FermiEnergy) 
+    !
+    !wrt dat.dos.real  
+    !
+    if(flg_causal==1)then
+     call wrt_dos_real(filename,ndosgrd,dosgrd(1),dos_r(1),efline(1),FermiEnergy) 
+    endif 
     !
     !wrt dat.pdos 
     !
     if(flg_pdos/=0.0d0)then
-      call wrt_pdos(filename,NTB,ndosgrd,dosgrd(1),pdos(1,1),efline(1)) 
+      call wrt_pdos(filename,NTB,ndosgrd,dosgrd(1),pdos(1,1),efline(1),FermiEnergy) 
     endif 
     !
     return
@@ -208,7 +230,7 @@ contains
     return
   end subroutine 
   !
-  subroutine calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,dos) 
+  subroutine calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,EF,dos)
     use m_tetrahedron
     implicit none
     integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
@@ -217,6 +239,7 @@ contains
     real(8),intent(in)::SK0(3,NTK)           
     real(8),intent(in)::delt,dmnr,dmna 
     real(8),intent(in)::b1(3),b2(3),b3(3)
+    real(8),intent(in)::EF 
     real(8),intent(out)::dos(ndosgrd) 
     integer::index_kpt(nkb1,nkb2,nkb3) 
     integer::imt1(4*nkb1*nkb2*nkb3*6)  
@@ -244,7 +267,19 @@ contains
       gk_1D=0.0d0
       do ik=1,NTK 
        fk_1D(ik)=1.0d0 
+       !
+       !ttrhdrn 
+       !
        gk_1D(ik)=cmplx(dosgrd(ie)-E_EIG(jb,ik),-delt) 
+       !
+       !causal form (NOT USE)
+       !
+       !if(E_EIG(jb,ik).gt.EF)then 
+       ! gk_1D(ik)=cmplx(dosgrd(ie)-E_EIG(jb,ik),delt) 
+       !else 
+       ! gk_1D(ik)=cmplx(dosgrd(ie)-E_EIG(jb,ik),-delt) 
+       !endif  
+       !
       enddo!ik 
       fk_3D=0.0d0 
       gk_3D=0.0d0 
@@ -257,13 +292,20 @@ contains
         enddo!ikb1 
        enddo!ikb2 
       enddo!ikb3 
+      !
+      !ttrhdrn 
+      !
       xo=0.0d0 
-      call ttrhdrn_simple(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),& 
-       fk_3D(1,1,1),gk_3D(1,1,1),xo(1,1,1))
+      call ttrhdrn_simple(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),fk_3D(1,1,1),gk_3D(1,1,1),xo(1,1,1))
+      !
+      !simple sum
+      !
+      !xo=fk_3D/gk_3D
+      !
       xow(ie,:,:,:)=xow(ie,:,:,:)+xo(:,:,:) 
      enddo!jb 
      iomp=omp_get_thread_num() 
-     !if(iomp.eq.0) write(6,*) '#',ie  
+     !if(iomp.eq.0) write(6,*)'#',ie  
     enddo!ie
 !$OMP END DO 
 !$OMP END PARALLEL 
@@ -273,7 +315,8 @@ contains
      do ikb3=1,nkb3
       do ikb2=1,nkb2
        do ikb1=1,nkb1 
-        SUM_REAL=SUM_REAL+dabs(dimag(xow(ie,ikb1,ikb2,ikb3)))/pi  
+        !SUM_REAL=SUM_REAL+dabs(dimag(xow(ie,ikb1,ikb2,ikb3)))/pi  
+        SUM_REAL=SUM_REAL+dimag(xow(ie,ikb1,ikb2,ikb3))/pi  
        enddo 
       enddo 
      enddo 
@@ -423,12 +466,13 @@ contains
     return 
   end subroutine  
   !
-  subroutine wrt_dos(filename,ndosgrd,dosgrd,dos,efline) 
+  subroutine wrt_dos(filename,ndosgrd,dosgrd,dos,efline,FermiEnergy) 
     implicit none
     integer,intent(in)::ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd)
     real(8),intent(in)::dos(ndosgrd)
     real(8),intent(in)::efline(ndosgrd)
+    real(8),intent(in)::FermiEnergy 
     character(99),intent(in)::filename
     character(99)::fname,fname_arg 
     integer::ie 
@@ -441,20 +485,51 @@ contains
     write(fname,'(a,a)') trim(filename),trim(fname_arg) 
     OPEN(300,file=trim(fname)) 
     rewind(300) 
+    write(300,'(a,f15.10)')'# FermiEnergy (eV):',FermiEnergy*au 
     do ie=1,ndosgrd
-     write(300,'(3f15.10)') dosgrd(ie)*au,dos(ie)/au,efline(ie)  
+     !write(300,'(3f15.10)') dosgrd(ie)*au,dos(ie)/au,efline(ie)  
+     write(300,'(3f20.10)')(dosgrd(ie)-FermiEnergy)*au,dos(ie)/au,(efline(ie)-FermiEnergy) 
     enddo!ie 
     close(300)
     return
   end subroutine 
   !
-  subroutine wrt_pdos(filename,NTB,ndosgrd,dosgrd,pdos,efline) 
+  subroutine wrt_dos_real(filename,ndosgrd,dosgrd,dos,efline,FermiEnergy) 
+    implicit none
+    integer,intent(in)::ndosgrd
+    real(8),intent(in)::dosgrd(ndosgrd)
+    real(8),intent(in)::dos(ndosgrd)
+    real(8),intent(in)::efline(ndosgrd)
+    real(8),intent(in)::FermiEnergy 
+    character(99),intent(in)::filename
+    character(99)::fname,fname_arg 
+    integer::ie 
+    real(8),parameter::au=27.21151d0 
+    !
+    !OPEN(500,W,file='./dir-wan/dat.dos.xxx-total-real')
+    !
+    fname_arg='-total-real'
+    !
+    write(fname,'(a,a)') trim(filename),trim(fname_arg) 
+    OPEN(500,file=trim(fname)) 
+    rewind(500) 
+    write(500,'(a,f15.10)')'# FermiEnergy (eV):',FermiEnergy*au 
+    do ie=1,ndosgrd
+     !write(500,'(3f15.10)') dosgrd(ie)*au,dos(ie)/au,efline(ie)  
+     write(500,'(3f20.10)')(dosgrd(ie)-FermiEnergy)*au,dos(ie)/au,(efline(ie)-FermiEnergy) 
+    enddo!ie 
+    close(500)
+    return
+  end subroutine 
+  !
+  subroutine wrt_pdos(filename,NTB,ndosgrd,dosgrd,pdos,efline,FermiEnergy) 
     implicit none
     integer,intent(in)::NTB
     integer,intent(in)::ndosgrd
     real(8),intent(in)::dosgrd(ndosgrd)
     real(8),intent(in)::pdos(ndosgrd,NTB)
     real(8),intent(in)::efline(ndosgrd)
+    real(8),intent(in)::FermiEnergy 
     character(99),intent(in)::filename
     character(99)::fname,fname_arg 
     integer::ie,ib 
@@ -467,6 +542,7 @@ contains
      write(fname,'(a,a,i3.3)') trim(filename),trim(fname_arg),ib
      OPEN(400,FILE=TRIM(fname)) 
      rewind(400)  
+     write(400,'(a,f15.10)')'# FermiEnergy (eV):',FermiEnergy*au 
      do ie=1,ndosgrd
       write(400,'(3f15.10)') dosgrd(ie)*au,pdos(ie,ib)/au,efline(ie)  
      enddo!ie 
@@ -474,5 +550,102 @@ contains
     enddo!ib 
     return
   end subroutine wrt_pdos 
+  !
+  subroutine calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,dos_r,dos_i) 
+    use m_tetrahedron
+    implicit none
+    integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
+    real(8),intent(in)::dosgrd(ndosgrd) 
+    real(8),intent(in)::E_EIG(NTB,NTK)           
+    real(8),intent(in)::SK0(3,NTK)           
+    real(8),intent(in)::delt,dmnr,dmna 
+    real(8),intent(in)::FermiEnergy 
+    real(8),intent(in)::b1(3),b2(3),b3(3)
+    real(8),intent(out)::dos_i(ndosgrd) 
+    real(8),intent(out)::dos_r(ndosgrd) 
+    integer::index_kpt(nkb1,nkb2,nkb3) 
+    integer::imt1(4*nkb1*nkb2*nkb3*6)  
+    integer::ie,jb,ik,ikb1,ikb2,ikb3
+    integer::iomp,omp_get_thread_num  
+    real(8)::SUM_REAL1,SUM_REAL2  
+    complex(8)::ek_1D(NTK)
+    complex(8)::ek_3D(nkb1,nkb2,nkb3) 
+    complex(8)::xow(ndosgrd,nkb1,nkb2,nkb3)
+    complex(8),allocatable::pxo(:,:,:,:)!pxo(ndosgrd,nkb1,nkb2,nkb3) 
+    complex(8),allocatable::xo(:,:,:,:)!xo(ndosgrd,nkb1,nkb2,nkb3) 
+    complex(8),allocatable::ca1(:)!ca1(4*ndosgrd) 
+    complex(8),allocatable::dosgrd_cmplx(:)!dosgrd_cmplx(ndosgrd) 
+    complex(8)::zj 
+    real(8),parameter::pi=dacos(-1.0d0)
+    real(8),parameter::au=27.21151d0 
+    !
+    allocate(dosgrd_cmplx(ndosgrd));dosgrd_cmplx=0.0d0   
+    do ie=1,ndosgrd 
+     dosgrd_cmplx(ie)=dcmplx(dosgrd(ie),0.0d0) 
+    enddo
+    !
+    call make_index_kpt(NTK,nkb1,nkb2,nkb3,SK0(1,1),index_kpt(1,1,1)) 
+    call ttrhdrn_mkidx(nkb1,nkb2,nkb3,imt1(1),b1(1),b2(1),b3(1))
+    !
+    xow=0.0d0 
+    !zj=(0.0d0,-0.1d0)  
+    zj=0.0d0 
+    !write(6,'(a10,2f20.10)')'zj=',zj 
+    !write(6,'(a10,f20.10)')'Rezj=',dble(zj) 
+    !write(6,'(a10,f20.10)')'Imzj=',dimag(zj) 
+!$OMP PARALLEL PRIVATE(jb,ek_1D,ik,ek_3D,ikb3,ikb2,ikb1,ca1,pxo,xo,iomp) 
+    allocate(ca1(4*ndosgrd)); ca1=0.d0   
+    allocate(pxo(ndosgrd,nkb1,nkb2,nkb3)); pxo=0.0d0  
+    allocate(xo(ndosgrd,nkb1,nkb2,nkb3)); xo=0.0d0  
+!$OMP DO 
+    do jb=1,NTB
+     ek_1D=0.0d0
+     do ik=1,NTK 
+      ek_1D(ik)=cmplx(E_EIG(jb,ik),0.0d0) 
+     enddo!ik 
+     ek_3D=0.0d0 
+     do ikb3=1,nkb3
+      do ikb2=1,nkb2
+       do ikb1=1,nkb1 
+        ik=index_kpt(ikb1,ikb2,ikb3) 
+        ek_3D(ikb1,ikb2,ikb3)=ek_1D(ik)
+       enddo!ikb1 
+      enddo!ikb2 
+     enddo!ikb3 
+     ca1=0.0d0
+     xo=0.0d0 
+     call ttrhdrn_causal(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),ek_3D(1,1,1),FermiEnergy,delt,ndosgrd,dosgrd_cmplx(1),zj,ca1(1),xo(1,1,1,1))
+     pxo=pxo+xo 
+     iomp=omp_get_thread_num() 
+     !if(iomp.eq.0) write(6,*)'#',ie  
+    enddo!jb 
+!$OMP END DO 
+!$OMP CRITICAL
+    xow=xow+pxo 
+!$OMP END CRITICAL
+    deallocate(pxo,xo,ca1) 
+!$OMP END PARALLEL 
+    !
+    dos_i=0.0d0 
+    dos_r=0.0d0 
+    do ie=1,ndosgrd 
+     SUM_REAL1=0.0d0 
+     SUM_REAL2=0.0d0 
+     do ikb3=1,nkb3
+      do ikb2=1,nkb2
+       do ikb1=1,nkb1 
+        SUM_REAL1=SUM_REAL1+dble(xow(ie,ikb1,ikb2,ikb3))/pi  
+        SUM_REAL2=SUM_REAL2+dimag(xow(ie,ikb1,ikb2,ikb3))/pi  
+       enddo 
+      enddo 
+     enddo 
+     dos_r(ie)=(2.0d0/dble(ncomp))*SUM_REAL1/dble(NTK)!2 is spin 
+     dos_i(ie)=(2.0d0/dble(ncomp))*SUM_REAL2/dble(NTK)!2 is spin 
+    enddo 
+    !
+    deallocate(dosgrd_cmplx) 
+    !
+    return
+  end subroutine calc_dos_causal
   !
 end module m_dos 

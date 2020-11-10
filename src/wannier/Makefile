@@ -43,31 +43,34 @@ TARGET = calc_wannier
 OBJECTS = m_rdinput.o m_fft3d_20150826.o m_bvector_20171208.o det.o inv.o inv_ge_LAPACK.o \
 	  diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_model.o m_wrt_frmsf.o \
 	  search_Rmin.o wannier_sub.o SO3_to_SU2_rotation.o wannier.o m_frmsf_wan.o gencif.o m_gencif_sub.o \
-          m_dos.o m_tetrahedron_20170325.o m_eigenstate.o \
+          m_dos.o m_tetrahedron_20201027.o m_eigenstate.o \
           m_dmx.o m_tetrainteg.o \
           m_SO3_to_SU2_Local.o \
           m_fat_band.o \
-          m_spinvector.o 
+          m_spinvector.o\
+          m_self.o 
 
 MOD_FILES = m_rdinput.mod fft_3d.mod m_bvector.mod m_frmsf_wan.mod m_gencif_sub.mod \
-            m_dos.mod m_tetrahedron_20170325.mod m_eigenstate.mod \
+            m_dos.mod m_tetrahedron_20201027.mod m_eigenstate.mod \
             m_wrt_model.mod m_wrt_frmsf.mod \
             m_dmx.mod m_tetrainteg.mod \
             m_SO3_to_SU2_Local.mod  \
             m_fat_band.mod \
-            m_spinvector.mod 
-
+            m_spinvector.mod \
+            m_self.mod 
+ 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${LDFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
 wannier.o: wannier.F m_rdinput.o m_fft3d_20150826.o m_bvector_20171208.o det.o inv.o inv_ge_LAPACK.o \
 	   diagV.o makekpts.o est_NTK.o est_nwx2.o est_latparam.o m_wrt_model.o m_wrt_frmsf.o \
 	   search_Rmin.o wannier_sub.o m_frmsf_wan.o SO3_to_SU2_rotation.o gencif.o m_gencif_sub.o \
-           m_dos.o m_tetrahedron_20170325.o m_eigenstate.o \
+           m_dos.o m_tetrahedron_20201027.o m_eigenstate.o \
            m_dmx.o m_tetrainteg.o \
            m_SO3_to_SU2_Local.o \
            m_fat_band.o \
-           m_spinvector.o 
+           m_spinvector.o \
+           m_self.o 
 
 wannier_sub.o: wannier_sub.F m_fft3d_20150826.o diagV.o 
 
@@ -75,7 +78,7 @@ est_NTK.o: est_NTK.f90 wannier_sub.o
 
 gencif.o: gencif.f90 m_gencif_sub.o  
 
-m_dos.o: m_dos.f90 m_tetrahedron_20170325.o 
+m_dos.o: m_dos.f90 m_tetrahedron_20201027.o 
 
 m_frmsf_wan.o: m_frmsf_wan.F90 m_rdinput.o
 
@@ -86,6 +89,8 @@ m_rdinput.o: m_rdinput.f90 m_SO3_to_SU2_Local.o
 m_SO3_to_SU2_Local.o: m_SO3_to_SU2_Local.f90 det.o 
 
 SO3_to_SU2_rotation.o: SO3_to_SU2_rotation.f90 m_SO3_to_SU2_Local.o 
+
+m_self.o: m_self.f90 m_tetrahedron_20201027.o 
 
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 
