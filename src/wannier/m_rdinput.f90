@@ -240,7 +240,8 @@ contains
      !
      !20190613 Kazuma Nakamura
      !
-     if(.true.)then
+     !if(.true.)then
+     if(.false.)then
       do igs=1,nigs 
        vec_ini(igs)%s_up(:)=0.0d0  
        vec_ini(igs)%s_dn(:)=0.0d0  
