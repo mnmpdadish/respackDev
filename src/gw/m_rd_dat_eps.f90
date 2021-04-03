@@ -87,6 +87,12 @@ do ie=1,ne
  pole_of_chi(ie)=cmplx(x,y) 
 enddo 
 !
+!write pole of chi
+!
+do ie=1,ne 
+ write(6,'(2f15.10)') pole_of_chi(ie) 
+enddo 
+!
 !mat_b
 !
 allocate(mat_b(ne,ne)); mat_b=0.0d0 

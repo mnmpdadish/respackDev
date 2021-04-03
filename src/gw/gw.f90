@@ -1675,12 +1675,19 @@ if(myrank.eq.0)then
   call makekpts(Ndiv,N_sym_points,NSK_BAND_DISP,SK_sym_pts(1,1),SK_BAND_DISP(1,1))
   !
   !write(5001) H_MAT_R 
-  !H_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
   !
   allocate(kdata(NSK_BAND_DISP)); kdata=0.0d0 
   allocate(EKS(NWF,NSK_BAND_DISP)); EKS=0.0d0 
+  !
+  !Routine to write band_KS, band_KS-XC, and band_KS-XC+SX 
+  !
+  !G_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R  
+  !
+  allocate(G_MAT_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3)); G_MAT_R=0.0d0 
+  G_MAT_R=H_MAT_R-MAT_VXC_R-MAT_SX_R !default, G_MAT_R=H_MAT_R  
+  !
   call calc_band_disp(Ndiv,N_sym_points,NTK,NSK_BAND_DISP,Na1,Na2,Na3,NWF,SK_BAND_DISP(1,1),&
-  H_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),kdata,EKS(1,1))  
+  G_MAT_R(1,1,-Na1,-Na2,-Na3),nkb1,nkb2,nkb3,a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),kdata,EKS(1,1))  
   !
   allocate(gwakw(NSK_BAND_DISP,nsgm)); gwakw=0.0d0
   allocate(gw_sigma_kw(NSK_BAND_DISP,nsgm)); gw_sigma_kw=0.0d0
@@ -1753,15 +1760,15 @@ endif!myrank.eq.0
 ! quasi-particle band 
 !#####################
 !
-if(myrank.eq.0)then
- call calculate_quasi_particle_band(& 
-  Nk_irr,NTK,Mb,NTB,NWF,Na1,Na2,Na3,nsgm,nsgmqp,FermiEnergy,shift_value,&
-  numirr(1),numMK(1),Nb(1),Ns(1),E_EIGI(1,1),sgmw(1),sgmwqp(1),& 
-  SCirr(1,1,1,1),SXirr(1,1,1),VXCirr(1,1,1),UNT(1,1,1),& 
-  NSK_BAND_DISP,nkb1,nkb2,nkb3,Ndiv,N_sym_points,& 
-  a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),SK_BAND_DISP(1,1))  
- write(6,'(a50)')'##### FINISH QUASI-PARTICLE BAND #####'
-endif!myrank.eq.0
+!if(myrank.eq.0)then
+! call calculate_quasi_particle_band(& 
+!  Nk_irr,NTK,Mb,NTB,NWF,Na1,Na2,Na3,nsgm,nsgmqp,FermiEnergy,shift_value,&
+!  numirr(1),numMK(1),Nb(1),Ns(1),E_EIGI(1,1),sgmw(1),sgmwqp(1),& 
+!  SCirr(1,1,1,1),SXirr(1,1,1),VXCirr(1,1,1),UNT(1,1,1),& 
+!  NSK_BAND_DISP,nkb1,nkb2,nkb3,Ndiv,N_sym_points,& 
+!  a1(1),a2(1),a3(1),b1(1),b2(1),b3(1),SK0(1,1),SK_BAND_DISP(1,1))  
+! write(6,'(a50)')'##### FINISH QUASI-PARTICLE BAND #####'
+!endif!myrank.eq.0
 !
 !##########
 !  FINISH 

@@ -121,6 +121,7 @@ real(8),allocatable::kdata(:)!kdata(NSK_BAND_DISP)
 real(8),allocatable::EKS(:,:)!EKS(NWF,NSK_BAND_DISP) 
 real(8),allocatable::gwakw(:,:)!gwakw(NSK_BAND_DISP,nsgm) 
 real(8),allocatable::gw_sigma_kw(:,:)!gw_sigma_kw(NSK_BAND_DISP,nsgm) 
+complex(8),allocatable::G_MAT_R(:,:,:,:,:)!G_MAT_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3) 
 !
 !index 
 !

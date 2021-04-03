@@ -158,7 +158,12 @@ contains
       dscdw=(s(je+1)-s(je-1))/(sgmw(je+1)-sgmw(je-1)) 
       zak=1.0d0/(1.0d0-dscdw) 
       dsc=-VXCirr(jb,jb,ikir)-SXirr(jb,jb,ikir)+SCirr(je,jb,jb,ikir)   
+      !
+      !20191205
+      !
       eqpirr(jb,ikir)=E_EIGI(jb+Ns(ik),ikir)+(dsc-shift_value)*zak  
+      !eqpirr(jb,ikir)=E_EIGI(jb+Ns(ik),ikir)+dsc*zak-shift_value  
+      !
       en=E_EIGI(jb+Ns(ik),ikir)-FermiEnergy 
       write(6,'(4F20.10)') en*au, zak, zak*dsc*au    
       !--
