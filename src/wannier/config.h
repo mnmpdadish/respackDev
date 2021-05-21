@@ -196,7 +196,7 @@
       integer::amin,amax,bmin,bmax,cmin,cmax 
 !basic variables 
       integer::iL,IC,JC,SUM_INT,ierr,chdir            
-      real(8)::SUM_REAL,tmp(3)
+      real(8)::SUM_REAL,tmp(3),rtmp
       complex(8)::SUM_CMPX        
       !
       !20180921 

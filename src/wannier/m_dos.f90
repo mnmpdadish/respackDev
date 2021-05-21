@@ -54,8 +54,9 @@ contains
     allocate(dos(ndosgrd));dos=0.0d0 
     allocate(dos_r(ndosgrd));dos_r=0.0d0 
     allocate(dos_i(ndosgrd));dos_r=0.0d0 
-    call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),FermiEnergy,dos(1));flg_causal=0  
-    !call calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1;dos=dos_i
+    !check 20210520 
+    !call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),FermiEnergy,dos_r(1),dos_i(1));flg_causal=1;dos=dos_i   
+    call calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1;dos=dos_i
     !
     !calc pdos 
     !
@@ -230,7 +231,7 @@ contains
     return
   end subroutine 
   !
-  subroutine calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,EF,dos)
+  subroutine calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd,E_EIG,SK0,delt,dmnr,dmna,b1,b2,b3,EF,dos_r,dos_i)
     use m_tetrahedron
     implicit none
     integer,intent(in)::ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd
@@ -240,12 +241,13 @@ contains
     real(8),intent(in)::delt,dmnr,dmna 
     real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::EF 
-    real(8),intent(out)::dos(ndosgrd) 
+    real(8),intent(out)::dos_r(ndosgrd) 
+    real(8),intent(out)::dos_i(ndosgrd) 
     integer::index_kpt(nkb1,nkb2,nkb3) 
     integer::imt1(4*nkb1*nkb2*nkb3*6)  
     integer::ie,jb,ik,ikb1,ikb2,ikb3
     integer::iomp,omp_get_thread_num  
-    real(8)::SUM_REAL 
+    real(8)::SUM_REAL1,SUM_REAL2  
     complex(8)::fk_1D(NTK)
     complex(8)::fk_3D(nkb1,nkb2,nkb3) 
     complex(8)::gk_1D(NTK)
@@ -261,8 +263,9 @@ contains
 !$OMP PARALLEL PRIVATE(ie,jb,fk_1D,gk_1D,ik,fk_3D,gk_3D,&
 !$OMP ikb3,ikb2,ikb1,xo,iomp) 
 !$OMP DO 
-    do ie=1,ndosgrd 
-     do jb=1,NTB
+    do jb=1,NTB
+    !do jb=13,15 !20210520 
+     do ie=1,ndosgrd 
       fk_1D=0.0d0
       gk_1D=0.0d0
       do ik=1,NTK 
@@ -302,25 +305,51 @@ contains
       !
       !xo=fk_3D/gk_3D
       !
+      !xow(ie,:,:,:)=xo(:,:,:)!for check20210520 
       xow(ie,:,:,:)=xow(ie,:,:,:)+xo(:,:,:) 
-     enddo!jb 
-     iomp=omp_get_thread_num() 
+     enddo!ie
+     ! for check 20210520 
+     !if(jb==13.or.jb==14.or.jb==15)then 
+     ! write(6,'(a,i5)')'jb=',jb 
+     ! do ikb3=1,nkb3
+     !  do ikb2=1,nkb2
+     !   do ikb1=1,nkb1
+     !    ik=index_kpt(ikb1,ikb2,ikb3) 
+     !    !if(ik==1)then 
+     !    !if(ik==64)then !GM for 4x4x4 
+     !    !if(ik==512)then !GM for 8x8x8
+     !    if(ik==1728)then !GM for 12x12x12 
+     !     write(6,'(a,3f10.5)')'SK=',SK0(1,ik),SK0(2,ik),SK0(3,ik)  
+     !     do ie=1,ndosgrd
+     !      write(6,'(f10.5,2f15.8)')(dble(dosgrd(ie))-EF)*au,xow(ie,ikb1,ikb2,ikb3)/dble(NTK) 
+     !     enddo!ie
+     !    endif 
+     !   enddo!ikb1
+     !  enddo!ikb2
+     ! enddo!ikb3 
+     !endif 
+     !xow=0.0d0!for check 20210520  
+     !
+     !iomp=omp_get_thread_num() 
      !if(iomp.eq.0) write(6,*)'#',ie  
-    enddo!ie
+    enddo!jb 
 !$OMP END DO 
 !$OMP END PARALLEL 
-    dos=0.0d0 
+    dos_r=0.0d0 
+    dos_i=0.0d0 
     do ie=1,ndosgrd 
-     SUM_REAL=0.0d0 
+     SUM_REAL1=0.0d0 
+     SUM_REAL2=0.0d0 
      do ikb3=1,nkb3
       do ikb2=1,nkb2
        do ikb1=1,nkb1 
-        !SUM_REAL=SUM_REAL+dabs(dimag(xow(ie,ikb1,ikb2,ikb3)))/pi  
-        SUM_REAL=SUM_REAL+dimag(xow(ie,ikb1,ikb2,ikb3))/pi  
+        SUM_REAL1=SUM_REAL1+dble(xow(ie,ikb1,ikb2,ikb3))/pi  
+        SUM_REAL2=SUM_REAL2+dimag(xow(ie,ikb1,ikb2,ikb3))/pi  
        enddo 
       enddo 
      enddo 
-     dos(ie)=(2.0d0/dble(ncomp))*SUM_REAL/dble(NTK)!2 is spin 
+     dos_r(ie)=(2.0d0/dble(ncomp))*SUM_REAL1/dble(NTK)!2 is spin 
+     dos_i(ie)=(2.0d0/dble(ncomp))*SUM_REAL2/dble(NTK)!2 is spin 
     enddo 
     !
     return
@@ -599,6 +628,7 @@ contains
     allocate(xo(ndosgrd,nkb1,nkb2,nkb3)); xo=0.0d0  
 !$OMP DO 
     do jb=1,NTB
+    !do jb=13,15!20210520 
      ek_1D=0.0d0
      do ik=1,NTK 
       ek_1D(ik)=cmplx(E_EIG(jb,ik),0.0d0) 
@@ -615,6 +645,27 @@ contains
      ca1=0.0d0
      xo=0.0d0 
      call ttrhdrn_causal(dmna,dmnr,nkb1,nkb2,nkb3,imt1(1),ek_3D(1,1,1),FermiEnergy,delt,ndosgrd,dosgrd_cmplx(1),zj,ca1(1),xo(1,1,1,1))
+     !for check 20210520 
+     !if(jb==13.or.jb==14.or.jb==15)then 
+     ! write(6,'(a,i5)')'jb=',jb 
+     ! do ikb3=1,nkb3
+     !  do ikb2=1,nkb2
+     !   do ikb1=1,nkb1
+     !    ik=index_kpt(ikb1,ikb2,ikb3) 
+     !    !if(ik==1)then  
+     !    !if(ik==64)then !GM for 4x4x4
+     !    !if(ik==512)then !GM for 8x8x8 
+     !    if(ik==1728)then !GM for 12x12x12 
+     !     write(6,'(a,3f10.5)')'SK=',SK0(1,ik),SK0(2,ik),SK0(3,ik)  
+     !     do ie=1,ndosgrd
+     !      write(6,'(f10.5,2f15.8)')(dble(dosgrd_cmplx(ie))-FermiEnergy)*au,xo(ie,ikb1,ikb2,ikb3)/dble(NTK) 
+     !     enddo!ie
+     !    endif 
+     !   enddo!ikb1
+     !  enddo!ikb2
+     ! enddo!ikb3 
+     !endif 
+     !
      pxo=pxo+xo 
      iomp=omp_get_thread_num() 
      !if(iomp.eq.0) write(6,*)'#',ie  

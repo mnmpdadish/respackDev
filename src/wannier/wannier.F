@@ -3100,6 +3100,40 @@
      +    i1=(xmin)*na_grid,(xmax)*na_grid-1)
           CLOSE(116)
           !
+          write(6,"(a,i5)")'ix=',ix 
+          SUM_REAL=0.0d0
+          do i1=(xmin)*na_grid,(xmax)*na_grid-1
+           do i2=(ymin)*nb_grid,(ymax)*nb_grid-1
+            do i3=(zmin)*nc_grid,(zmax)*nc_grid-1
+             !
+             SUM_REAL=SUM_REAL+dble(WANNIER_REALSPACE(i1,i2,i3))**2 
+             !
+             if(i1==i2.and.i2==i3.and.i3==i1)then 
+              tmp(:)=dble(i1)/dble(na_grid)*a1(:)
+     +              +dble(i2)/dble(nb_grid)*a2(:)
+     +              +dble(i3)/dble(nc_grid)*a3(:) 
+              tmp=tmp*bohr  
+              rtmp=dsqrt(tmp(1)**2+tmp(2)**2+tmp(3)**2) 
+              if(i1<=0)then  
+               write(6,"(3i5,2f20.10)")i1,i2,i3,-rtmp,
+     +         dble(WANNIER_REALSPACE(i1,i2,i3))/dsqrt((bohr**3)) 
+!    +         dsqrt( dble(WANNIER_REALSPACE(i1,i2,i3))**2/(bohr**3) ) 
+              else
+               write(6,"(3i5,2f20.10)")i1,i2,i3,rtmp,
+     +         dble(WANNIER_REALSPACE(i1,i2,i3))/dsqrt((bohr**3)) 
+!    +         dsqrt( dble(WANNIER_REALSPACE(i1,i2,i3))**2/(bohr**3) ) 
+              endif 
+             endif 
+            enddo!i3
+           enddo!i2 
+          enddo!i1 
+          !
+          !dV=NTK*VOLUME/NTK/nwx2/nwy2/nwz2 
+          !
+          SUM_REAL
+     +   =SUM_REAL*VOLUME/dble(na_grid)/dble(nb_grid)/dble(nc_grid)    
+          write(6,'(a5,i5,f20.10)')'ix:',ix,SUM_REAL
+          !
          enddo!ix 
         enddo!ic
         deallocate(WANNIER_REALSPACE,C0WN) 
