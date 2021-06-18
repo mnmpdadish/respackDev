@@ -43,21 +43,24 @@ LIBBLAS = -lmkl_intel_lp64 -Wl,--start-group -lmkl_intel_thread -lmkl_core -Wl,-
 #--------------------------------------------------------------------
 TARGET = calc_gw 
 
-OBJECTS = m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
+OBJECTS = m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20201027.o \
 	  sub_wfn.o sub_eps.o sub_gw.o util.o calc_band_disp.o make_kpts.o make_sgmw.o calc_ksdos.o calc_gwdos.o calc_gwakw.o \
 	  search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o gw.o \
-	  m_qp.o m_FR.o m_band.o m_eigenstate.o m_bspline.o  
+	  m_qp.o m_FR.o m_band.o m_eigenstate.o m_bspline.o \
+          m_self.o 
 
 MOD_FILES = m_rd_input.mod m_rd_dat_wfn.mod m_rd_dat_wan.mod m_rd_dat_eps.mod fft_3d.mod m_tetrahedron.mod \
-	    m_qp.mod m_FR.mod m_band.mod m_eigenstate.mod m_bspline.mod   
+	    m_qp.mod m_FR.mod m_band.mod m_eigenstate.mod m_bspline.mod  \
+            m_self.mod  
 
 ${TARGET} : ${OBJECTS} 
 	${FC} ${FFLAGS} -o $@ ${OBJECTS} ${LIBBLAS} 
 
-gw.o:   gw.f90 m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20170325.o \
+gw.o:   gw.f90 m_rd_input.o m_rd_dat_wfn.o m_rd_dat_wan.o m_rd_dat_eps.o m_fft3d_20150826.o m_tetrahedron_20201027.o \
 	sub_wfn.o sub_eps.o sub_gw.o util.o calc_band_disp.o make_kpts.o make_sgmw.o calc_ksdos.o calc_gwdos.o calc_gwakw.o \
 	search_Rmin.o sub_ksdos.o sub_gwdos.o sub_eigenvalue.o sub_mkidx.o sub_det_shift.o \
-	m_qp.o m_FR.o m_band.o m_eigenstate.o m_bspline.o  
+	m_qp.o m_FR.o m_band.o m_eigenstate.o m_bspline.o \
+        m_self.o  
 
 calc_band_disp.o: calc_band_disp.f90 search_Rmin.o util.o  
 
@@ -75,11 +78,13 @@ sub_eigenvalue.o: sub_eigenvalue.f90 util.o
 
 sub_gw.o: sub_gw.f90 m_fft3d_20150826.o 
 
-sub_gwdos.o: sub_gwdos.f90 sub_mkidx.o m_tetrahedron_20170325.o 
+sub_gwdos.o: sub_gwdos.f90 sub_mkidx.o m_tetrahedron_20201027.o 
 
-sub_ksdos.o: sub_ksdos.f90 sub_mkidx.o m_tetrahedron_20170325.o
+sub_ksdos.o: sub_ksdos.f90 sub_mkidx.o m_tetrahedron_20201027.o
 
 m_qp.o: m_qp.f90 m_FR.o m_band.o m_eigenstate.o m_bspline.o  
+
+m_self.o: m_self.f90 m_tetrahedron_20201027.o 
 
 clean: 
 	${RM} ${TARGET} ${OBJECTS} ${MOD_FILES} *.mod *__genmod.f90* 

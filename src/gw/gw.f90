@@ -7,6 +7,7 @@ use m_rd_dat_wfn
 use m_rd_dat_wan 
 use m_rd_dat_eps 
 use m_qp, only: calculate_quasi_particle_band
+use m_self, only: calculate_self 
 !
 include "config.h" 
 !
@@ -465,15 +466,36 @@ end if
 if(calc_sc)then!.true.=default 
  !
  !write(file_id,'(a)')'## SC calc start ##'
- !write(file_id,'(a,3i7)')'bnq,enq,pnq',bnq,enq,pnq 
  !
  if(myrank.eq.0)then 
   write(6,*)'## SC calc start ##' 
   write(6,*) 
  endif 
- !
+ call MPI_BARRIER(comm,ierr)
+ !--
+ !FileIO: tthrdrn_causal, 20210617 Kazuma Nakamura  
+ !--
+ calc_ttrhdrn_sum=.False.!flag to calc ttrhdrn-sum or not; .False.=default 
+ if(calc_ttrhdrn_sum)then 
+  write(6,'(a)')'tetrahedron summation method employed:'
+  allocate(xowtjk(ne,nsgm,1));xowtjk=0.0d0 
+  inquire(iolength=rec_len)((xowtjk(je,ie,1),je=1,ne),ie=1,nsgm) 
+  write(6,'(a,i30)')'rec_len (byte):',rec_len 
+  deallocate(xowtjk) 
+  !write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
+  write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
+  call system(command) 
+  call MPI_BARRIER(comm,ierr)
+  filename='./dir-gw/dat.self.global'
+  call calculate_self(ncomp,Ncalc,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),b1(1),b2(1),b3(1),&
+  filename,nproc,pnq,bnq,enq,myrank,rec_len) 
+ else
+  write(6,'(a)')'simple summation method employed:'
+ endif 
+ call MPI_BARRIER(comm,ierr)
+ !--
  !fft
- !
+ !--
  nfft1=nwx2+1; nfft2=nwy2+1; nfft3=nwz2+1; Nl123=nfft1*nfft2*nfft3 
  call fft3_init(nwx2,nwy2,nwz2,nfft1,nfft2,nfft3,fs) 
  !
@@ -510,7 +532,8 @@ if(calc_sc)then!.true.=default
    enddo!igL 
    !
 !$OMP PARALLEL PRIVATE(ib,ik,jb,shift_G,ikq,C0_K,C0_KmQ,rho,wfunc,fftwk,rho_tmp,ikir,iop,kb,ie,SUM_CMPX,&
-!$OMP&         ikqir,ikqop,igL,jgL,vecf,je,veca,delta,de,sgn,dnm,pSComp) 
+!$OMP&         ikqir,ikqop,igL,jgL,vecf,je,veca,delta,de,sgn,dnm,pSComp,&
+!$OMP&         filename,file_num,rec_num,xowtjk) 
    allocate(rho(NG_for_eps,Mb,Nk_irr));rho=0.0d0
    allocate(fftwk(Nl123*2));fftwk=0.0d0 
    allocate(wfunc(Nl123*2));wfunc=0.0d0 
@@ -520,12 +543,27 @@ if(calc_sc)then!.true.=default
    allocate(C0_KmQ(NTG));C0_KmQ=0.0d0
    allocate(vecf(ne));vecf=0.0d0
    allocate(veca(ne));veca=0.0d0
+   allocate(xowtjk(ne,nsgm,NK_irr));xowtjk=0.0d0!20210617 Kazuma Nakamura 
 !$OMP DO  
    do ib=1,Ncalc
     if(myrank.eq.0) write(6,*)'ib=',ib
     !
     rho(:,:,:)=0.0D0 
-    !
+    if(calc_ttrhdrn_sum)then 
+     !--
+     !fileIO: 20210617 Kazuma Nakamura
+     !--
+     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     file_num=(myrank+1)*10000+ib  
+     open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
+     xowtjk=0.0d0 
+     do ikir=1,NK_irr 
+      rec_num=iq+(ikir-1)*pnq
+      read(file_num,rec=rec_num)((xowtjk(je,ie,ikir),je=1,ne),ie=1,nsgm) 
+     enddo!ikir  
+    endif  
+    !--
     do ikir=1,Nk_irr
      !
      ik=numMK(ikir) 
@@ -585,36 +623,56 @@ if(calc_sc)then!.true.=default
         enddo!ie 
         veca(je)=SUM_CMPX
        enddo!je 
-       !
-       do ie=1,nsgm 
-        delta=sgmw(ie) 
-        !
-        ikqir=numirr(ikq) 
-        de=delta-E_EIGI(ib,ikqir)
-        !
-        if(E_EIGI(ib,ikqir)>FermiEnergy)then 
-         sgn=1.0d0
-        else
-         sgn=-1.0d0
-        endif 
-        !
-        do je=1,ne 
+       if(calc_ttrhdrn_sum)then 
+        !--
+        !fileIO: 20210617 Kazuma Nakamura
+        !---
+        do ie=1,nsgm 
+         do je=1,ne 
+          pSComp(ie,jb,kb,ikir)=pSComp(ie,jb,kb,ikir)+veca(je)*xowtjk(je,ie,ikir) 
+         enddo!je
+        enddo!ie 
+       else
+        !--
+        !simple sum
+        !-- 
+        do ie=1,nsgm 
+         delta=sgmw(ie) 
          !
-         dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
+         ikqir=numirr(ikq) 
+         de=delta-E_EIGI(ib,ikqir)
          !
-         pSComp(ie,jb,kb,ikir)=pSComp(ie,jb,kb,ikir)+veca(je)/dnm 
+         if(E_EIGI(ib,ikqir)>FermiEnergy)then 
+          sgn=1.0d0
+         else
+          sgn=-1.0d0
+         endif 
          !
-        enddo!je 
-       enddo!ie  
+         do je=1,ne 
+          !
+          dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
+          !
+          pSComp(ie,jb,kb,ikir)=pSComp(ie,jb,kb,ikir)+veca(je)/dnm 
+          !
+         enddo!je 
+        enddo!ie  
+       endif 
+       !--
       enddo!kb 
      enddo!jb 
     enddo!ikir  
+    if(calc_ttrhdrn_sum)then 
+     !--
+     !fileIO: 20210617 Kazuma Nakamura
+     !--
+     close(file_num)
+    endif 
    enddo!ib 
 !$OMP END DO
 !$OMP CRITICAL
    pSC=pSC+pSComp
 !$OMP END CRITICAL
-   deallocate(fftwk,wfunc,rho_tmp,rho,pSComp,C0_K,C0_KmQ,vecf,veca)
+   deallocate(fftwk,wfunc,rho_tmp,rho,pSComp,C0_K,C0_KmQ,vecf,veca);deallocate(xowtjk)!20210617 Kazuma Nakamura  
 !$OMP END PARALLEL
    if(myrank.eq.0) write(6,*)'FINISH iq',iq 
    deallocate(length_qg,atten_factor,epsmk) 
@@ -653,10 +711,38 @@ if(calc_sc)then!.true.=default
      atten_factor(igL)=dsqrt(1.0d0-dcos(qgL1*Rc))   
     endif 
    enddo!igL 
-   !
+   if(calc_ttrhdrn_sum)then 
+    !--
+    !fileIO: 20210617 Kazuma Nakamura
+    !--
+    allocate(xowtjkq0(ne,nsgm,NK_irr,maxval(Nb))); xowtjkq0=0.0d0 
+   endif 
    do ib=1,Ncalc
     if(myrank.eq.0) write(6,*)'ib=',ib
     rho(:,:,:)=0.0D0 
+    if(calc_ttrhdrn_sum)then 
+     !--
+     !fileIO: 20210617 Kazuma Nakamura
+     !--
+     allocate(xowtjk(ne,nsgm,NK_irr)); xowtjk=0.0d0 
+     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     file_num=(myrank+1)*10000+ib  
+     open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
+     do ikir=1,NK_irr 
+      rec_num=iq+(ikir-1)*pnq
+      read(file_num,rec=rec_num)((xowtjk(je,ie,ikir),je=1,ne),ie=1,nsgm) 
+     enddo!ikir  
+     write(6,*)'q.eq.0; xowtjkq0 start'
+     do ikir=1,NK_irr 
+      ik=numMK(ikir) 
+      if(Ns(ik)+1.le.ib.and.ib.le.Ns(ik)+Nb(ik))then 
+       xowtjkq0(:,:,:,ib-Ns(ik))=xowtjk(:,:,:) 
+      endif 
+     enddo!ikir 
+     write(6,*)'q.eq.0; xowtjkq0 end'
+    endif 
+    !--
 !$OMP PARALLEL PRIVATE(ik,jb,ikqir,ikqop,shift_G,ikq,C0_K,C0_KmQ,wfunc,fftwk,rho_tmp,ikir,iop) 
     allocate(fftwk(Nl123*2));fftwk=0.0d0 
     allocate(wfunc(Nl123*2));wfunc=0.0d0  
@@ -693,6 +779,7 @@ if(calc_sc)then!.true.=default
 !$OMP END DO
     deallocate(fftwk,wfunc,rho_tmp,C0_K,C0_KmQ)
 !$OMP END PARALLEL
+    write(6,*)'q.eq.0; rho end'
 !--
 !$OMP PARALLEL PRIVATE(ik,jb,kb,ie,SUM_CMPX,igL,jgL,vecf,je,veca,ikq,delta,ikir,ikqir,de,sgn,dnm) 
     allocate(vecf(ne));vecf=0.0d0
@@ -727,32 +814,55 @@ if(calc_sc)then!.true.=default
         enddo!ie  
         veca(je)=SUM_CMPX 
        enddo!je  
-       do ie=1,nsgm 
-        ikq=ik 
-        delta=sgmw(ie) 
-        !
-        ikqir=numirr(ikq) 
-        de=delta-E_EIGI(ib,ikqir)
-        !
-        if(E_EIGI(ib,ikqir)>FermiEnergy)then 
-         sgn=1.0d0
-        else
-         sgn=-1.0d0
-        endif 
-        !
-        do je=1,ne 
-         dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
+       if(calc_ttrhdrn_sum)then 
+        !--
+        !fileIO: 20210617 Kazuma Nakamura
+        !---
+        do ie=1,nsgm 
+         do je=1,ne 
+          pSC(ie,jb,kb,ikir)=pSC(ie,jb,kb,ikir)+veca(je)*xowtjk(je,ie,ikir) 
+         enddo!je
+        enddo!ie 
+       else
+        !--
+        !simple sum
+        !-- 
+        do ie=1,nsgm 
+         ikq=ik 
+         delta=sgmw(ie) 
          !
-         pSC(ie,jb,kb,ikir)=pSC(ie,jb,kb,ikir)+veca(je)/dnm 
+         ikqir=numirr(ikq) 
+         de=delta-E_EIGI(ib,ikqir)
          !
-        enddo!je  
-       enddo!ie  
+         if(E_EIGI(ib,ikqir)>FermiEnergy)then 
+          sgn=1.0d0
+         else
+          sgn=-1.0d0
+         endif 
+         !
+         do je=1,ne 
+          dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
+          !
+          pSC(ie,jb,kb,ikir)=pSC(ie,jb,kb,ikir)+veca(je)/dnm 
+          !
+         enddo!je  
+        enddo!ie  
+       endif 
+       !--
       enddo!kb 
      enddo!jb 
     enddo!ikir 
 !$OMP END DO
     deallocate(vecf,veca)
 !$OMP END PARALLEL
+    if(calc_ttrhdrn_sum)then 
+     !--
+     !fileIO: 20210617 Kazuma Nakamura
+     !--
+     deallocate(xowtjk)!20210617 Kazuma Nakamura  
+     close(file_num)
+     write(6,*)'ib at q=0:',ib
+    endif 
    enddo!ib 
    deallocate(length_qg,atten_factor,rho,epsmk) 
    !
@@ -797,27 +907,43 @@ if(calc_sc)then!.true.=default
       enddo!ie 
       veca(je)=SUM_CMPX 
      enddo!je  
-     !
-     do ie=1,nsgm  
-      delta=sgmw(ie) 
-      !
-      de=delta-E_EIGI(jb+Ns(ik),ikir) 
-      !
-      if(E_EIGI(jb+Ns(ik),ikir)>FermiEnergy)then 
-       sgn=1.0d0
-      else
-       sgn=-1.0d0
-      endif 
-      do je=1,ne 
-       dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
-       !
-       pSC(ie,jb,jb,ikir)=pSC(ie,jb,jb,ikir)+veca(je)/dnm*chead  
-       !
-      enddo!je
-     enddo!ie  
+     if(calc_ttrhdrn_sum)then 
+      !--
+      !fileIO: 20210617 Kazuma Nakamura
+      !---
+      do ie=1,nsgm 
+       do je=1,ne 
+         pSC(ie,jb,jb,ikir)=pSC(ie,jb,jb,ikir)+veca(je)*xowtjkq0(je,ie,ikir,jb)*chead  
+       enddo!je
+      enddo!ie 
+     else 
+      !--
+      !simple sum
+      !-- 
+      do ie=1,nsgm  
+       delta=sgmw(ie) 
+       de=delta-E_EIGI(jb+Ns(ik),ikir) 
+       if(E_EIGI(jb+Ns(ik),ikir)>FermiEnergy)then 
+        sgn=1.0d0
+       else
+        sgn=-1.0d0
+       endif 
+       do je=1,ne 
+        dnm=de-(pole_of_chi(je)-ci*idlt)*sgn
+        pSC(ie,jb,jb,ikir)=pSC(ie,jb,jb,ikir)+veca(je)/dnm*chead  
+       enddo!je
+      enddo!ie  
+     endif 
+     !--
     enddo!jb 
    enddo!ikir 
-   deallocate(vecf,veca) 
+   deallocate(vecf,veca)
+   if(calc_ttrhdrn_sum)then 
+    !--
+    !fileIO: 20210617 Kazuma Nakamura
+    !---
+    deallocate(xowtjkq0)!20210617 Kazuma Nakamura  
+   endif 
    if(myrank.eq.0) write(6,*)'FINISH iq',iq 
   endif 
  enddo!iq 

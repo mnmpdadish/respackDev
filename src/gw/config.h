@@ -131,8 +131,13 @@ real(8)::SUM_REAL
 real(8)::mem_size          
 complex(8)::SUM_CMPX
 !
-!file output 
+!fileIO
 !
 integer::chdir
+character(99)::filename,command 
+complex(4),allocatable::xowtjk(:,:,:)!xowtjk(ne,nsgm,NK_irr) 
+complex(4),allocatable::xowtjkq0(:,:,:,:)!xowtjk(ne,nsgm,NK_irr,maxval(Nb)) 
+integer::file_num,rec_len,rec_num 
+logical::calc_ttrhdrn_sum !flag to calc ttrhdrn-sum or not 
 !
 !end-of-config.h 

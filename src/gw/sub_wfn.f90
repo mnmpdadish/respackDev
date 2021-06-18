@@ -150,9 +150,10 @@ END
 !
 subroutine est_nkbi(N,SK,nkb1,nkb2,nkb3)  
 implicit none 
-integer::N,nkb1,nkb2,nkb3,NTK  
-real(8)::SK(3,N) 
-integer::i 
+integer,intent(in)::N
+real(8),intent(in)::SK(3,N) 
+integer,intent(out)::nkb1,nkb2,nkb3
+integer::i,NTK  
 real(8)::x 
 !
 x=1.0d0 
