@@ -3,11 +3,12 @@ module m_self
 contains
   !
   subroutine calculate_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr,numMK,FermiEnergy,nsgm,sgmw,ne,pole_of_chi,E_EIGI,SK0,SQ,b1,b2,b3,&
-  filename,nproc,pnq,bnq,enq,myrank,rec_len) 
+  delt,dmna,dmnr,filename,nproc,pnq,bnq,enq,myrank,rec_len) 
     implicit none 
     integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne,nproc,pnq,bnq,enq,myrank,rec_len
     integer,intent(in)::numirr(NTK)
     integer,intent(in)::numMK(NK_irr)
+    real(8),intent(in)::delt,dmna,dmnr 
     real(8),intent(inout)::FermiEnergy
     character(99),intent(in)::filename 
     real(8),intent(in)::b1(3),b2(3),b3(3)
@@ -25,13 +26,12 @@ contains
     !real(8),parameter::delt=0.0001d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.001d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.005d0/au!Greens function delt in au 
-    real(8),parameter::delt=0.01d0/au!Greens function delt in au 
+    !real(8),parameter::delt=0.01d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.02d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.05d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.1d0/au!Greens function delt in au 
-    !
-    real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
-    real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
+    !real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
+    !real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
     !
     !calc self 
     !
@@ -255,8 +255,8 @@ contains
      !file open
      !--
      !do impi=0,nproc-1 
-     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      file_num=(myrank+1)*10000+ib  
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      !open(file_num,FILE=filename,FORM='unformatted')

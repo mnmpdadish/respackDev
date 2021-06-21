@@ -7,6 +7,7 @@ integer,public::Rc_range_spacing!Range of attenuation potential cutoff
 integer,public::Ncalc!The number of bands considered in the GW calculation  
 logical,public::calc_SC!flag to calc SC or not 
 real(8),public::gw_grid_separation!minimum separation of GW grid (eV) 
+logical,public::calc_ttrhdrn!flag to calc ttrhdrn-sum or not 
 !real(8),public::Green_func_delt!ttrhdrn Green's function delt (eV)
 !real(8),public::idlt!ttrhdrn Green's function delt (eV)
 !&param_interpolation   
@@ -16,7 +17,7 @@ integer,public::reading_sk_format!20170709
 real(8),public,allocatable::SK_sym_pts(:,:) 
 integer,public,allocatable::dense(:)!dense(3)!Dense k-grid for the Wnnier-interpolated FS
 namelist/param_interpolation/N_sym_points,Ndiv,reading_sk_format,dense
-namelist/param_calc_gw/Rc_range_spacing,Ncalc,calc_SC,gw_grid_separation   
+namelist/param_calc_gw/Rc_range_spacing,Ncalc,calc_SC,gw_grid_separation,calc_ttrhdrn 
 contains
 subroutine read_input 
 integer::ix,ik  
@@ -64,6 +65,7 @@ Rc_range_spacing=2!3
 Ncalc=0!Ncalc is set to NTB after
 calc_SC=.true.!calc SC: .true., not calc SC: .false.
 gw_grid_separation=0.05d0!(eV) 
+calc_ttrhdrn=.False. !flag to calc ttrhdrn-sum or not; .False.=default 
 !--
 !open(999,file='input.in')
 !read(999,nml=param_calc_gw)

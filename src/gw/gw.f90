@@ -34,6 +34,7 @@ call MPI_Bcast(gw_grid_separation,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 call MPI_Bcast(Rc_range_spacing,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(Ncalc,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(calc_SC,1,MPI_LOGICAL,0,comm,ierr) 
+call MPI_Bcast(calc_ttrhdrn,1,MPI_LOGICAL,0,comm,ierr)!20210617 Kazuma Nakamura  
 !
 call MPI_Bcast(N_sym_points,1,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(Ndiv,1,MPI_INTEGER,0,comm,ierr) 
@@ -475,20 +476,19 @@ if(calc_sc)then!.true.=default
  !--
  !FileIO: tthrdrn_causal, 20210617 Kazuma Nakamura  
  !--
- calc_ttrhdrn_sum=.False.!flag to calc ttrhdrn-sum or not; .False.=default 
- if(calc_ttrhdrn_sum)then 
-  write(6,'(a)')'tetrahedron summation method employed:'
+ if(calc_ttrhdrn)then 
+  write(6,'(a)')'Tetrahedron summation method for self-energy employed:'
   allocate(xowtjk(ne,nsgm,1));xowtjk=0.0d0 
   inquire(iolength=rec_len)((xowtjk(je,ie,1),je=1,ne),ie=1,nsgm) 
   write(6,'(a,i30)')'rec_len (byte):',rec_len 
   deallocate(xowtjk) 
-  !write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
-  write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
+  write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
+  !write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
   call system(command) 
   call MPI_BARRIER(comm,ierr)
   filename='./dir-gw/dat.self.global'
   call calculate_self(ncomp,Ncalc,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),b1(1),b2(1),b3(1),&
-  filename,nproc,pnq,bnq,enq,myrank,rec_len) 
+  idlt,dmna,dmnr,filename,nproc,pnq,bnq,enq,myrank,rec_len) 
  else
   write(6,'(a)')'simple summation method employed:'
  endif 
@@ -546,15 +546,16 @@ if(calc_sc)then!.true.=default
    allocate(xowtjk(ne,nsgm,NK_irr));xowtjk=0.0d0!20210617 Kazuma Nakamura 
 !$OMP DO  
    do ib=1,Ncalc
-    if(myrank.eq.0) write(6,*)'ib=',ib
+    !if(myrank.eq.0) write(6,*)'ib=',ib
+    write(6,'(a,2i10)')'myrank,ib:',myrank,ib
     !
     rho(:,:,:)=0.0D0 
-    if(calc_ttrhdrn_sum)then 
+    if(calc_ttrhdrn)then 
      !--
      !fileIO: 20210617 Kazuma Nakamura
      !--
-     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      file_num=(myrank+1)*10000+ib  
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      xowtjk=0.0d0 
@@ -623,7 +624,7 @@ if(calc_sc)then!.true.=default
         enddo!ie 
         veca(je)=SUM_CMPX
        enddo!je 
-       if(calc_ttrhdrn_sum)then 
+       if(calc_ttrhdrn)then 
         !--
         !fileIO: 20210617 Kazuma Nakamura
         !---
@@ -661,7 +662,7 @@ if(calc_sc)then!.true.=default
       enddo!kb 
      enddo!jb 
     enddo!ikir  
-    if(calc_ttrhdrn_sum)then 
+    if(calc_ttrhdrn)then 
      !--
      !fileIO: 20210617 Kazuma Nakamura
      !--
@@ -711,7 +712,7 @@ if(calc_sc)then!.true.=default
      atten_factor(igL)=dsqrt(1.0d0-dcos(qgL1*Rc))   
     endif 
    enddo!igL 
-   if(calc_ttrhdrn_sum)then 
+   if(calc_ttrhdrn)then 
     !--
     !fileIO: 20210617 Kazuma Nakamura
     !--
@@ -720,13 +721,13 @@ if(calc_sc)then!.true.=default
    do ib=1,Ncalc
     if(myrank.eq.0) write(6,*)'ib=',ib
     rho(:,:,:)=0.0D0 
-    if(calc_ttrhdrn_sum)then 
+    if(calc_ttrhdrn)then 
      !--
      !fileIO: 20210617 Kazuma Nakamura
      !--
      allocate(xowtjk(ne,nsgm,NK_irr)); xowtjk=0.0d0 
-     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      file_num=(myrank+1)*10000+ib  
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      do ikir=1,NK_irr 
@@ -814,7 +815,7 @@ if(calc_sc)then!.true.=default
         enddo!ie  
         veca(je)=SUM_CMPX 
        enddo!je  
-       if(calc_ttrhdrn_sum)then 
+       if(calc_ttrhdrn)then 
         !--
         !fileIO: 20210617 Kazuma Nakamura
         !---
@@ -855,7 +856,7 @@ if(calc_sc)then!.true.=default
 !$OMP END DO
     deallocate(vecf,veca)
 !$OMP END PARALLEL
-    if(calc_ttrhdrn_sum)then 
+    if(calc_ttrhdrn)then 
      !--
      !fileIO: 20210617 Kazuma Nakamura
      !--
@@ -907,7 +908,7 @@ if(calc_sc)then!.true.=default
       enddo!ie 
       veca(je)=SUM_CMPX 
      enddo!je  
-     if(calc_ttrhdrn_sum)then 
+     if(calc_ttrhdrn)then 
       !--
       !fileIO: 20210617 Kazuma Nakamura
       !---
@@ -938,7 +939,7 @@ if(calc_sc)then!.true.=default
     enddo!jb 
    enddo!ikir 
    deallocate(vecf,veca)
-   if(calc_ttrhdrn_sum)then 
+   if(calc_ttrhdrn)then 
     !--
     !fileIO: 20210617 Kazuma Nakamura
     !---
@@ -947,7 +948,15 @@ if(calc_sc)then!.true.=default
    if(myrank.eq.0) write(6,*)'FINISH iq',iq 
   endif 
  enddo!iq 
- call MPI_BARRIER(comm,ierr)
+ if(calc_ttrhdrn)then 
+  !--
+  !fileIO: 20210617 Kazuma Nakamura
+  !---
+  write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
+  !write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
+  call system(command) 
+  call MPI_BARRIER(comm,ierr)
+ endif 
  !write(file_id,*)'I finished pSC calc' 
  allocate(SCirr(nsgm,Mb,Mb,Nk_irr)); SCirr(:,:,:,:)=0.0d0 
  !
