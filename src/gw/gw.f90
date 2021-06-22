@@ -293,8 +293,18 @@ call MPI_Bcast(LG0,3*NTG*NTQ,MPI_INTEGER,0,comm,ierr)
 call MPI_Bcast(NGQ_eps,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(NGQ_psi,NTQ,MPI_INTEGER,0,comm,ierr) 
 call MPI_Bcast(packingq(-Lq1,-Lq2,-Lq3,1),(2*Lq1+1)*(2*Lq2+1)*(2*Lq3+1)*Nq_irr,MPI_INTEGER,0,comm,ierr) 
-call MPI_Bcast(epsirr,NTGQ*NTGQ*ne*Nq_irr,MPI_COMPLEX,0,comm,ierr)
+!
+!20210622 Kazuma Nakamura 
+!
+if(mem_size<1.99d0)then 
+ call MPI_Bcast(epsirr,NTGQ*NTGQ*ne*Nq_irr,MPI_COMPLEX,0,comm,ierr)
+else 
+ do iq=1,NQ_irr 
+  call MPI_Bcast(epsirr(1,1,1,iq),NTGQ*NTGQ*ne,MPI_COMPLEX,0,comm,ierr)
+ enddo 
+endif 
 call MPI_BARRIER(comm,ierr)
+
 !
 !if(myrank.eq.0)then 
 ! write(6,*) 
