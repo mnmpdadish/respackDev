@@ -51,7 +51,7 @@ contains
     !
     allocate(dos_r(ndosgrd));dos_r=0.0d0 
     allocate(dos_i(ndosgrd));dos_i=0.0d0 
-    call calc_dos_self(ncomp,NTB,NTK,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,ndosgrd,dosgrd(1),E_EIGI(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1 
+    call calc_dos_self(ncomp,NTB,NTK,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,ndosgrd,dosgrd(1),E_EIGI(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1
     !
     !wrt dat.self.imag 
     !
@@ -365,8 +365,12 @@ contains
         xow(ie)=xow(ie)+SUM_CMPX/dble(NTQ) 
        enddo!ie 
       enddo!je 
+      !--
+      !write(command,"('mkdir ikir',i3.3,'_ib',i3.3)")ikir,ib
+      !call system(command) 
+      !--
       pself(:,ikir)=pself(:,ikir)+xow(:) 
-     enddo!ik
+     enddo!ikir 
      if(iomp.eq.0) write(6,*)'#',jb   
     enddo!jb 
 !$OMP END DO 

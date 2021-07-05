@@ -84,9 +84,15 @@ contains
     !
     !define grid range
     !
-    ndosgrd=int(2.0d0*diff/deltw)+1
-    emax=emax+0.5d0*diff
-    emin=emin-0.5d0*diff
+    !ndosgrd=int(2.0d0*diff/deltw)+1
+    !emax=emax+0.5d0*diff
+    !emin=emin-0.5d0*diff
+    !
+    !20200624 Kazuma Nakamura
+    !
+    ndosgrd=int(4.0d0*diff/deltw)+1
+    emax=emax+1.5d0*diff
+    emin=emin-1.5d0*diff
     !
     write(6,*)
     write(6,'(a50)')'GRID DATA FOR DOS:'

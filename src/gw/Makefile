@@ -6,7 +6,7 @@
 #--------------------------------------------------------------------
 #intel
 FC = mpiifort 
-FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel -g -traceback
+FFLAGS = -O2 -qopenmp -xHost -mcmodel=large -shared-intel -g -traceback -heap-arrays
 
 #######
 #DEBUG#

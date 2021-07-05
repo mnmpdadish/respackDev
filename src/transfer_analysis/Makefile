@@ -6,7 +6,7 @@
 #--------------------------------------------------------------------
 #intel
 FC = ifort  
-FFLAGS = -O2 -qopenmp -xHost -g -traceback
+FFLAGS = -O2 -qopenmp -xHost -g -traceback -heap-arrays 
 
 #######
 #DEBUG#

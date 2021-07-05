@@ -55,8 +55,8 @@ contains
     allocate(dos_r(ndosgrd));dos_r=0.0d0 
     allocate(dos_i(ndosgrd));dos_r=0.0d0 
     !check 20210520 
-    !call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),FermiEnergy,dos_r(1),dos_i(1));flg_causal=1;dos=dos_i   
-    call calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1;dos=dos_i
+    call calc_dos(ncomp,NTB,NTK,nkb1,nkb2,nkb3,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),FermiEnergy,dos_r(1),dos_i(1));flg_causal=1;dos=dos_i   
+    !call calc_dos_causal(ncomp,NTB,NTK,nkb1,nkb2,nkb3,FermiEnergy,ndosgrd,dosgrd(1),EIG(1,1),SK0(1,1),delt,dmnr,dmna,b1(1),b2(1),b3(1),dos_r(1),dos_i(1));flg_causal=1;dos=dos_i
     !
     !calc pdos 
     !

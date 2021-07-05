@@ -248,7 +248,7 @@ contains
     allocate(ekq_3D(nqb1,nqb2,nqb3)); ekq_3D=0.0d0  
     allocate(xowt_1D(nsgm,NTQ)); xowt_1D=0.0d0  
     allocate(xowtj(ne,nsgm,pnq)); xowtj=0.0d0 
-!$OMP DO 
+!$OMP DO SCHEDULE(DYNAMIC,1)  
     do ib=1,NTB
      iomp=omp_get_thread_num() 
      !--
@@ -271,7 +271,7 @@ contains
        zj=pole_of_chi(je) 
        !
        Rezj=dble(zj)
-       Imzj=dimag(zj)*1.0d0 !0.1d0!0.01d0 
+       Imzj=dimag(zj) !*1.0d0!0.1d0!0.01d0 
        !
        zj=cmplx(Rezj,Imzj)
        !
@@ -376,6 +376,7 @@ contains
      !
      if(iomp.eq.0) write(6,*)'#',ib   
      !
+!$OMP BARRIER  
     enddo!ib 
 !$OMP END DO 
 !$OMP CRITICAL

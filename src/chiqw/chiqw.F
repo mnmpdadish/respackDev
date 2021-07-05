@@ -164,7 +164,7 @@
       READ(105,*) a3(1),a3(2),a3(3)!a3 vector
       CLOSE(105)
       call OUTER_PRODUCT(a2(1),a3(1),b1(1))
-      VOLUME=a1(1)*b1(1)+a1(2)*b1(2)+a1(3)*b1(3)
+      VOLUME=dabs(a1(1)*b1(1)+a1(2)*b1(2)+a1(3)*b1(3))!20210630 Kazuma Nakamura
       b1(:)=b1(:)*tpi/VOLUME 
       call OUTER_PRODUCT(a3(1),a1(1),b2(1))
       b2(:)=b2(:)*tpi/VOLUME 
