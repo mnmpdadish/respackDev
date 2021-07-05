@@ -22,7 +22,7 @@ contains
     !
     !20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
     !
-    complex(8),allocatable::tmp(:,:,:) 
+    !complex(8),allocatable::tmp(:,:,:) 
     !
     Ntr=NWF*NWF*(2*Na3+1)*(2*Na2+1)*(2*Na1+1) 
     allocate(tr(Ntr)); tr=0.0d0  
@@ -35,9 +35,9 @@ contains
     !
     !20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
     !
-    allocate(tmp(NWF,NWF,-Na3:Na3)); tmp=0.0d0 
-    tmp(:,:,:)=KS_R(:,:,0,0,:) 
-    KS_R(:,:,0,0,:)=0.0d0 
+    !allocate(tmp(NWF,NWF,-Na3:Na3)); tmp=0.0d0 
+    !tmp(:,:,:)=KS_R(:,:,0,0,:) 
+    !KS_R(:,:,0,0,:)=0.0d0 
     !
     do ia1=-Na1,Na1
      do ia2=-Na2,Na2
@@ -49,39 +49,39 @@ contains
          !
          !20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
          !
-         if(ia1/=0)then
-          tij=0.0d0 
-         endif
-         ! 
-         if(ia2/=0)then
-          tij=0.0d0 
-         endif
-         !
-         !20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
-         !
-         if(ia1==0.and.ia2==0)then
-          if(ib==jb)then 
-            tij=tmp(ib,jb,ia3) 
-          endif 
-          if((ib== 1.and.jb==4).or.(ib== 1.and.jb==7).or.(ib== 1.and.jb==10).or. & 
-             (ib== 4.and.jb==1).or.(ib== 4.and.jb==7).or.(ib== 4.and.jb==10).or. & 
-             (ib== 7.and.jb==1).or.(ib== 7.and.jb==4).or.(ib== 7.and.jb==10).or. & 
-             (ib==10.and.jb==1).or.(ib==10.and.jb==4).or.(ib==10.and.jb== 7))then 
-           tij=tmp(ib,jb,ia3) 
-          endif 
-          if((ib== 2.and.jb==5).or.(ib== 2.and.jb==8).or.(ib== 2.and.jb==11).or. & 
-             (ib== 5.and.jb==2).or.(ib== 5.and.jb==8).or.(ib== 5.and.jb==11).or. & 
-             (ib== 8.and.jb==2).or.(ib== 8.and.jb==5).or.(ib== 8.and.jb==11).or. & 
-             (ib==11.and.jb==2).or.(ib==11.and.jb==5).or.(ib==11.and.jb== 8))then 
-           tij=tmp(ib,jb,ia3) 
-          endif 
-          if((ib== 3.and.jb==6).or.(ib== 3.and.jb==9).or.(ib== 3.and.jb==12).or. & 
-             (ib== 6.and.jb==3).or.(ib== 6.and.jb==9).or.(ib== 6.and.jb==12).or. & 
-             (ib== 9.and.jb==3).or.(ib== 9.and.jb==6).or.(ib== 9.and.jb==12).or. & 
-             (ib==12.and.jb==3).or.(ib==12.and.jb==6).or.(ib==12.and.jb== 9))then 
-           tij=tmp(ib,jb,ia3) 
-          endif 
-         endif 
+         !if(ia1/=0)then
+         ! tij=0.0d0 
+         !endif
+         !! 
+         !if(ia2/=0)then
+         ! tij=0.0d0 
+         !endif
+         !!
+         !!20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
+         !!
+         !if(ia1==0.and.ia2==0)then
+         ! if(ib==jb)then 
+         !   tij=tmp(ib,jb,ia3) 
+         ! endif 
+         ! if((ib== 1.and.jb==4).or.(ib== 1.and.jb==7).or.(ib== 1.and.jb==10).or. & 
+         !    (ib== 4.and.jb==1).or.(ib== 4.and.jb==7).or.(ib== 4.and.jb==10).or. & 
+         !    (ib== 7.and.jb==1).or.(ib== 7.and.jb==4).or.(ib== 7.and.jb==10).or. & 
+         !    (ib==10.and.jb==1).or.(ib==10.and.jb==4).or.(ib==10.and.jb== 7))then 
+         !  tij=tmp(ib,jb,ia3) 
+         ! endif 
+         ! if((ib== 2.and.jb==5).or.(ib== 2.and.jb==8).or.(ib== 2.and.jb==11).or. & 
+         !    (ib== 5.and.jb==2).or.(ib== 5.and.jb==8).or.(ib== 5.and.jb==11).or. & 
+         !    (ib== 8.and.jb==2).or.(ib== 8.and.jb==5).or.(ib== 8.and.jb==11).or. & 
+         !    (ib==11.and.jb==2).or.(ib==11.and.jb==5).or.(ib==11.and.jb== 8))then 
+         !  tij=tmp(ib,jb,ia3) 
+         ! endif 
+         ! if((ib== 3.and.jb==6).or.(ib== 3.and.jb==9).or.(ib== 3.and.jb==12).or. & 
+         !    (ib== 6.and.jb==3).or.(ib== 6.and.jb==9).or.(ib== 6.and.jb==12).or. & 
+         !    (ib== 9.and.jb==3).or.(ib== 9.and.jb==6).or.(ib== 9.and.jb==12).or. & 
+         !    (ib==12.and.jb==3).or.(ib==12.and.jb==6).or.(ib==12.and.jb== 9))then 
+         !  tij=tmp(ib,jb,ia3) 
+         ! endif 
+         !endif 
          !
          if(threshold_e>abs(tij))then 
           tij=0.0d0 
@@ -116,7 +116,7 @@ contains
     !
     !20200623 without IC Ca5Ir3O12 Kazuma Nakamura 
     !
-    deallocate(tmp)
+    !deallocate(tmp)
     !
     call wrt_transfer_analysis(threshold_e,threshold_r,diff_transfers,Ntr,ib_map(1),jb_map(1),&
                                ia1_map(1),ia2_map(1),ia3_map(1),dist(1),tr(1)) 
