@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#Copyright (c) 2018 Yuichi Motoyama, 2019 Terumasa Tadano
+#Copyright (c) 2017 Yusuke Nomura, 2018 Yuichi Motoyama, 2019 Terumasa Tadano, 2021 Jean-Baptiste Mor\'ee
 
 '''
 qe2respack.py -- convert Quantum ESPRESSO output into RESPACK input.
@@ -159,16 +159,25 @@ def latvectors(root, oldxml=False):
         for i in range(3):
             A[i,:] = [float(x) for x in cc.find('a{0}'.format(i+1)).text.split()]
     else:
-        child = root.find('input').find('atomic_structure')
-        celldm = float(child.attrib['alat'])
-        cell = child.find('cell')
+        input_tag = root.find('input')
+        output_tag = root.find('output')
+        if input_tag is not None:
+            child = input_tag.find('atomic_structure')
+            celldm = float(child.attrib['alat'])
+            cell = child.find('cell')
+            # The celldm should be alat when "CELL_PARAMETERS alat" is used, but it isn't
+            # in the <input> tag probably due to a bug in QE. The value in the 'alat' attribute
+            # of the <atomic_structure> tag inside <output> is alat (= celldm(1)).
+            # So, let's update celldm as follows:
+            celldm = float(output_tag.find('atomic_structure').attrib['alat'])
+        else:
+            # In some cases, <input> tag may be absent. 
+            # If so, let's parse data from <output> instead.
+            child = output_tag.find('atomic_structure')
+            celldm = float(child.attrib['alat'])
+            cell = child.find('cell')
         for i in range(3):
             A[i,:] = [float(x) for x in cell.find('a{0}'.format(i+1)).text.split()]
-        # The celldm should be alat when "CELL_PARAMETERS alat" is used, but it isn't
-        # in the <input> tag probably due to a but in QE. The value in the 'alat' attribute
-        # of the <atomic_structure> tag inside <output> is alat (= celldm(1)).
-        # So, let's update celldm as follows:
-        celldm = float(root.find('output').find('atomic_structure').attrib['alat'])
     return A, celldm
 
 def atoms_information(root, oldxml=False):
@@ -196,8 +205,13 @@ def wfc_cutoff(root, oldxml=False):
         child = root.find('PLANE_WAVES')
         Ecut_for_psi = float(child.find('WFC_CUTOFF').text)
     else:
-        child = root.find('input').find('basis')
-        Ecut_for_psi = float(child.find('ecutwfc').text)
+        input_tag = root.find('input')
+        if input_tag is not None:
+            child = root.find('input').find('basis')
+            Ecut_for_psi = float(child.find('ecutwfc').text)
+        else:
+            child = root.find('output').find('basis_set')
+            Ecut_for_psi = float(child.find('ecutwfc').text)
     return Ecut_for_psi
 
 def symmetry(root, oldxml=False):
@@ -243,17 +257,34 @@ def eigenvalues(dirname, num_k, num_b, oldxml=False):
             evs[k,:] = [float(x) for x in kse.find('eigenvalues').text.strip().split()]
     return evs
 
+#def occupations(dirname, num_k, num_b, oldxml=False):
+#    occs = np.zeros((num_k,num_b))
+#    if oldxml:
+#        for k in range(num_k):
+#            tree = ET.parse(os.path.join(dirname, 'K{0:0>5}/eigenval.xml'.format(k+1)))
+#            root = tree.getroot()
+#            child = root.find('OCCUPATIONS')
+#            occs[k,:] = [float(x) for x in child.text.strip().split()]
+#    else:
+#        tree = ET.parse(os.path.join(dirname, 'data-file-schema.xml'))
+#        root = tree.getroot()
+#        child = root.find('output').find('band_structure')
+#        for k,kse in enumerate(child.iter('ks_energies')):
+#            occs[k,:] = [float(x) for x in kse.find('occupations').text.strip().split()]
+#    return occs
+
 def spin_orbit_info(root, oldxml=False):
     if oldxml:
         child = root.find('SPIN')
         is_SpinOrbit = bool(child.find('SPIN-ORBIT_CALCULATION').text)
+        is_noncolin = bool(child.find('NON-COLINEAR_CALCULATION').text)
         is_LSDA = bool(child.find('LSDA').text)
     else:
         child = root.find('output').find('magnetization')
+        is_noncolin = child.find('noncolin').text=='true'
         is_SpinOrbit = child.find('spinorbit').text=='true'
         is_LSDA = child.find('lsda').text=='true'
-    return is_SpinOrbit, is_LSDA
-
+    return is_noncolin,is_SpinOrbit,is_LSDA
 
 def qe2respack(dirname, endian=sys.byteorder):
     if endian == 'little':
@@ -300,10 +331,11 @@ def qe2respack(dirname, endian=sys.byteorder):
     print('n_sym = {0}'.format(n_sym))
     
     mat_sym, ftau = symmetry(root, oldxml=oldxml)
-    is_SpinOrbit, is_LSDA = spin_orbit_info(root, oldxml=oldxml)
+    is_noncolin,is_SpinOrbit, is_LSDA = spin_orbit_info(root, oldxml=oldxml)
+    print('is_noncolin = {0}'.format(is_noncolin))
     print('is_SpinOrbit = {0}'.format(is_SpinOrbit))
     ncomp=1
-    if(is_SpinOrbit): ncomp = 2
+    if(is_noncolin or is_SpinOrbit): ncomp = 2
     
     ## end of read XML file
 
@@ -321,7 +353,7 @@ def qe2respack(dirname, endian=sys.byteorder):
     print('generating dir-wfn/dat.lattice')
     with open('./dir-wfn/dat.lattice', 'w') as f:
         for i in range(3):
-            f.write('{0} {1} {2}\n'.format(A[i,0], A[i,1], A[i,2]))
+            f.write('{0:20.15f} {1:20.15f} {2:20.15f}\n'.format(A[i,0], A[i,1], A[i,2]))
     
     print('generating dir-wfn/dat.bandcalc')
     with open('./dir-wfn/dat.bandcalc', 'w') as f:
@@ -343,6 +375,14 @@ def qe2respack(dirname, endian=sys.byteorder):
                 f.write(str(eigvals[k,i]))
                 f.write('\n')
 
+#    print('generating dir-wfn/dat.occ')
+#    occs = occupations(dirname, num_k, num_b, oldxml=oldxml)
+#    with open('./dir-wfn/dat.occ', 'w') as f:
+#        for k in range(num_k):
+#            for i in range(num_b):
+#                f.write(str(occs[k,i]))
+#                f.write('\n')
+                
     print('generating dir-wfn/dat.atom_position')
     with open('./dir-wfn/dat.atom_position', 'w') as f:
         f.write('{0}\n'.format(n_atoms))
@@ -409,7 +449,7 @@ def qe2respack(dirname, endian=sys.byteorder):
         f.write(struct.pack(endian_fmt+'i',4))
         if oldxml:
             for k in range(num_k):
-                if(not is_SpinOrbit):
+                if(not (is_SpinOrbit or is_noncolin)):
                     with Iotk_dat(os.path.join(dirname, 'K{0:0>5}/evc.dat'.format(k+1)), endian=endian) as inp:
                         for ib in range(num_b):
                             size,dat = inp.load('evc.{0}'.format(ib+1), raw=True)
