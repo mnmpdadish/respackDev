@@ -3,24 +3,27 @@ module m_self
 contains
   !
   subroutine calculate_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr,numMK,FermiEnergy,nsgm,sgmw,ne,pole_of_chi,E_EIGI,SK0,SQ,b1,b2,b3,&
-  delt,dmna,dmnr,filename,nproc,pnq,bnq,enq,myrank,rec_len) 
+  delt,dmna,dmnr,nproc,myrank,rec_len,comm) 
+    use mpi
     implicit none 
-    integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne,nproc,pnq,bnq,enq,myrank,rec_len
+    integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne,nproc,myrank,rec_len,comm 
     integer,intent(in)::numirr(NTK)
     integer,intent(in)::numMK(NK_irr)
     real(8),intent(in)::delt,dmna,dmnr 
     real(8),intent(inout)::FermiEnergy
-    character(99),intent(in)::filename 
     real(8),intent(in)::b1(3),b2(3),b3(3)
     real(8),intent(in)::SK0(3,NTK),SQ(3,NTQ) 
     real(8),intent(in)::E_EIGI(NTB,NK_irr) 
     real(8),intent(in)::sgmw(nsgm) 
     complex(8),intent(in)::pole_of_chi(ne)!pole_of_chi(ne)
     !
-    real(8),allocatable::dos_i(:)!dos_i(nsgm) 
+    character(99)::filename,command 
+    integer::pnb,bnb,enb 
+    integer::je,ie,ierr  
     real(8),allocatable::dos_r(:)!dos_r(nsgm) 
-    integer::flg_causal 
-    !
+    real(8),allocatable::dos_i(:)!dos_i(nsgm) 
+    real(8),allocatable::pself_r(:)!pself_r(nsgm) 
+    real(8),allocatable::pself_i(:)!pself_i(nsgm) 
     real(8),parameter::au=27.21151d0
     !real(8),parameter::delt=0.00001d0/au!Greens function delt in au 
     !real(8),parameter::delt=0.0001d0/au!Greens function delt in au 
@@ -32,26 +35,46 @@ contains
     !real(8),parameter::delt=0.1d0/au!Greens function delt in au 
     !real(8),parameter::dmna=1.0d-3!Ttrhdrn parameter dmna in au 
     !real(8),parameter::dmnr=1.0d-3!Ttrhdrn parameter dmnr in au 
+    !--
+    !pnb,bnb,enb setting 
+    !
+    pnb=NTB/nproc 
+    if(myrank.lt.mod(NTB,nproc))then
+     pnb=pnb+1
+     bnb=pnb*myrank+1 
+     enb=bnb+pnb-1
+    else
+     bnb=(pnb+1)*mod(NTB,nproc)+pnb*(myrank-mod(NTB,nproc))+1 
+     enb=bnb+pnb-1
+    end if
     !
     !calc self 
     !
+    allocate(pself_r(nsgm));pself_r=0.0d0 
+    allocate(pself_i(nsgm));pself_i=0.0d0 
+    call MPI_BARRIER(comm,ierr)
+    call calc_dos_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),&
+    delt,dmnr,dmna,b1(1),b2(1),b3(1),nproc,pnb,bnb,enb,myrank,rec_len,pself_r(1),pself_i(1)) 
+    !
+    !MPI_REDUCE 
+    !
     allocate(dos_r(nsgm));dos_r=0.0d0 
     allocate(dos_i(nsgm));dos_i=0.0d0 
-    call calc_dos_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),&
-    delt,dmnr,dmna,b1(1),b2(1),b3(1),nproc,pnq,bnq,enq,myrank,rec_len,dos_r(1),dos_i(1));flg_causal=1
+    call MPI_BARRIER(comm,ierr)
+    call MPI_REDUCE(pself_r,dos_r,nsgm,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
+    call MPI_BARRIER(comm,ierr)
+    call MPI_REDUCE(pself_i,dos_i,nsgm,MPI_DOUBLE_PRECISION,MPI_SUM,0,comm,ierr)
+    call MPI_BARRIER(comm,ierr)
     !
-    !wrt dat.self.imag 
+    !wrt dat.self.dos.real and dat.self.dos.imag 
     !
     if(myrank.eq.0)then 
+     filename='./dir-gw/dat.self.dos'
+     call wrt_dos_real(filename,nsgm,sgmw(1),dos_r(1),FermiEnergy) 
      call wrt_dos_imag(filename,nsgm,sgmw(1),dos_i(1),FermiEnergy) 
-     !
-     !wrt dat.dos.real  
-     !
-     if(flg_causal==1)then
-      call wrt_dos_real(filename,nsgm,sgmw(1),dos_r(1),FermiEnergy) 
-     endif 
     endif 
     !
+    deallocate(pself_r,pself_i,dos_r,dos_i) 
     return
   end subroutine calculate_self 
   ! 
@@ -125,7 +148,7 @@ contains
     !
     !OPEN(300,W,file='./dir-wan/dat.dos.xxx-total')
     !
-    fname_arg='-total'
+    fname_arg='-total-imag'
     !
     write(fname,'(a,a)') trim(filename),trim(fname_arg) 
     OPEN(300,file=trim(fname)) 
@@ -167,13 +190,13 @@ contains
   end subroutine wrt_dos_real
   !
   subroutine calc_dos_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr,numMK,FermiEnergy,nsgm,sgmw,ne,pole_of_chi,E_EIGI,SK0,SQ,delt,dmnr,dmna,b1,b2,b3,&
-  nproc,pnq,bnq,enq,myrank,rec_len,self_r,self_i)
+  nproc,pnb,bnb,enb,myrank,rec_len,pself_r,pself_i)
     use m_tetrahedron
     implicit none
     integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne
     integer,intent(in)::numirr(NTK) 
     integer,intent(in)::numMK(NK_irr) 
-    integer,intent(in)::nproc,pnq,bnq,enq,myrank 
+    integer,intent(in)::nproc,pnb,bnb,enb,myrank 
     integer,intent(in)::rec_len
     real(8),intent(in)::FermiEnergy 
     real(8),intent(in)::sgmw(nsgm) 
@@ -182,14 +205,14 @@ contains
     real(8),intent(in)::delt,dmnr,dmna 
     real(8),intent(in)::b1(3),b2(3),b3(3)
     complex(8),intent(in)::pole_of_chi(ne)!pole_of_chi(ne)
-    real(8),intent(out)::self_r(nsgm) 
-    real(8),intent(out)::self_i(nsgm) 
+    real(8),intent(out)::pself_r(nsgm) 
+    real(8),intent(out)::pself_i(nsgm) 
     !
     integer::index_kpt(nkb1,nkb2,nkb3) 
     integer::imt1(4*nkb1*nkb2*nkb3*6)  
     integer::ie,ib,ik,ikb1,ikb2,ikb3,iqb1,iqb2,iqb3 
     integer::je,iq,ikq,ikir,ikqir   
-    integer::iomp,omp_get_thread_num,impi,file_num   
+    integer::iomp,omp_get_thread_num,impi,file_num,pnqIO,bnqIO,enqIO 
     integer::nqb1,nqb2,nqb3
     integer::rec_num 
     real(8)::SUM_REAL1,SUM_REAL2  
@@ -200,16 +223,17 @@ contains
     complex(8)::SUM_CMPX 
     character(99)::filename,command 
     !
+    complex(8),allocatable::pself(:,:)!pself(nsgm,NK_irr) 
+    complex(8),allocatable::sgmw_cmplx(:)!sgmw_cmplx(nsgm) 
+    complex(4),allocatable::xowtj(:,:,:,:)!xowtj(ne,nsgm,NTQ,Nk_irr) 
+    !
     complex(8),allocatable::ekq_1D(:)!ekq_1D(NTQ)
     complex(8),allocatable::ekq_3D(:,:,:)!ekq_3D(nqb1,nqb2,nqb3) 
-    complex(8),allocatable::self(:,:)!self(nsgm,NK_irr) 
-    complex(8),allocatable::pself(:,:)!pself(nsgm,NK_irr) 
     complex(8),allocatable::xow(:)!xow(nsgm) 
     complex(8),allocatable::xowt(:,:,:,:)!xowt(nsgm,nqb1,nqb2,nqb3) 
     complex(8),allocatable::xowt_1D(:,:)!xowt_1D(nsgm,NTQ)
-    complex(4),allocatable::xowtj(:,:,:)!xowtj(ne,nsgm,NTQ) 
     complex(8),allocatable::ca1(:)!ca1(4*nsgm) 
-    complex(8),allocatable::sgmw_cmplx(:)!sgmw_cmplx(nsgm) 
+    !
     real(8),parameter::pi=dacos(-1.0d0)
     real(8),parameter::au=27.21151d0 
     complex(8),parameter::ci=(0.0D0,1.0D0) 
@@ -221,51 +245,38 @@ contains
     call make_index_kpt(NTQ,nqb1,nqb2,nqb3,SQ(1,1),index_kpt(1,1,1)) 
     call ttrhdrn_mkidx(nqb1,nqb2,nqb3,imt1(1),b1(1),b2(1),b3(1))
     !--
+    !set GW grid
+    !--
     allocate(sgmw_cmplx(nsgm)); sgmw_cmplx=0.0d0   
     do ie=1,nsgm
      sgmw_cmplx(ie)=dcmplx(sgmw(ie),0.0d0) 
     enddo
     !--
-    !do impi=0,nproc-1
-    !write(command,"('mkdir -p ./xqdata',i3.3)")myrank!impi  
-    !call system(command) 
-    !enddo!impi  
-    !--
-    !rec_len=ne*nsgm*2 
-    !allocate(xowtj(ne,nsgm,1)); xowtj=0.0d0 
-    !inquire(iolength=rec_len)((xowtj(je,ie,1),je=1,ne),ie=1,nsgm) 
-    !write(6,'(a,i30)')'rec_len (byte):',rec_len 
-    !deallocate(xowtj) 
-    !--
-    allocate(self(nsgm,NK_irr)); self=0.0d0  
-!$OMP PARALLEL PRIVATE(ca1,pself,xow,xowt,ekq_1D,ekq_3D,ib,iomp,ikir,ik,je,zj,Rezj,ImZj,sgn,iq,q1,q2,q3,shift_G,ikq,ikqir,iqb3,iqb2,iqb1,ie,SUM_CMPX,&
-!$OMP&                 xowt_1D,xowtj,filename,file_num,rec_num)
-    allocate(ca1(4*nsgm)); ca1=0.d0   
     allocate(pself(nsgm,NK_irr)); pself=0.0d0  
+    allocate(xowtj(ne,nsgm,NTQ,Nk_irr)); xowtj=0.0d0 
+    do ib=1,pnb !NTB
+     !--
+     !file open
+     !--
+     do impi=0,nproc-1 
+      write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")impi,bnb+ib-1 
+      file_num=(impi+1)*10000+bnb+ib-1   
+      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
+     enddo!impi 
+     !
+!$OMP PARALLEL PRIVATE(ca1,xow,xowt,ekq_1D,ekq_3D,iomp,ikir,ik,je,zj,Rezj,ImZj,sgn,iq,q1,q2,q3,shift_G,ikq,ikqir,iqb3,iqb2,iqb1,ie,SUM_CMPX,&
+!$OMP&                 xowt_1D,file_num,rec_num,impi,pnqIO,bnqIO,enqIO) 
+    allocate(ca1(4*nsgm)); ca1=0.d0   
     allocate(xow(nsgm)); xow=0.0d0  
     allocate(xowt(nsgm,nqb1,nqb2,nqb3)); xowt=0.0d0  
     allocate(ekq_1D(NTQ)); ekq_1D=0.0d0
     allocate(ekq_3D(nqb1,nqb2,nqb3)); ekq_3D=0.0d0  
     allocate(xowt_1D(nsgm,NTQ)); xowt_1D=0.0d0  
-    allocate(xowtj(ne,nsgm,pnq)); xowtj=0.0d0 
-!$OMP DO SCHEDULE(DYNAMIC,1)  
-    do ib=1,NTB
-     iomp=omp_get_thread_num() 
-     !--
-     !file open
-     !--
-     !do impi=0,nproc-1 
-     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     file_num=(myrank+1)*10000+ib  
-     open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
-     !open(file_num,FILE=filename,FORM='unformatted')
-     !enddo!impi 
-     !
+!$OMP DO  
      do ikir=1,NK_irr 
-      if(iomp.eq.0.and.myrank.eq.0) write(6,*)'#ikir=',ikir 
+      iomp=omp_get_thread_num() 
+      if(iomp.eq.0.and.myrank.eq.1) write(6,*)'#ikir=',ikir 
       ik=numMK(ikir) 
-      xowtj=0.0d0 
       xow=0.0d0 
       do je=1,ne 
        zj=pole_of_chi(je) 
@@ -283,7 +294,7 @@ contains
         shift_G(:)=0
         call search_kq(NTK,SK0(1,1),-q1,-q2,-q3,ik,ikq,shift_G(1))
         ikqir=numirr(ikq) 
-        ekq_1D(iq)=cmplx(E_EIGI(ib,ikqir),0.0d0) 
+        ekq_1D(iq)=cmplx(E_EIGI(ib+bnb-1,ikqir),0.0d0) 
        enddo!iq 
        ekq_3D=0.0d0 
        do iqb3=1,nqb3
@@ -334,72 +345,67 @@ contains
        !make xowtj
        !--
        do ie=1,nsgm
-        do iq=1,pnq !NTQ 
-         xowtj(je,ie,iq)=xowt_1D(ie,bnq+iq-1) 
-         !xowtj(je,ie,iq)=xowt_1D(ie,iq) 
+        do iq=1,NTQ !pnq 
+         xowtj(je,ie,iq,ikir)=xowt_1D(ie,iq) 
         enddo!iq
        enddo!ie 
-       !--
       enddo!je
-      !--
-      !wrt xowtj via fileIO 
-      !--
-      !do impi=0,nproc-1
-      ! pnqIO=NTQ/nproc 
-      ! if(impi.lt.mod(NTQ,nproc))then
-      !  pnqIO=pnqIO+1
-      !  bnqIO=pnqIO*impi+1
-      !  enqIO=bnqIO+pnqIO-1
-      ! else
-      !  bnqIO=(pnqIO+1)*mod(NTQ,nproc)+pnqIO*(impi-mod(NTQ,nproc))+1
-      !  enqIO=bnqIO+pnqIO-1
-      ! endif 
-      ! file_num=(impi+1)*10000+ib 
-      do iq=1,pnq
-       rec_num=iq+(ikir-1)*pnq
-       !write(file_num,rec=rec_num)((xowtj(je,ie,bnq+iq-1),je=1,ne),ie=1,nsgm) 
-       write(file_num,rec=rec_num)((xowtj(je,ie,iq),je=1,ne),ie=1,nsgm) 
-       !write(file_num)((xowtj(je,ie,iq),je=1,ne),ie=1,nsgm) 
-      enddo!iq
-      !enddo!impi 
       !
       pself(:,ikir)=pself(:,ikir)+xow(:) 
-      !
      enddo!ikir 
+!$OMP END DO 
+!$OMP CRITICAL  
+     !--
+     !wrt xowtj via fileIO 
+     !--
+     do ikir=1,Nk_irr  
+      do impi=0,nproc-1
+       pnqIO=NTQ/nproc 
+       if(impi.lt.mod(NTQ,nproc))then
+        pnqIO=pnqIO+1
+        bnqIO=pnqIO*impi+1
+        enqIO=bnqIO+pnqIO-1
+       else
+        bnqIO=(pnqIO+1)*mod(NTQ,nproc)+pnqIO*(impi-mod(NTQ,nproc))+1
+        enqIO=bnqIO+pnqIO-1
+       endif 
+       file_num=(impi+1)*10000+bnb+ib-1 
+       do iq=1,pnqIO
+        rec_num=iq+(ikir-1)*pnqIO 
+        write(file_num,rec=rec_num)((xowtj(je,ie,bnqIO+iq-1,ikir),je=1,ne),ie=1,nsgm) 
+       enddo!iq
+      enddo!impi 
+     enddo!ikir 
+!$OMP END CRITICAL  
+    deallocate(ca1,xow,xowt,ekq_1D,ekq_3D,xowt_1D)  
+!$OMP END PARALLEL 
      !--
      !file close 
      !--
-     !do impi=0,nproc-1 
-     ! file_num=(impi+1)*10000+ib 
-     close(file_num) 
-     !enddo!impi 
+     do impi=0,nproc-1 
+      file_num=(impi+1)*10000+bnb+ib-1 
+      close(file_num) 
+     enddo!impi 
      !
-     if(iomp.eq.0) write(6,*)'#',ib   
-     !
-!$OMP BARRIER  
+     if(iomp.eq.0.and.myrank.eq.1)write(6,*)'#',bnb+ib-1   
     enddo!ib 
-!$OMP END DO 
-!$OMP CRITICAL
-    self=self+pself  
-!$OMP END CRITICAL
-    deallocate(ca1,pself,xow,xowt,ekq_1D,ekq_3D,xowt_1D,xowtj)  
-!$OMP END PARALLEL 
     !
-    self_i=0.0d0 
-    self_r=0.0d0 
+    pself_i=0.0d0 
+    pself_r=0.0d0 
     do ie=1,nsgm 
      SUM_REAL1=0.0d0 
      SUM_REAL2=0.0d0 
      do ik=1,NTK 
        ikir=numirr(ik) 
-       SUM_REAL1=SUM_REAL1+dble(self(ie,ikir))/pi  
-       SUM_REAL2=SUM_REAL2+dimag(self(ie,ikir))/pi  
+       SUM_REAL1=SUM_REAL1+dble(pself(ie,ikir))/pi  
+       SUM_REAL2=SUM_REAL2+dimag(pself(ie,ikir))/pi  
      enddo 
-     self_r(ie)=(2.0d0/dble(ncomp))*SUM_REAL1/dble(NTK)!2 is spin 
-     self_i(ie)=(2.0d0/dble(ncomp))*SUM_REAL2/dble(NTK)!2 is spin 
+     pself_r(ie)=(2.0d0/dble(ncomp))*SUM_REAL1/dble(NTK)!2 is spin 
+     pself_i(ie)=(2.0d0/dble(ncomp))*SUM_REAL2/dble(NTK)!2 is spin 
     enddo 
     !
-    deallocate(sgmw_cmplx,self) 
+    deallocate(sgmw_cmplx,pself)
+    deallocate(xowtj) 
     !    
     return
   end subroutine calc_dos_self 

@@ -479,30 +479,48 @@ if(calc_sc)then!.true.=default
  !write(file_id,'(a)')'## SC calc start ##'
  !
  if(myrank.eq.0)then 
-  write(6,*)'## SC calc start ##' 
+  write(6,'(a)')'## SC calc start ##' 
   write(6,*) 
  endif 
  call MPI_BARRIER(comm,ierr)
  !--
- !FileIO: tthrdrn_causal, 20210617 Kazuma Nakamura  
+ ! FileIO: tthrdrn_causal, 20210617 Kazuma Nakamura  
  !--
  if(calc_ttrhdrn)then 
-  write(6,'(a)')'Tetrahedron summation method for self-energy employed:'
+  if(myrank.eq.0)then
+   write(6,'(a)')'Tetrahedron summation method for self-energy employed:'
+   write(6,*) 
+  endif 
+  !
+  ! Estimate record length of direct accesss file
+  !
   allocate(xowtjk(ne,nsgm,1));xowtjk=0.0d0 
   inquire(iolength=rec_len)((xowtjk(je,ie,1),je=1,ne),ie=1,nsgm) 
   write(6,'(a,i30)')'rec_len (byte):',rec_len 
   deallocate(xowtjk) 
-  write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
-  !write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
+  !
+  ! mkdir xqdata%%% (temporal directory) 
+  !
+  !write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
+  write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
   call system(command) 
   call MPI_BARRIER(comm,ierr)
-  filename='./dir-gw/dat.self.global'
+  !
+  !calc self 
+  !
+  call MPI_BARRIER(comm,ierr)
   call calculate_self(ncomp,Ncalc,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),b1(1),b2(1),b3(1),&
-  idlt,dmna,dmnr,filename,nproc,pnq,bnq,enq,myrank,rec_len) 
+  idlt,dmna,dmnr,nproc,myrank,rec_len,comm) 
+  call MPI_BARRIER(comm,ierr)
  else
-  write(6,'(a)')'simple summation method employed:'
+  if(myrank.eq.0)then 
+   write(6,'(a)')'Simple summation method employed:'
+   write(6,*) 
+  endif 
  endif 
  call MPI_BARRIER(comm,ierr)
+ !call MPI_FINALIZE(ierr)
+ !STOP 
  !--
  !fft
  !--
@@ -564,8 +582,8 @@ if(calc_sc)then!.true.=default
      !--
      !fileIO: 20210617 Kazuma Nakamura
      !--
-     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      file_num=(myrank+1)*10000+ib  
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      xowtjk=0.0d0 
@@ -736,8 +754,8 @@ if(calc_sc)then!.true.=default
      !fileIO: 20210617 Kazuma Nakamura
      !--
      allocate(xowtjk(ne,nsgm,NK_irr)); xowtjk=0.0d0 
-     write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      file_num=(myrank+1)*10000+ib  
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      do ikir=1,NK_irr 
@@ -962,8 +980,8 @@ if(calc_sc)then!.true.=default
   !--
   !fileIO: 20210617 Kazuma Nakamura
   !---
-  write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
-  !write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
+  !write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
+  write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
   call system(command) 
   call MPI_BARRIER(comm,ierr)
  endif 
