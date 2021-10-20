@@ -219,6 +219,7 @@ contains
     real(8)::q1,q2,q3 
     integer::shift_G(3) 
     real(8)::Rezj,Imzj,sgn 
+    real(8)::mem_size          
     complex(8)::zj 
     complex(8)::SUM_CMPX 
     character(99)::filename,command 
@@ -247,13 +248,19 @@ contains
     !--
     !set GW grid
     !--
-    allocate(sgmw_cmplx(nsgm)); sgmw_cmplx=0.0d0   
+    allocate(sgmw_cmplx(nsgm));sgmw_cmplx=0.0d0   
     do ie=1,nsgm
      sgmw_cmplx(ie)=dcmplx(sgmw(ie),0.0d0) 
     enddo
     !--
-    allocate(pself(nsgm,NK_irr)); pself=0.0d0  
-    allocate(xowtj(ne,nsgm,NTQ,Nk_irr)); xowtj=0.0d0 
+    mem_size=dble(ne)*dble(nsgm)*dble(NTQ)*dble(Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+    if(myrank.eq.0)then 
+     write(6,'(a35,f20.15)')'mem size xowtj (GB)',mem_size
+    endif 
+    allocate(xowtj(ne,nsgm,NTQ,Nk_irr));xowtj=0.0d0 
+    !     
+    allocate(pself(nsgm,NK_irr));pself=0.0d0  
+    !
     do ib=1,pnb !NTB
      !--
      !file open

@@ -145,8 +145,7 @@ call MPI_BARRIER(comm,ierr)
 !
 !20180922
 !
-!mem_size=dble(NTG*NTB*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
- mem_size=dble(NTG*NTB*Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+mem_size=dble(NTG)*dble(NTB)*dble(Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
 !
 if(myrank.eq.0)then 
  write(6,'(a35,f20.15)')'mem size CIR (GB)',mem_size
@@ -275,7 +274,7 @@ if(myrank/=0) allocate(packingq(-Lq1:Lq1,-Lq2:Lq2,-Lq3:Lq3,Nq_irr))
 if(myrank/=0) allocate(epsirr(NTGQ,NTGQ,ne,Nq_irr))!real4 
 call MPI_BARRIER(comm,ierr)
 !
-mem_size=dble(NTGQ*NTGQ*ne*Nq_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+mem_size=dble(NTGQ)*dble(NTGQ)*dble(ne)*dble(Nq_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
 if(myrank.eq.0)then 
  write(6,'(a35,f20.15)')'mem size epsirr (GB)',mem_size
 endif 
@@ -982,7 +981,7 @@ if(calc_sc)then!.true.=default
   !---
   !write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
   write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
-  call system(command) 
+  !call system(command) 
   call MPI_BARRIER(comm,ierr)
  endif 
  !write(file_id,*)'I finished pSC calc' 
@@ -990,8 +989,7 @@ if(calc_sc)then!.true.=default
  !
  !20180922
  !
- !mem_size=dble(nsgm*Mb*Mb*Nk_irr)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
-  mem_size=dble(nsgm*Mb*Mb*Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+ mem_size=dble(nsgm)*dble(Mb)*dble(Mb)*dble(Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
  if(myrank.eq.0)then 
   write(6,'(a35,f20.15)')'mem size pSC or SCirr (GB)',mem_size
  endif 
@@ -1022,7 +1020,7 @@ if(calc_sc)then!.true.=default
  !
  allocate(SC(pnw,Mb,Mb,NTK)); SC=0.0d0
  ! 
- !mem_size=dble(pnw*Mb*Mb*NTK)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
+ !mem_size=dble(pnw)*dble(Mb)*dble(Mb)*dble(NTK)*16.0d0/1024.0d0/1024.0d0/1024.0d0 
  !if(myrank.eq.0)then 
  ! write(6,'(a35,f20.15)')'mem size SC (GB)',mem_size
  !endif 
@@ -1150,8 +1148,7 @@ if(calc_sc)then!.true.=default
   allocate(MAT_SC_R(NWF,NWF,-Na1:Na1,-Na2:Na2,-Na3:Na3,nsgm)); MAT_SC_R=0.0d0 
  endif 
  !
- ! 
- mem_size=dble(pnw*NWF*NWF*(2*Na1+1)*(2*Na2+1)*(2*Na3+1))*8.0d0/1024.0d0/1024.0d0/1024.0d0 
+ mem_size=dble(pnw)*dble(NWF)*dble(NWF)*(2.0d0*dble(Na1)+1.0d0)*(2.0d0*dble(Na2)+1.0d0)*(2.0d0*dble(Na3)+1.0d0)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
  if(myrank.eq.0)then 
   write(6,'(a35,f20.15)')'mem size pSCR (GB)',mem_size
  endif 
