@@ -130,7 +130,7 @@ contains
      iy=idnint(y)+mod(nkb2,2)
      iz=idnint(z)+mod(nkb3,2)
      index_kpt(ix,iy,iz)=ik
-    enddo 
+    nddo 
     ! 
     return 
   end subroutine  
