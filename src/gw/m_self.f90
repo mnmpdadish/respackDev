@@ -75,6 +75,7 @@ contains
     endif 
     !
     deallocate(pself_r,pself_i,dos_r,dos_i) 
+    !STOP
     return
   end subroutine calculate_self 
   ! 
@@ -261,13 +262,18 @@ contains
     !     
     allocate(pself(nsgm,NK_irr));pself=0.0d0  
     !
+    do impi=0,nproc-1
+     write(command,"('mkdir -p ./dir-gw/tmpw',i3.3,'/xqdata',i3.3)")myrank,impi
+     call system(command) 
+    enddo 
+    !STOP 
     do ib=1,pnb !NTB
      !--
      !file open
      !--
      do impi=0,nproc-1 
-      write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")impi,bnb+ib-1 
-      file_num=(impi+1)*10000+bnb+ib-1   
+      write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")myrank,impi,bnb+ib-1 
+      file_num=(myrank+1)*1000000+(impi+1)*1000+bnb+ib-1   
       open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      enddo!impi 
      !
@@ -376,7 +382,8 @@ contains
         bnqIO=(pnqIO+1)*mod(NTQ,nproc)+pnqIO*(impi-mod(NTQ,nproc))+1
         enqIO=bnqIO+pnqIO-1
        endif 
-       file_num=(impi+1)*10000+bnb+ib-1 
+       !file_num=(impi+1)*10000+bnb+ib-1 
+       file_num=(myrank+1)*1000000+(impi+1)*1000+bnb+ib-1   
        do iq=1,pnqIO
         rec_num=iq+(ikir-1)*pnqIO 
         write(file_num,rec=rec_num)((xowtj(je,ie,bnqIO+iq-1,ikir),je=1,ne),ie=1,nsgm) 

@@ -16,6 +16,9 @@ real(8)::start_time,end_time,diff_time
 !integer::status(MPI_STATUS_SIZE)
 integer::nbufq,pnq,bnq,enq
 integer::nbufw,pnw,bnw,enw 
+integer::nbufb,pnb,bnb,enb 
+integer::impi 
+integer,allocatable::func(:)!func(Ncalc) 
 !
 !integer::file_id 
 !

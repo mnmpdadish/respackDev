@@ -501,7 +501,31 @@ if(calc_sc)then!.true.=default
   ! mkdir xqdata%%% (temporal directory) 
   !
   !write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
-  write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
+  !write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
+  write(command,"('mkdir -p ./dir-gw/tmpw',i3.3)")myrank 
+  !
+  allocate(func(Ncalc)); func(:)=0 
+  do impi=0,nproc-1
+    pnb=Ncalc/nproc 
+    if(impi.lt.mod(Ncalc,nproc))then
+     pnb=pnb+1
+     bnb=pnb*impi+1 
+     enb=bnb+pnb-1
+    else
+     bnb=(pnb+1)*mod(Ncalc,nproc)+pnb*(impi-mod(Ncalc,nproc))+1 
+     enb=bnb+pnb-1
+    end if
+    do ib=1,pnb
+      func(ib+bnb-1)=impi
+    enddo
+  enddo
+  !
+  if(myrank.eq.0)then 
+   do ib=1,Ncalc
+    write(6,'(a20,2i5)')'ib, func(ib):',ib,func(ib)
+   enddo
+  endif 
+  !
   call system(command) 
   call MPI_BARRIER(comm,ierr)
   !
@@ -582,8 +606,11 @@ if(calc_sc)then!.true.=default
      !fileIO: 20210617 Kazuma Nakamura
      !--
      !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     file_num=(myrank+1)*10000+ib  
+     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !file_num=(myrank+1)*10000+ib  
+     !
+     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")func(ib),myrank,ib 
+     file_num=(func(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      xowtjk=0.0d0 
      do ikir=1,NK_irr 
@@ -754,8 +781,12 @@ if(calc_sc)then!.true.=default
      !--
      allocate(xowtjk(ne,nsgm,NK_irr)); xowtjk=0.0d0 
      !write(filename,"('/var/tmp/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
-     file_num=(myrank+1)*10000+ib  
+     !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
+     !file_num=(myrank+1)*10000+ib  
+     !
+     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")func(ib),myrank,ib 
+     file_num=(func(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
+     !
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      do ikir=1,NK_irr 
       rec_num=iq+(ikir-1)*pnq
@@ -980,7 +1011,8 @@ if(calc_sc)then!.true.=default
   !fileIO: 20210617 Kazuma Nakamura
   !---
   !write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
-  write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
+  !write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
+  !write(command,"('rm -rf ./dir-gw/tmpw',i3.3)")myrank 
   !call system(command) 
   call MPI_BARRIER(comm,ierr)
  endif 

@@ -10,7 +10,7 @@ subroutine estimate_nsgm(ecmin,emin,emax,ecmax,gw_grid_separation,nproc,nsgm,nsg
  real(8)::omega,grd_separation 
  integer::ie,je,nproc
  integer,parameter::nsgm_max=100000 
- real(8),parameter::expansion=30.0d0 !10.0d0!50.0d0  
+ real(8),parameter::expansion=30.0d0!10.0d0!30.0d0 !10.0d0!50.0d0  
  integer,parameter::Nqp=5!for spline grid 
  !
  !sgm grid
@@ -88,7 +88,7 @@ subroutine make_sgmw(ecmin,emin,emax,gw_grid_separation,nsgm,sgmw)
  integer::nsgm 
  real(8)::sgmw(nsgm) 
  integer::ie 
- real(8),parameter::expansion=30.0d0!10.0d0!50.0d0  
+ real(8),parameter::expansion=30.0d0!10.0d0!30.0d0!10.0d0!50.0d0  
  !
  sgmw=0.0d0 
  !
@@ -130,7 +130,7 @@ subroutine make_sgmwqp(ecmin,emin,emax,gw_grid_separation,nsgmqp,sgmwqp)
  integer::nsgmqp 
  real(8)::sgmwqp(nsgmqp) 
  integer::ie 
- real(8),parameter::expansion=30.0d0!10.0d0!50.0d0  
+ real(8),parameter::expansion=30.0d0!10.0d0!30.0d0!10.0d0!50.0d0  
  integer,parameter::Nqp=5!for spline grid 
  !
  sgmwqp=0.0d0 
