@@ -54,7 +54,7 @@ contains
     allocate(pself_i(nsgm));pself_i=0.0d0 
     call MPI_BARRIER(comm,ierr)
     call calc_dos_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr(1),numMK(1),FermiEnergy,nsgm,sgmw(1),ne,pole_of_chi(1),E_EIGI(1,1),SK0(1,1),SQ(1,1),&
-    delt,dmnr,dmna,b1(1),b2(1),b3(1),nproc,pnb,bnb,enb,myrank,rec_len,pself_r(1),pself_i(1)) 
+    delt,dmnr,dmna,b1(1),b2(1),b3(1),nproc,pnb,bnb,enb,myrank,rec_len,pself_r(1),pself_i(1),comm) 
     !
     !MPI_REDUCE 
     !
@@ -75,7 +75,7 @@ contains
     endif 
     !
     deallocate(pself_r,pself_i,dos_r,dos_i) 
-    !STOP
+    !
     return
   end subroutine calculate_self 
   ! 
@@ -191,10 +191,11 @@ contains
   end subroutine wrt_dos_real
   !
   subroutine calc_dos_self(ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,numirr,numMK,FermiEnergy,nsgm,sgmw,ne,pole_of_chi,E_EIGI,SK0,SQ,delt,dmnr,dmna,b1,b2,b3,&
-  nproc,pnb,bnb,enb,myrank,rec_len,pself_r,pself_i)
+  nproc,pnb,bnb,enb,myrank,rec_len,pself_r,pself_i,comm)
     use m_tetrahedron
+    use mpi 
     implicit none
-    integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne
+    integer,intent(in)::ncomp,NTB,NTK,NTQ,nkb1,nkb2,nkb3,NK_irr,nsgm,ne,comm
     integer,intent(in)::numirr(NTK) 
     integer,intent(in)::numMK(NK_irr) 
     integer,intent(in)::nproc,pnb,bnb,enb,myrank 
@@ -209,26 +210,25 @@ contains
     real(8),intent(out)::pself_r(nsgm) 
     real(8),intent(out)::pself_i(nsgm) 
     !
-    integer::index_kpt(nkb1,nkb2,nkb3) 
-    integer::imt1(4*nkb1*nkb2*nkb3*6)  
-    integer::ie,ib,ik,ikb1,ikb2,ikb3,iqb1,iqb2,iqb3 
-    integer::je,iq,ikq,ikir,ikqir   
+    integer::ie,ib,ik,ikb1,ikb2,ikb3,iqb1,iqb2,iqb3,je,iq,ikq,ikir,ikqir   
     integer::iomp,omp_get_thread_num,impi,file_num,pnqIO,bnqIO,enqIO 
     integer::nqb1,nqb2,nqb3
-    integer::rec_num 
+    integer::rec_num,ierr,token,pnbmax  
     real(8)::SUM_REAL1,SUM_REAL2  
     real(8)::q1,q2,q3 
-    integer::shift_G(3) 
     real(8)::Rezj,Imzj,sgn 
     real(8)::mem_size          
     complex(8)::zj 
     complex(8)::SUM_CMPX 
     character(99)::filename,command 
+    integer::shift_G(3) 
+    integer::index_kpt(nkb1,nkb2,nkb3) 
+    integer::imt1(4*nkb1*nkb2*nkb3*6)  
+    integer::status(MPI_STATUS_SIZE)
     !
     complex(8),allocatable::pself(:,:)!pself(nsgm,NK_irr) 
     complex(8),allocatable::sgmw_cmplx(:)!sgmw_cmplx(nsgm) 
-    complex(4),allocatable::xowtj(:,:,:,:)!xowtj(ne,nsgm,NTQ,Nk_irr) 
-    !
+    complex(4),allocatable::xowtjk(:,:,:,:)!xowtjk(ne,nsgm,NTQ,Nk_irr) 
     complex(8),allocatable::ekq_1D(:)!ekq_1D(NTQ)
     complex(8),allocatable::ekq_3D(:,:,:)!ekq_3D(nqb1,nqb2,nqb3) 
     complex(8),allocatable::xow(:)!xow(nsgm) 
@@ -239,38 +239,62 @@ contains
     real(8),parameter::pi=dacos(-1.0d0)
     real(8),parameter::au=27.21151d0 
     complex(8),parameter::ci=(0.0D0,1.0D0) 
-    !--
+    !
     nqb1=nkb1!important
     nqb2=nkb2!important
     nqb3=nkb3!important
-    !--
+    !
     call make_index_kpt(NTQ,nqb1,nqb2,nqb3,SQ(1,1),index_kpt(1,1,1)) 
     call ttrhdrn_mkidx(nqb1,nqb2,nqb3,imt1(1),b1(1),b2(1),b3(1))
-    !--
+    !
     !set GW grid
-    !--
+    !
     allocate(sgmw_cmplx(nsgm));sgmw_cmplx=0.0d0   
     do ie=1,nsgm
      sgmw_cmplx(ie)=dcmplx(sgmw(ie),0.0d0) 
     enddo
-    !--
+    !
+    !memory size of xowtjk
+    !
     mem_size=dble(ne)*dble(nsgm)*dble(NTQ)*dble(Nk_irr)*8.0d0/1024.0d0/1024.0d0/1024.0d0 
     if(myrank.eq.0)then 
-     write(6,'(a35,f20.15)')'mem size xowtj (GB)',mem_size
+     write(6,'(a35,f20.15)')'mem size xowtjk (GB)',mem_size
     endif 
-    allocate(xowtj(ne,nsgm,NTQ,Nk_irr));xowtj=0.0d0 
+    allocate(xowtjk(ne,nsgm,NTQ,Nk_irr));xowtjk=0.0d0 
     !     
-    allocate(pself(nsgm,NK_irr));pself=0.0d0  
+    !mkdir tmpw/xqdata%%%
     !
     do impi=0,nproc-1
      write(command,"('mkdir -p ./dir-gw/tmpw',i3.3,'/xqdata',i3.3)")myrank,impi
      call system(command) 
     enddo 
-    !STOP 
-    do ib=1,pnb !NTB
-     !--
+    !
+    !MPI setting: token and pnbmax 
+    !
+    token=0
+    call MPI_ALLREDUCE(pnb,pnbmax,1,MPI_INTEGER,MPI_MAX,comm,ierr)
+    !
+    allocate(pself(nsgm,NK_irr));pself=0.0d0  
+    !
+    do ib=1,pnbmax !pnb !NTB
+     if(ib.gt.pnb)then 
+      !
+      !token recieve
+      !
+      if(myrank.gt.0)then 
+       call MPI_Recv(token,1,MPI_INTEGER,myrank-1,0,comm,status,ierr) 
+      endif 
+      !
+      !token send
+      !
+      if(myrank+1.lt.nproc)then 
+       call MPI_Send(token,1,MPI_INTEGER,myrank+1,0,comm,ierr) 
+      endif
+      goto 1111 
+     endif 
+     !
      !file open
-     !--
+     !
      do impi=0,nproc-1 
       write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")myrank,impi,bnb+ib-1 
       file_num=(myrank+1)*1000000+(impi+1)*1000+bnb+ib-1   
@@ -354,12 +378,12 @@ contains
         enddo!iqb3 
         xow(ie)=xow(ie)+SUM_CMPX/dble(NTQ) 
        enddo!ie 
-       !--
-       !make xowtj
-       !--
+       !
+       !make xowtjk 
+       !
        do ie=1,nsgm
         do iq=1,NTQ !pnq 
-         xowtj(je,ie,iq,ikir)=xowt_1D(ie,iq) 
+         xowtjk(je,ie,iq,ikir)=xowt_1D(ie,iq) 
         enddo!iq
        enddo!ie 
       enddo!je
@@ -367,10 +391,17 @@ contains
       pself(:,ikir)=pself(:,ikir)+xow(:) 
      enddo!ikir 
 !$OMP END DO 
-!$OMP CRITICAL  
-     !--
-     !wrt xowtj via fileIO 
-     !--
+     deallocate(ca1,xow,xowt,ekq_1D,ekq_3D,xowt_1D)  
+!$OMP END PARALLEL 
+     !
+     !token recieve
+     !
+     if(myrank.gt.0)then 
+      call MPI_Recv(token,1,MPI_INTEGER,myrank-1,0,comm,status,ierr) 
+     endif 
+     !
+     !wrt xowtjk via fileIO 
+     !
      do ikir=1,Nk_irr  
       do impi=0,nproc-1
        pnqIO=NTQ/nproc 
@@ -386,20 +417,25 @@ contains
        file_num=(myrank+1)*1000000+(impi+1)*1000+bnb+ib-1   
        do iq=1,pnqIO
         rec_num=iq+(ikir-1)*pnqIO 
-        write(file_num,rec=rec_num)((xowtj(je,ie,bnqIO+iq-1,ikir),je=1,ne),ie=1,nsgm) 
+        write(file_num,rec=rec_num)((xowtjk(je,ie,bnqIO+iq-1,ikir),je=1,ne),ie=1,nsgm) 
        enddo!iq
       enddo!impi 
      enddo!ikir 
-!$OMP END CRITICAL  
-    deallocate(ca1,xow,xowt,ekq_1D,ekq_3D,xowt_1D)  
-!$OMP END PARALLEL 
-     !--
+     !
      !file close 
-     !--
+     !
      do impi=0,nproc-1 
-      file_num=(impi+1)*10000+bnb+ib-1 
+      !file_num=(impi+1)*10000+bnb+ib-1 
+      file_num=(myrank+1)*1000000+(impi+1)*1000+bnb+ib-1   
       close(file_num) 
      enddo!impi 
+     !
+     !token send
+     !
+     if(myrank+1.lt.nproc)then 
+      call MPI_Send(token,1,MPI_INTEGER,myrank+1,0,comm,ierr) 
+     endif
+1111 call MPI_BARRIER(comm,ierr)
      !
      if(iomp.eq.0.and.myrank.eq.1)write(6,*)'#',bnb+ib-1   
     enddo!ib 
@@ -419,7 +455,7 @@ contains
     enddo 
     !
     deallocate(sgmw_cmplx,pself)
-    deallocate(xowtj) 
+    deallocate(xowtjk) 
     !    
     return
   end subroutine calc_dos_self 

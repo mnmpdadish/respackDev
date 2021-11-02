@@ -491,20 +491,23 @@ if(calc_sc)then!.true.=default
    write(6,*) 
   endif 
   !
-  ! Estimate record length of direct accesss file
+  !Estimate record length of direct accesss file
   !
   allocate(xowtjk(ne,nsgm,1));xowtjk=0.0d0 
   inquire(iolength=rec_len)((xowtjk(je,ie,1),je=1,ne),ie=1,nsgm) 
   write(6,'(a,i30)')'rec_len (byte):',rec_len 
   deallocate(xowtjk) 
   !
-  ! mkdir xqdata%%% (temporal directory) 
+  !mkdir tmpw(myrank) (temporal directory) 
   !
   !write(command,"('mkdir -p /var/tmp/xqdata',i3.3)")myrank 
   !write(command,"('mkdir -p ./dir-gw/xqdata',i3.3)")myrank 
   write(command,"('mkdir -p ./dir-gw/tmpw',i3.3)")myrank 
+  call system(command) 
   !
-  allocate(func(Ncalc)); func(:)=0 
+  !mpi process number containing bandidx 
+  !
+  allocate(mpi_number_for_bandidx(Ncalc)); mpi_number_for_bandidx(:)=0 
   do impi=0,nproc-1
     pnb=Ncalc/nproc 
     if(impi.lt.mod(Ncalc,nproc))then
@@ -516,17 +519,16 @@ if(calc_sc)then!.true.=default
      enb=bnb+pnb-1
     end if
     do ib=1,pnb
-      func(ib+bnb-1)=impi
+      mpi_number_for_bandidx(ib+bnb-1)=impi
     enddo
   enddo
   !
   if(myrank.eq.0)then 
    do ib=1,Ncalc
-    write(6,'(a20,2i5)')'ib, func(ib):',ib,func(ib)
+    write(6,'(a20,2i5)')'ib, mpi_number_for_bandidx(ib):',ib,mpi_number_for_bandidx(ib)
    enddo
   endif 
   !
-  call system(command) 
   call MPI_BARRIER(comm,ierr)
   !
   !calc self 
@@ -609,8 +611,8 @@ if(calc_sc)then!.true.=default
      !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      !file_num=(myrank+1)*10000+ib  
      !
-     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")func(ib),myrank,ib 
-     file_num=(func(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
+     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")mpi_number_for_bandidx(ib),myrank,ib 
+     file_num=(mpi_number_for_bandidx(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      xowtjk=0.0d0 
      do ikir=1,NK_irr 
@@ -784,8 +786,8 @@ if(calc_sc)then!.true.=default
      !write(filename,"('./dir-gw/xqdata',i3.3,'/dat.ib',i4.4)")myrank,ib 
      !file_num=(myrank+1)*10000+ib  
      !
-     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")func(ib),myrank,ib 
-     file_num=(func(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
+     write(filename,"('./dir-gw/tmpw',i3.3,'/xqdata',i3.3,'/dat.ib',i4.4)")mpi_number_for_bandidx(ib),myrank,ib 
+     file_num=(mpi_number_for_bandidx(ib)+1)*1000000+(myrank+1)*1000+bnb+ib-1   
      !
      open(file_num,FILE=filename,FORM='unformatted',access='direct',recl=rec_len) 
      do ikir=1,NK_irr 
@@ -1012,8 +1014,9 @@ if(calc_sc)then!.true.=default
   !---
   !write(command,"('rm -rf /var/tmp/xqdata',i3.3)")myrank 
   !write(command,"('rm -rf ./dir-gw/xqdata',i3.3)")myrank 
-  !write(command,"('rm -rf ./dir-gw/tmpw',i3.3)")myrank 
-  !call system(command) 
+  call MPI_BARRIER(comm,ierr)
+  write(command,"('rm -rf ./dir-gw/tmpw',i3.3)")myrank 
+  call system(command) 
   call MPI_BARRIER(comm,ierr)
  endif 
  !write(file_id,*)'I finished pSC calc' 

@@ -18,7 +18,7 @@ integer::nbufq,pnq,bnq,enq
 integer::nbufw,pnw,bnw,enw 
 integer::nbufb,pnb,bnb,enb 
 integer::impi 
-integer,allocatable::func(:)!func(Ncalc) 
+integer,allocatable::mpi_number_for_bandidx(:)!mpi_number_for_bandidx(Ncalc) 
 !
 !integer::file_id 
 !
